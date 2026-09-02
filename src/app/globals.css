@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-han: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-han);
+}
+
+ruby.ruby {
+  ruby-align: center;
+}
+
+rt {
+  user-select: none;
+  line-height: 1.1;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 8px;
+  background: rgb(148 163 184 / 0.5);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dot-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgb(100 116 139 / 0.22) 1px, transparent 0);
+  background-size: 28px 28px;
+}

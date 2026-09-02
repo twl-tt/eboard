@@ -1,0 +1,47 @@
+{
+  "name": "whiteboard-reader-pro",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "setup": "prisma generate && prisma db push",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@hello-pangea/dnd": "^16.6.0",
+    "@prisma/client": "^5.17.0",
+    "@vercel/blob": "^0.23.4",
+    "canvas-confetti": "^1.9.3",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "fabric": "^5.3.0",
+    "framer-motion": "^11.3.21",
+    "html2canvas": "^1.4.1",
+    "iconv-lite": "^0.7.3",
+    "jspdf": "^2.5.1",
+    "lucide-react": "^0.414.0",
+    "mammoth": "^1.7.2",
+    "next": "14.2.5",
+    "pinyin-pro": "^3.24.0",
+    "qrcode.react": "^4.0.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "swr": "^2.2.5",
+    "tailwind-merge": "^2.4.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/canvas-confetti": "^1.6.4",
+    "@types/node": "^20.14.12",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "postcss": "^8.4.40",
+    "prisma": "^5.17.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.5.4"
+  }
+}

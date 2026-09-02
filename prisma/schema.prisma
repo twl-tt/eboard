@@ -1,0 +1,84 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(TEACHER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  grade     String
+  articles  Article[]
+  createdAt DateTime  @default(now())
+
+  @@unique([name, grade])
+}
+
+model Article {
+  id          String    @id @default(uuid())
+  title       String
+  rawContent  String    @db.Text
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  sentences   Json
+  highlights  Json      @default("[]")
+  canvasState Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([categoryId])
+}
+
+model Student {
+  id        String     @id @default(uuid())
+  name      String
+  seatNo    Int?
+  points    Int        @default(0)
+  scoreLogs ScoreLog[]
+  createdAt DateTime   @default(now())
+}
+
+model ScoreLog {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  delta     Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([studentId])
+}
+
+model Poll {
+  id           String       @id @default(uuid())
+  question     String
+  isActive     Boolean      @default(true)
+  correctIndex Int?
+  options      PollOption[]
+  createdAt    DateTime     @default(now())
+}
+
+model PollOption {
+  id     String @id @default(uuid())
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text   String
+  votes  Int    @default(0)
+}
