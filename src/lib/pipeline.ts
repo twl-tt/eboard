@@ -1,7 +1,7 @@
 import type { RhetoricKey } from "./types"
 import type { CharToken, Sentence } from "./types"
 import { sentencePinyinArray, charPinyin } from "./pinyin"
-import { detectRhetoricBatch, aiRhetoricBatch } from "./rhetoric"
+import { detectRhetoricBatch } from "./rhetoric"
 
 const HANZI_RE = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/
 
@@ -107,8 +107,6 @@ export function applyOverrides(sentences: Sentence[], overrides: Map<string, Tok
 
 export async function buildSentences(rawContent: string): Promise<Sentence[]> {
   const parts = splitSentences(rawContent)
-  const valid = parts.filter((p) => p.trim().length > 0)
-  detectRhetoricBatch(valid)
   return parts.map((text, i) => {
     if (!text.trim()) return { id: `p${i}`, text: "", tokens: [], rhetoric: null }
     const s: Sentence = {

@@ -3,7 +3,6 @@ import { z } from "zod"
 import { Prisma } from "@prisma/client"
 import { db } from "@/lib/db"
 import { splitSentences, tokenize } from "@/lib/pipeline"
-import { detectRhetoricBatch } from "@/lib/rhetoric"
 
 const rowSchema = z.object({
   title: z.string().min(1).max(200),
@@ -92,10 +91,7 @@ export async function POST(req: NextRequest) {
         const parsed = rowSchema.parse(row)
         const paragraphs = parsed.content.split(/\n\s*\n/).filter(p => p.trim())
         const parts = splitSentences(parsed.content)
-        const valid = parts.filter(p => p.trim().length > 0)
-        const rhetorics = detectRhetoricBatch(valid)
 
-        let ri = 0
         const sentences = parts.map((text, i) => {
           if (!text.trim()) return { id: `p${i}`, text: "", tokens: [], rhetoric: null, explanation: null as string | null }
 
@@ -112,10 +108,9 @@ export async function POST(req: NextRequest) {
             id: `s${i}`,
             text,
             tokens: tokenize(text),
-            rhetoric: rhetorics[ri] ?? null,
+            rhetoric: null,
             explanation
           }
-          ri++
           return s
         })
 

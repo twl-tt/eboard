@@ -7,7 +7,6 @@ import {
   BookOpen, Puzzle, Loader2, Highlighter, X, Languages
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode, RhetoricKey } from "@/lib/types"
-import { RHETORIC_KEYS } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { speakSeq, stopSpeak, warmVoices } from "@/lib/tts"
 import { celebrate } from "@/lib/sound"
@@ -42,7 +41,6 @@ export default function WhiteboardShell() {
   const [highlights, setHighlights] = useState<Highlight[]>([])
   const [highlightColor, setHighlightColor] = useState<HighlightColor>("purple")
   const [showExplanation, setShowExplanation] = useState(false)
-  const [selectedRhetoric, setSelectedRhetoric] = useState<RhetoricKey | null>(null)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -246,7 +244,6 @@ export default function WhiteboardShell() {
   ]
 
   const validSentences = article?.sentences.filter((s) => s.text.trim()) ?? []
-  const rhetoricCount = validSentences.filter((s) => s.rhetoric).length
 
   return (
     <div
@@ -390,32 +387,6 @@ export default function WhiteboardShell() {
 
           <span className="mx-1 hidden h-6 w-px bg-slate-300/70 sm:block dark:bg-slate-700/70" />
 
-          <div className="flex items-center gap-1 rounded-2xl border border-pink-200/60 bg-pink-50/50 p-1 shadow-sm dark:border-pink-900/40 dark:bg-pink-900/20">
-            <span className="ml-1 text-xs font-medium text-pink-500">修辭</span>
-            {RHETORIC_KEYS.map((r) => (
-              <button
-                key={r}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("rhetoric", r)
-                  setSelectedRhetoric(r)
-                }}
-                onClick={() => setSelectedRhetoric(selectedRhetoric === r ? null : r)}
-                title={`拖曳或點擊「${r}」至句子`}
-                className={cn(
-                  "flex h-7 min-w-[2.5rem] items-center justify-center rounded-lg border px-1.5 text-xs font-medium transition-all hover:scale-105",
-                  selectedRhetoric === r
-                    ? "border-pink-400 bg-pink-200 text-pink-700 dark:border-pink-300 dark:bg-pink-800 dark:text-pink-200"
-                    : "border-pink-200 bg-white/80 text-pink-600 hover:bg-pink-100 dark:border-pink-800 dark:bg-pink-900/60 dark:text-pink-300"
-                )}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-
-          <span className="mx-1 hidden h-6 w-px bg-slate-300/70 sm:block dark:bg-slate-700/70" />
-
           <Button size="icon" variant="ghost" title="縮小字體" onClick={() => setFontSizeRem((v) => Math.max(1.6, +(v - 0.2).toFixed(1)))}>
             <ZoomOut className="h-5 w-5" />
           </Button>
@@ -488,7 +459,7 @@ export default function WhiteboardShell() {
                   </span>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  自動生成普通話拼音與廣東話粵拼、AI 標註修辭、文字直接上螢光筆、加上畫筆與課室互動工具 — 專為大螢幕教學而設計。
+                  自動生成普通話拼音與廣東話粵拼、文字直接上螢光筆、加上畫筆與課室互動工具 — 專為大螢幕教學而設計。
                 </p>
               </div>
               <div className="relative mt-7 grid grid-cols-2 gap-3 text-left sm:grid-cols-3">
@@ -546,9 +517,6 @@ export default function WhiteboardShell() {
                   )}
                   <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-indigo-700 dark:text-indigo-300">{article.categoryName}</span>
                   <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">{validSentences.length} 句</span>
-                  {rhetoricCount > 0 && (
-                    <span className="rounded-full bg-pink-500/10 px-2.5 py-1 text-pink-700 dark:text-pink-300">✦ {rhetoricCount} 處修辭</span>
-                  )}
                   {highlights.length > 0 && (
                     <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-700 dark:text-amber-300">🖍 {highlights.length} 處螢光筆</span>
                   )}
@@ -576,7 +544,6 @@ export default function WhiteboardShell() {
                 }}
                 showExplanation={showExplanation}
                 onDropRhetoric={handleDropRhetoric}
-                selectedRhetoric={selectedRhetoric}
               />
             </div>
             <CanvasStage ref={canvasApiRef} articleId={article.id} dark={dark} />
