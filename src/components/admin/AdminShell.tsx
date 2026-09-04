@@ -2,20 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { BookText, Users, FolderTree, ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { BookText, Users, FolderTree, ArrowLeft, Plus, Trash2, Tags } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input, Label } from "@/components/ui/input"
 import type { CategoryTree } from "@/lib/types"
 import { ArticlesAdmin } from "./ArticlesAdmin"
 import { StudentsAdmin } from "./StudentsAdmin"
+import { TagAdmin } from "./TagAdmin"
 
-type Tab = "articles" | "students" | "categories"
+type Tab = "articles" | "students" | "categories" | "tags"
 
 const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
   { key: "articles", label: "課文管理", icon: <BookText className="h-4 w-4" /> },
   { key: "categories", label: "分類管理", icon: <FolderTree className="h-4 w-4" /> },
-  { key: "students", label: "學生管理", icon: <Users className="h-4 w-4" /> }
+  { key: "students", label: "學生管理", icon: <Users className="h-4 w-4" /> },
+  { key: "tags", label: "標籤管理", icon: <Tags className="h-4 w-4" /> }
 ]
 
 export default function AdminShell() {
@@ -86,6 +88,7 @@ export default function AdminShell() {
 
       {tab === "articles" && <ArticlesAdmin categories={categories} refreshCategories={load} />}
       {tab === "students" && <StudentsAdmin />}
+      {tab === "tags" && <TagAdmin />}
       {tab === "categories" && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end gap-2 rounded-2xl border border-slate-200 p-4 dark:border-slate-800">

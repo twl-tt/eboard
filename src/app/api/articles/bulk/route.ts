@@ -108,7 +108,8 @@ export async function POST(req: NextRequest) {
             id: `s${i}`,
             text,
             tokens: tokenize(text),
-            explanation
+            explanation,
+            tags: []
           }
         })
 

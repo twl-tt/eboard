@@ -10,6 +10,7 @@ export interface Sentence {
   text: string
   tokens: CharToken[]
   explanation?: string
+  tags?: string[]
 }
 
 export interface CategoryTree {
@@ -51,4 +52,12 @@ export interface PollDTO {
   correctIndex: number | null
   createdAt: string
   options: { id: string; text: string; votes: number }[]
+}
+
+export interface TagDTO {
+  id: string
+  name: string
+  category: string
+  color: string
+  sortOrder: number
 }

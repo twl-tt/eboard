@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
@@ -44,6 +44,7 @@ export default function WhiteboardShell() {
   const [canvasFollowsText, setCanvasFollowsText] = useState(false)
   const [boardMode, setBoardMode] = useState<"normal" | "whiteboard" | "blackboard">("normal")
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -64,6 +65,10 @@ export default function WhiteboardShell() {
   }, [])
 
   useEffect(() => () => stopSpeak(), [])
+
+  useEffect(() => {
+    fetch("/api/tags").then((r) => r.ok ? r.json() : []).then(setTags).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const el = readingRef.current
@@ -288,6 +293,48 @@ export default function WhiteboardShell() {
   function exitBoardMode() {
     setBoardMode("normal")
   }
+
+  async function addTagToSentence(sentenceIndex: number, tagName: string) {
+    if (!article) return
+    const s = article.sentences[sentenceIndex]
+    const current = s.tags ?? []
+    if (current.includes(tagName)) return
+    const next = [...current, tagName]
+    const res = await fetch(`/api/articles/${article.id}/tags`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sentenceIndex, tags: next })
+    })
+    if (res.ok) {
+      const updatedSentences = await res.json()
+      setArticle((prev) => (prev ? { ...prev, sentences: updatedSentences } : prev))
+    }
+  }
+
+  async function removeTagFromSentence(sentenceIndex: number, tagName: string) {
+    if (!article) return
+    const s = article.sentences[sentenceIndex]
+    const next = (s.tags ?? []).filter((t) => t !== tagName)
+    const res = await fetch(`/api/articles/${article.id}/tags`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sentenceIndex, tags: next })
+    })
+    if (res.ok) {
+      const updatedSentences = await res.json()
+      setArticle((prev) => (prev ? { ...prev, sentences: updatedSentences } : prev))
+    }
+  }
+
+  const tagsByCategory = useMemo(() => {
+    const map = new Map<string, typeof tags>()
+    for (const t of tags) {
+      const list = map.get(t.category) ?? []
+      list.push(t)
+      map.set(t.category, list)
+    }
+    return map
+  }, [tags])
 
   const phoneticOptions: { key: PhoneticMode; label: string }[] = [
     { key: "off", label: "隱藏拼音" },
@@ -599,6 +646,9 @@ export default function WhiteboardShell() {
                 highlights={highlights}
                 onAddHighlight={addHighlight}
                 onRemoveHighlight={removeHighlight}
+                tags={tags}
+                onAddTag={addTagToSentence}
+                onRemoveTag={removeTagFromSentence}
                 onSentenceClick={(s) => {
                   if (focusMode) {
                     setFocusId(s.id === focusId ? null : s.id)

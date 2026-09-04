@@ -93,11 +93,12 @@ export function applyOverrides(sentences: Sentence[], _overrides: Map<string, To
 export async function buildSentences(rawContent: string): Promise<Sentence[]> {
   const parts = splitSentences(rawContent)
   return parts.map((text, i) => {
-    if (!text.trim()) return { id: `p${i}`, text: "", tokens: [] }
+    if (!text.trim()) return { id: `p${i}`, text: "", tokens: [], tags: [] }
     return {
       id: `s${i}`,
       text,
-      tokens: tokenize(text)
+      tokens: tokenize(text),
+      tags: []
     }
   })
 }

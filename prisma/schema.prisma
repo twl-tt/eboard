@@ -85,3 +85,15 @@ model PollOption {
   text   String
   votes  Int    @default(0)
 }
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String
+  category  String
+  color     String   @default("violet")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([name, category])
+  @@index([category])
+}
