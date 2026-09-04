@@ -10,6 +10,7 @@ export function StudentsAdmin() {
   const [students, setStudents] = useState<StudentDTO[]>([])
   const [name, setName] = useState("")
   const [seatNo, setSeatNo] = useState("")
+  const [className, setClassName] = useState("")
   const [csv, setCsv] = useState("")
   const [ranked, setRanked] = useState(false)
   const [historyId, setHistoryId] = useState<string | null>(null)
@@ -30,9 +31,13 @@ export function StudentsAdmin() {
     await fetch("/api/students", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), seatNo: seatNo ? Number(seatNo) : null })
+      body: JSON.stringify({
+        name: name.trim(),
+        seatNo: seatNo ? Number(seatNo) : null,
+        className: className.trim() || null
+      })
     })
-    setName(""); setSeatNo("")
+    setName(""); setSeatNo(""); setClassName("")
     load()
   }
 
@@ -88,15 +93,16 @@ export function StudentsAdmin() {
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
           <Label>新增學生</Label>
-          <div className="flex gap-2">
-            <Input className="w-36" placeholder="姓名" value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="flex flex-wrap gap-2">
+            <Input className="w-32" placeholder="姓名" value={name} onChange={(e) => setName(e.target.value)} />
             <Input className="w-20" placeholder="座號" type="number" value={seatNo} onChange={(e) => setSeatNo(e.target.value)} />
+            <Input className="w-32" placeholder="班別 (例如 1A)" value={className} onChange={(e) => setClassName(e.target.value)} />
             <Button onClick={addStudent}><Plus className="h-4 w-4" /> 加入</Button>
           </div>
         </div>
         <div className="flex min-w-[320px] flex-1 flex-col gap-1 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
-          <Label>CSV 匯入（每行：姓名,座號）</Label>
-          <Textarea className="min-h-[64px]" placeholder={"王小明,1\n陳大文,2"} value={csv} onChange={(e) => setCsv(e.target.value)} />
+          <Label>CSV 匯入（每行：姓名,座號,班別）</Label>
+          <Textarea className="min-h-[64px]" placeholder={"王小明,1,1A\n陳大文,2,1A\n李大雄,3,1B"} value={csv} onChange={(e) => setCsv(e.target.value)} />
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={() => importCsv(csv)} disabled={!csv.trim()}>匯入名單</Button>
             <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg bg-slate-200 px-3 text-xs font-medium hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700">
@@ -116,6 +122,7 @@ export function StudentsAdmin() {
             <tr>
               <th className="px-4 py-2.5 font-medium">座號</th>
               <th className="px-4 py-2.5 font-medium">姓名</th>
+              <th className="px-4 py-2.5 font-medium">班別</th>
               <th className="px-4 py-2.5 font-medium">平時分</th>
               <th className="px-4 py-2.5 text-right font-medium">操作</th>
             </tr>
@@ -130,6 +137,7 @@ export function StudentsAdmin() {
                     {historyId === s.id && <span className="ml-2 text-xs text-sky-500">▲ 收起紀錄</span>}
                     {!historyId && s.recentLogs?.length ? <span className="ml-2 text-xs text-slate-400">{s.recentLogs.length} 筆近期紀錄 ▾</span> : null}
                   </td>
+                  <td className="px-4 py-2 text-slate-500">{s.className ?? "—"}</td>
                   <td className="px-4 py-2"><span className={`font-mono font-bold ${ranked && i === 0 ? "text-amber-500" : ""}`}>{s.points}</span></td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="success" size="sm" className="mr-1" onClick={() => award(s, 1)}>+1</Button>
@@ -139,7 +147,7 @@ export function StudentsAdmin() {
                 </tr>
                 {historyId === s.id && (
                   <tr className="border-t border-dashed border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60">
-                    <td colSpan={4} className="px-8 py-3">
+                    <td colSpan={5} className="px-8 py-3">
                       {(s.recentLogs?.length ?? 0) === 0 ? (
                         <p className="text-xs text-slate-400">暫無紀錄</p>
                       ) : (
@@ -158,7 +166,7 @@ export function StudentsAdmin() {
               </Fragment>
             ))}
             {sorted.length === 0 && (
-              <tr><td colSpan={4} className="px-4 py-10 text-center text-slate-400">尚未有學生，請新增或匯入 CSV。</td></tr>
+              <tr><td colSpan={5} className="px-4 py-10 text-center text-slate-400">尚未有學生，請新增或匯入 CSV。</td></tr>
             )}
           </tbody>
         </table>

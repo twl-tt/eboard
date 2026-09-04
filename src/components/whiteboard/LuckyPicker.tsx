@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Dices, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -19,12 +19,34 @@ export function LuckyPicker({ students }: Props) {
   const [rolling, setRolling] = useState(false)
   const [idx, setIdx] = useState(0)
   const [winner, setWinner] = useState<StudentDTO | null>(null)
+  const [classFilter, setClassFilter] = useState<string>("__all__")
   const timersRef = useRef<number[]>([])
 
+  const classes = useMemo(() => {
+    const set = new Set<string>()
+    for (const s of students) if (s.className) set.add(s.className)
+    return Array.from(set).sort()
+  }, [students])
+
+  const filtered = useMemo(
+    () => classFilter === "__all__" ? students : students.filter((s) => s.className === classFilter),
+    [students, classFilter]
+  )
+
   useEffect(() => () => timersRef.current.forEach(clearTimeout), [])
+  useEffect(() => { setIdx(0); setWinner(null) }, [classFilter])
 
   if (students.length === 0) {
     return <p className="py-8 text-center text-slate-400">請先在管理後台匯入學生名單。</p>
+  }
+
+  if (filtered.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6">
+        <p className="text-sm text-slate-400">此班別暫無學生。</p>
+        <Button variant="secondary" onClick={() => setClassFilter("__all__")}>顯示全部</Button>
+      </div>
+    )
   }
 
   const roll = () => {
@@ -34,16 +56,16 @@ export function LuckyPicker({ students }: Props) {
     let delay = 60
     let t = 0
     const step = () => {
-      setIdx(Math.floor(Math.random() * students.length))
+      setIdx(Math.floor(Math.random() * filtered.length))
       tick()
       delay *= 1.14
       t += delay
       if (t < 2600) {
         timersRef.current.push(window.setTimeout(step, delay))
       } else {
-        const w = Math.floor(Math.random() * students.length)
+        const w = Math.floor(Math.random() * filtered.length)
         setIdx(w)
-        setWinner(students[w])
+        setWinner(filtered[w])
         setRolling(false)
         ding()
         celebrate()
@@ -68,6 +90,38 @@ export function LuckyPicker({ students }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-4 py-2">
+      {classes.length > 0 && (
+        <div className="flex w-full flex-wrap items-center justify-center gap-1.5">
+          <button
+            onClick={() => setClassFilter("__all__")}
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-xs font-semibold transition-all",
+              classFilter === "__all__"
+                ? "border-violet-400 bg-violet-500/20 text-violet-700 dark:text-violet-200"
+                : "border-slate-200 bg-white/70 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+            )}
+          >
+            全部 ({students.length})
+          </button>
+          {classes.map((c) => {
+            const count = students.filter((s) => s.className === c).length
+            return (
+              <button
+                key={c}
+                onClick={() => setClassFilter(c)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs font-semibold transition-all",
+                  classFilter === c
+                    ? "border-violet-400 bg-violet-500/20 text-violet-700 dark:text-violet-200"
+                    : "border-slate-200 bg-white/70 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300"
+                )}
+              >
+                {c} ({count})
+              </button>
+            )
+          })}
+        </div>
+      )}
       <div className="relative">
         <motion.div
           animate={rolling ? { rotate: 360 } : { rotate: 0 }}
@@ -83,10 +137,10 @@ export function LuckyPicker({ students }: Props) {
           transition={{ duration: 0.09 }}
           className="absolute inset-0 flex items-center justify-center px-6 text-center text-2xl font-black text-slate-900 dark:text-white"
         >
-          {students[idx]?.name ?? "?"}
+          {filtered[idx]?.name ?? "?"}
         </motion.span>
         <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-0.5 text-xs font-black text-white shadow-lg shadow-orange-500/40">
-          {students[idx]?.seatNo ? `${students[idx].seatNo} 號` : "READY"}
+          {filtered[idx]?.seatNo ? `${filtered[idx].seatNo} 號` : "READY"}
         </span>
         <div
           className={cn(

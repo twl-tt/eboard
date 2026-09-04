@@ -21,6 +21,7 @@ interface Props {
   onDirty?: () => void
   followsText?: boolean
   scrollContainerRef?: React.RefObject<HTMLDivElement> | null
+  forceActive?: boolean
 }
 
 const HL_COLORS = [
@@ -40,7 +41,7 @@ const TOOLS: { tool: CanvasTool; icon: React.ReactNode; label: string }[] = [
   { tool: "text", icon: <Type className="h-5 w-5" />, label: "文字（雙擊畫布）" }
 ]
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null, forceActive = false }, ref) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
@@ -54,7 +55,12 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const [ready, setReady] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const active = tool !== "none"
+  useEffect(() => {
+    if (forceActive && tool === "none") setTool("pen")
+    if (!forceActive && tool !== "none" && tool !== "move") setTool("none")
+  }, [forceActive, tool])
+
+  const active = tool !== "none" || forceActive
 
   useImperativeHandle(ref, (): CanvasApi => ({
     toJSON: () => {
@@ -266,12 +272,12 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }
 
   return (
-    <div className="absolute inset-0 z-20 pointer-events-none" data-article={articleId}>
+    <div className={cn("absolute inset-0 z-20", !active && "pointer-events-none")} data-article={articleId}>
       <div
         ref={wrapRef}
         className={cn(
-          "pointer-events-auto absolute inset-0 overflow-hidden rounded-3xl",
-          active ? "opacity-100" : "opacity-0 pointer-events-none",
+          "absolute inset-0 overflow-hidden rounded-3xl",
+          active ? "pointer-events-auto" : "pointer-events-none opacity-0",
           active && "inset-ring-2 inset-ring-indigo-500/50"
         )}
         aria-hidden={!active}

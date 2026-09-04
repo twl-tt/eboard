@@ -15,6 +15,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       id: s.id,
       name: s.name,
       seatNo: s.seatNo,
+      className: s.className,
       points: s.points,
       recentLogs: s.scoreLogs
     })
@@ -25,7 +26,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
 const patchSchema = z.object({
   name: z.string().min(1).max(30).optional(),
-  seatNo: z.number().int().min(1).max(99).nullable().optional()
+  seatNo: z.number().int().min(1).max(99).nullable().optional(),
+  className: z.string().min(1).max(40).nullable().optional()
 })
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {

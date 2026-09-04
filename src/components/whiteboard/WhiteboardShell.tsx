@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
-  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock
+  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock, Maximize2, Minimize2, Brush
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -42,9 +42,12 @@ export default function WhiteboardShell() {
   const [highlightColor, setHighlightColor] = useState<HighlightColor>("purple")
   const [showExplanation, setShowExplanation] = useState(false)
   const [canvasFollowsText, setCanvasFollowsText] = useState(false)
+  const [boardMode, setBoardMode] = useState<"normal" | "whiteboard" | "blackboard">("normal")
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
+  const shellRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     warmVoices()
@@ -258,6 +261,34 @@ export default function WhiteboardShell() {
     })
   }
 
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      shellRef.current?.requestFullscreen?.()
+    } else {
+      document.exitFullscreen?.()
+    }
+  }
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener("fullscreenchange", onChange)
+    return () => document.removeEventListener("fullscreenchange", onChange)
+  }, [])
+
+  function enterBoardMode(mode: "whiteboard" | "blackboard") {
+    setBoardMode(mode)
+    setTimeout(() => {
+      canvasApiRef.current?.toJSON()
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("board-mode", { detail: mode }))
+      }
+    }, 0)
+  }
+
+  function exitBoardMode() {
+    setBoardMode("normal")
+  }
+
   const phoneticOptions: { key: PhoneticMode; label: string }[] = [
     { key: "off", label: "隱藏拼音" },
     { key: "pinyin", label: "普通話拼音" }
@@ -443,6 +474,38 @@ export default function WhiteboardShell() {
 
           <Button
             size="sm"
+            variant={boardMode === "whiteboard" ? "default" : "ghost"}
+            onClick={() => (boardMode === "whiteboard" ? exitBoardMode() : enterBoardMode("whiteboard"))}
+            title="純白板模式（隱藏文字）"
+            className={cn(boardMode === "whiteboard" && "bg-sky-500/20 text-sky-700 hover:bg-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300")}
+          >
+            <Brush className="h-4 w-4" /> 白板
+          </Button>
+          <Button
+            size="sm"
+            variant={boardMode === "blackboard" ? "default" : "ghost"}
+            onClick={() => (boardMode === "blackboard" ? exitBoardMode() : enterBoardMode("blackboard"))}
+            title="純黑板模式（隱藏文字）"
+            className={cn(
+              boardMode === "blackboard"
+                ? "bg-slate-900 text-white hover:bg-slate-800"
+                : "text-slate-700 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-700"
+            )}
+          >
+            <Square className="h-4 w-4" /> 黑板
+          </Button>
+
+          <Button
+            size="icon"
+            variant={isFullscreen ? "default" : "ghost"}
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "退出全螢幕" : "進入全螢幕"}
+          >
+            {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+          </Button>
+
+          <Button
+            size="sm"
             variant={canvasFollowsText ? "default" : "ghost"}
             onClick={() => setCanvasFollowsText((v) => !v)}
             title={canvasFollowsText ? "畫板跟隨文字 — 點擊切換為固定" : "畫板固定在畫面 — 點擊切換為跟隨文字"}
@@ -491,7 +554,15 @@ export default function WhiteboardShell() {
         )}
 
         {mode === "read" && article && (
-          <div className="relative h-full">
+          <div
+            ref={shellRef}
+            className={cn(
+              "relative h-full",
+              boardMode === "blackboard" && "rounded-3xl bg-slate-900 ring-1 ring-slate-700",
+              boardMode === "whiteboard" && "rounded-3xl bg-white ring-1 ring-slate-200"
+            )}
+          >
+            {boardMode === "normal" && (
             <div
               ref={readingRef}
               className={cn(
@@ -537,12 +608,19 @@ export default function WhiteboardShell() {
                 showExplanation={showExplanation}
               />
             </div>
+            )}
+            {boardMode !== "normal" && (
+              <div className="pointer-events-none absolute right-6 top-6 rounded-full bg-slate-900/10 px-3 py-1 text-[10px] text-slate-500 dark:bg-white/10 dark:text-slate-300">
+                {boardMode === "blackboard" ? "🖤 黑板模式 — 全部繪製" : "🤍 白板模式 — 全部繪製"}
+              </div>
+            )}
             <CanvasStage
               ref={canvasApiRef}
               articleId={article.id}
-              dark={dark}
-              followsText={canvasFollowsText}
-              scrollContainerRef={canvasFollowsText ? readingRef : null}
+              dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
+              followsText={canvasFollowsText && boardMode === "normal"}
+              scrollContainerRef={canvasFollowsText && boardMode === "normal" ? readingRef : null}
+              forceActive={boardMode !== "normal"}
             />
           </div>
         )}

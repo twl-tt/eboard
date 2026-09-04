@@ -18,6 +18,7 @@ export async function GET() {
         id: s.id,
         name: s.name,
         seatNo: s.seatNo,
+        className: s.className,
         points: s.points,
         recentLogs: s.scoreLogs
       }))
@@ -29,13 +30,14 @@ export async function GET() {
 
 const createSchema = z.object({
   name: z.string().min(1).max(30),
-  seatNo: z.number().int().min(1).max(99).nullable().optional()
+  seatNo: z.number().int().min(1).max(99).nullable().optional(),
+  className: z.string().min(1).max(40).nullable().optional()
 })
 
 export async function POST(req: Request) {
   try {
     const body = await parseBody(req, createSchema)
-    const student = await db.student.create({ data: { name: body.name, seatNo: body.seatNo ?? null } })
+    const student = await db.student.create({ data: { name: body.name, seatNo: body.seatNo ?? null, className: body.className ?? null } })
     return NextResponse.json(student, { status: 201 })
   } catch (e) {
     return jsonError(e)

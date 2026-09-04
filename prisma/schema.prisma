@@ -50,9 +50,12 @@ model Student {
   id        String     @id @default(uuid())
   name      String
   seatNo    Int?
+  className String?    @map("class")
   points    Int        @default(0)
   scoreLogs ScoreLog[]
   createdAt DateTime   @default(now())
+
+  @@index([className])
 }
 
 model ScoreLog {

@@ -39,6 +39,7 @@ export interface StudentDTO {
   id: string
   name: string
   seatNo: number | null
+  className: string | null
   points: number
   recentLogs?: { id: string; delta: number; reason: string; createdAt: string }[]
 }
