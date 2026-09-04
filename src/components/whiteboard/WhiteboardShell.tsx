@@ -252,9 +252,9 @@ export default function WhiteboardShell() {
             </span>
             <div className="leading-tight">
               <h1 className="bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 bg-clip-text text-lg font-black tracking-tight text-transparent dark:from-sky-400 dark:via-indigo-400 dark:to-violet-400">
-                Whiteboard Reader Pro
+                eBoard
               </h1>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">校本智慧電子白板教學平台</p>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">eBoard</p>
             </div>
           </div>
           <ArticlePicker
@@ -424,7 +424,7 @@ export default function WhiteboardShell() {
                 <div className="absolute -left-20 -bottom-20 h-56 w-56 rounded-full bg-violet-300/40 blur-3xl dark:bg-violet-500/15" />
               </div>
               <div className="relative">
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-600 dark:text-sky-300">Whiteboard Reader Pro</p>
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-600 dark:text-sky-300">eBoard</p>
                 <h2 className="mt-2 text-2xl font-black leading-tight">
                   請選擇一篇課文開始
                 </h2>

@@ -63,7 +63,7 @@ export default function AdminShell() {
           <h1 className="bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 bg-clip-text text-xl font-black tracking-tight text-transparent dark:from-violet-400 dark:via-fuchsia-400 dark:to-pink-400">
             管理後台
           </h1>
-          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Whiteboard Reader Pro CMS</p>
+          <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">eBoard CMS</p>
         </div>
         <nav className="flex gap-1 rounded-2xl border border-white/50 bg-white/70 p-1 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/60">
           {TABS.map((t) => (

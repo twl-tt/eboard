@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Whiteboard Reader Pro — 校本智慧電子白板教學平台",
+  title: "eBoard — 電子白板",
   description: "電子白板中文教學平台：雙語拼音、粵拼、螢光筆批註、白板繪圖、課室互動"
 }
 
