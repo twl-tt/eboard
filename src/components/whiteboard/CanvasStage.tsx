@@ -30,9 +30,9 @@ interface Props {
 }
 
 const HL_COLORS = [
-  { key: "purple", rgba: "rgba(168,85,247,0.35)" },
-  { key: "red", rgba: "rgba(239,68,68,0.35)" },
-  { key: "blue", rgba: "rgba(59,130,246,0.35)" }
+  { key: "purple", rgba: "rgba(168,85,247,0.6)" },
+  { key: "red", rgba: "rgba(239,68,68,0.6)" },
+  { key: "blue", rgba: "rgba(59,130,246,0.6)" }
 ]
 
 const PEN_COLORS = [
@@ -126,11 +126,27 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       obj.evented = tool === "select" || tool === "pan" || tool === "eraser"
     })
 
-    if (tool === "pen" || tool === "hl") {
+    if (tool === "pen") {
       canvas.isDrawingMode = true
+      canvas.selection = false
       const brush = new fabricLibRef.current.PencilBrush(canvas)
-      brush.color = tool === "pen" ? penColor : hlColor
-      brush.width = tool === "pen" ? 3 : 24
+      brush.color = penColor
+      brush.width = 4
+      canvas.freeDrawingBrush = brush
+    }
+
+    if (tool === "hl") {
+      canvas.isDrawingMode = true
+      canvas.selection = false
+      const brush = new fabricLibRef.current.PencilBrush(canvas)
+      brush.color = hlColor
+      brush.width = 28
+      brush.shadow = new fabricLibRef.current.Shadow({
+        color: hlColor,
+        blur: 15,
+        offsetX: 0,
+        offsetY: 0
+      })
       canvas.freeDrawingBrush = brush
     }
 
