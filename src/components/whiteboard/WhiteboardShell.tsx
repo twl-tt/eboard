@@ -27,7 +27,7 @@ export default function WhiteboardShell() {
   const [articleId, setArticleId] = useState<string | null>(null)
   const [article, setArticle] = useState<ArticleFull | null>(null)
   const [loadingArticle, setLoadingArticle] = useState(false)
-  const [phonetic, setPhonetic] = useState<PhoneticMode>("pinyin")
+  const [phonetic, setPhonetic] = useState<PhoneticMode>("off")
   const [voiceLang, setVoiceLang] = useState<"zh-HK" | "zh-TW">("zh-HK")
   const [fontSizeRem, setFontSizeRem] = useState(2.2)
   const [dark, setDark] = useState(true)
