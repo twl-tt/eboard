@@ -417,60 +417,17 @@ export default function WhiteboardShell() {
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-8 text-center shadow-2xl shadow-sky-200/50 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl dark:shadow-slate-900/40"
+              className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-8 text-center shadow-2xl shadow-sky-200/50 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl dark:shadow-slate-900/40"
             >
               <div aria-hidden className="pointer-events-none absolute inset-0">
                 <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-sky-300/40 blur-3xl dark:bg-sky-500/15" />
                 <div className="absolute -left-20 -bottom-20 h-56 w-56 rounded-full bg-violet-300/40 blur-3xl dark:bg-violet-500/15" />
               </div>
               <div className="relative">
-                <div className="relative mb-5 flex justify-center">
-                  <span className="absolute -left-12 -top-2 text-3xl animate-bounce [animation-delay:-0.5s]">✏️</span>
-                  <span className="text-6xl">📖</span>
-                  <span className="absolute -right-12 bottom-0 text-3xl animate-bounce [animation-delay:-1.2s]">🎨</span>
-                </div>
                 <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-600 dark:text-sky-300">Whiteboard Reader Pro</p>
-                <h2 className="mt-2 text-3xl font-black leading-tight sm:text-4xl">
-                  讓每一篇課文，<br />
-                  <span className="bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500 bg-clip-text text-transparent">
-                    在電子白板上活起來
-                  </span>
+                <h2 className="mt-2 text-2xl font-black leading-tight">
+                  請選擇一篇課文開始
                 </h2>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  自動生成普通話拼音與廣東話粵拼、文字直接上螢光筆、加上畫筆與課室互動工具 — 專為大螢幕教學而設計。
-                </p>
-              </div>
-              <div className="relative mt-7 grid grid-cols-2 gap-3 text-left sm:grid-cols-3">
-                {[
-                  { icon: "🖍", t: "文字螢光筆", d: "拖選直接反白", g: "from-fuchsia-500 to-pink-500" },
-                  { icon: "🔊", t: "雙語朗讀", d: "粵/國逐句跟讀", g: "from-indigo-500 to-blue-600" },
-                  { icon: "🎨", t: "自由白板", d: "畫筆+圖片+文字", g: "from-violet-500 to-fuchsia-500" },
-                  { icon: "🧩", t: "卡片重組", d: "句序拖放", g: "from-amber-400 to-orange-500" },
-                  { icon: "🎲", t: "隨機抽籤", d: "轉盤+快速加分", g: "from-emerald-400 to-teal-600" },
-                  { icon: "📊", t: "即時投票", d: "QR 掃碼・柱狀圖", g: "from-rose-400 to-pink-600" }
-                ].map((f) => (
-                  <div
-                    key={f.t}
-                    className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/70 p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700/60 dark:bg-slate-800/60"
-                  >
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-base text-white shadow-md ${f.g}`}>
-                      {f.icon}
-                    </span>
-                    <div className="leading-tight">
-                      <p className="text-sm font-bold">{f.t}</p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{f.d}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="relative mt-7 flex flex-wrap items-center justify-center gap-3">
-                <a
-                  href="/admin"
-                  className="rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-500/30 transition-transform hover:scale-105"
-                >
-                  ＋ 前往管理後台匯入課文
-                </a>
-                <span className="text-xs text-slate-500 dark:text-slate-400">或在上方選單直接選擇課文</span>
               </div>
             </motion.div>
           </div>
