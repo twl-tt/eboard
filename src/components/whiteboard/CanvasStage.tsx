@@ -320,17 +320,17 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   return (
     <div
-      className={cn("z-20", forceActive ? "fixed inset-x-3" : "absolute inset-0")}
-      style={forceActive ? { top: canvasTopOffset, bottom: 12, isolation: "isolate" } : undefined}
+      className="fixed inset-x-3"
+      style={{ top: canvasTopOffset, bottom: 12, pointerEvents: "none" }}
       data-article={articleId}
     >
       <div
         ref={wrapRef}
         className={cn(
           "absolute inset-0 overflow-hidden rounded-3xl",
-          active ? "pointer-events-auto z-10" : "pointer-events-none opacity-0 z-0",
-          active && "inset-ring-2 inset-ring-indigo-500/50"
+          active ? "pointer-events-auto" : "opacity-0"
         )}
+        style={{ zIndex: active ? 30 : 0 }}
         aria-hidden={!active}
       >
         <canvas ref={canvasElRef} />

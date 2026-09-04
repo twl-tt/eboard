@@ -353,7 +353,7 @@ export default function WhiteboardShell() {
   return (
     <div
       className={cn(
-        "relative flex h-screen flex-col overflow-hidden text-slate-900 transition-colors",
+        "relative flex min-h-screen flex-col text-slate-900 transition-colors",
         "bg-gradient-to-br from-sky-50 via-white to-violet-50",
         "dark:bg-gradient-to-br dark:from-[#0a0f1e] dark:via-slate-950 dark:to-indigo-950 dark:text-slate-100"
       )}
@@ -589,7 +589,7 @@ export default function WhiteboardShell() {
         </div>
       </header>
 
-      <main className="relative z-10 min-h-0 flex-1 overflow-hidden px-3 pb-16 pt-3">
+      <main className="relative z-10 flex-1 px-3 pb-32 pt-3">
         {!article && mode === "read" && (
           <div className="flex h-full items-center justify-center">
             <motion.div
