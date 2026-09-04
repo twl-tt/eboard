@@ -144,6 +144,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }
 
   useEffect(() => {
+    if (tool === "none") return
     let disposed = false
     ;(async () => {
       const mod = await import("fabric")
@@ -152,7 +153,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       ;(window as any).fabric = fabric
       const c = new fabric.Canvas(canvasElRef.current, {
         isDrawingMode: false,
-        selection: false,
+        selection: true,
         preserveObjectStacking: true
       })
       fabricRef.current = c
@@ -245,8 +246,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       disposed = true
       fabricRef.current?.dispose()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [tool])
 
   useEffect(() => {
     if (fabricRef.current && ready) applyTool(fabricRef.current, tool, hlColor, dark)
