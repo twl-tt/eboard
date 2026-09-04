@@ -612,41 +612,32 @@ export default function WhiteboardShell() {
         )}
 
         {mode === "read" && article && (
-          <div
-            ref={shellRef}
-            className={cn(
-              "relative h-full overflow-hidden",
-              boardMode === "blackboard" && "rounded-3xl bg-slate-900 ring-1 ring-slate-700",
-              boardMode === "whiteboard" && "rounded-3xl bg-white ring-1 ring-slate-200"
-            )}
-            onDragOver={(e) => {
-              if (e.dataTransfer.types.includes("application/x-sticker")) {
-                e.preventDefault()
-                e.dataTransfer.dropEffect = "copy"
-              }
-            }}
-            onDrop={(e) => {
-              const tagId = e.dataTransfer.getData("application/x-sticker")
-              if (!tagId || !canvasApiRef.current) return
-              e.preventDefault()
-              const tag = tags.find((t) => t.id === tagId)
-              if (!tag) return
-              const COLORS: Record<string, string> = {
-                violet: "#a78bfa", rose: "#fb7185", amber: "#fbbf24",
-                emerald: "#34d399", sky: "#38bdf8", fuchsia: "#e879f9"
-              }
-              canvasApiRef.current.addSticker(tag.name, COLORS[tag.color] ?? "#a78bfa")
-              setStickerBarOpen(false)
-            }}
-          >
-            {boardMode === "normal" && (
+          <div className="grid h-[calc(100vh-180px)] grid-cols-1 gap-3 lg:grid-cols-[1fr_460px]">
             <div
               ref={readingRef}
               className={cn(
-                "absolute inset-0 overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
+                "relative overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
                 "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80",
-                "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10"
+                "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10",
+                boardMode === "blackboard" && "bg-slate-900 ring-slate-700",
+                boardMode === "whiteboard" && "bg-white ring-slate-200"
               )}
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes("application/x-sticker")) {
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = "copy"
+                }
+              }}
+              onDrop={(e) => {
+                const tagId = e.dataTransfer.getData("application/x-sticker")
+                if (!tagId || !canvasApiRef.current) return
+                e.preventDefault()
+                const tag = tags.find((t) => t.id === tagId)
+                if (!tag) return
+                const COLORS: Record<string, string> = { violet: "#a78bfa", rose: "#fb7185", amber: "#fbbf24", emerald: "#34d399", sky: "#38bdf8", fuchsia: "#e879f9" }
+                canvasApiRef.current.addSticker(tag.name, COLORS[tag.color] ?? "#a78bfa")
+                setStickerBarOpen(false)
+              }}
             >
               <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
               <div className="mb-6 flex flex-wrap items-end justify-between gap-2 border-b border-dashed border-slate-300 pb-4 dark:border-slate-700">
@@ -662,7 +653,7 @@ export default function WhiteboardShell() {
                   )}
                 </div>
               </div>
-              <div className="absolute right-6 top-6 rounded-full bg-slate-900/5 px-3 py-1 text-[10px] text-slate-500 dark:bg-white/5 dark:text-slate-400">
+              <div className="mb-4 inline-block rounded-full bg-slate-900/5 px-3 py-1 text-[10px] text-slate-500 dark:bg-white/5 dark:text-slate-400">
                 拖選文字上螢光筆 / 點擊反白可刪除
               </div>
               <ReadingPane
@@ -685,21 +676,35 @@ export default function WhiteboardShell() {
                 showExplanation={showExplanation}
               />
             </div>
-            )}
-            {boardMode !== "normal" && (
-              <div className="pointer-events-none absolute right-6 top-6 rounded-full bg-slate-900/10 px-3 py-1 text-[10px] text-slate-500 dark:bg-white/10 dark:text-slate-300">
-                {boardMode === "blackboard" ? "🖤 黑板模式 — 全部繪製" : "🤍 白板模式 — 全部繪製"}
-              </div>
-            )}
-            <CanvasStage
-              ref={canvasApiRef}
-              articleId={article.id}
-              dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
-              followsText={canvasFollowsText}
-              scrollContainerRef={null}
-              forceActive={boardMode !== "normal"}
-              canvasTopOffset={180}
-            />
+            <div
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes("application/x-sticker")) {
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = "copy"
+                }
+              }}
+              onDrop={(e) => {
+                const tagId = e.dataTransfer.getData("application/x-sticker")
+                if (!tagId || !canvasApiRef.current) return
+                e.preventDefault()
+                const tag = tags.find((t) => t.id === tagId)
+                if (!tag) return
+                const COLORS: Record<string, string> = { violet: "#a78bfa", rose: "#fb7185", amber: "#fbbf24", emerald: "#34d399", sky: "#38bdf8", fuchsia: "#e879f9" }
+                canvasApiRef.current.addSticker(tag.name, COLORS[tag.color] ?? "#a78bfa")
+                setStickerBarOpen(false)
+              }}
+              className="relative overflow-hidden rounded-3xl bg-slate-50 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-700/60"
+            >
+              <CanvasStage
+                ref={canvasApiRef}
+                articleId={article.id}
+                dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
+                followsText={false}
+                scrollContainerRef={null}
+                forceActive={boardMode !== "normal"}
+                canvasTopOffset={0}
+              />
+            </div>
           </div>
         )}
 

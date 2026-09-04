@@ -320,8 +320,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   return (
     <div
-      className="fixed inset-x-3"
-      style={{ top: canvasTopOffset, bottom: 12, pointerEvents: "none" }}
+      className="absolute inset-0"
+      style={{ pointerEvents: "none" }}
       data-article={articleId}
     >
       <div
