@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
-  BookOpen, Puzzle, Loader2, Highlighter, X, Languages
+  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -41,6 +41,7 @@ export default function WhiteboardShell() {
   const [highlights, setHighlights] = useState<Highlight[]>([])
   const [highlightColor, setHighlightColor] = useState<HighlightColor>("purple")
   const [showExplanation, setShowExplanation] = useState(false)
+  const [canvasFollowsText, setCanvasFollowsText] = useState(false)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -60,6 +61,52 @@ export default function WhiteboardShell() {
   }, [])
 
   useEffect(() => () => stopSpeak(), [])
+
+  useEffect(() => {
+    const el = readingRef.current
+    if (!el) return
+    let isDown = false
+    let startX = 0
+    let startY = 0
+    let startScroll = 0
+    let moved = false
+    const EDGE = 6
+    function onDown(e: PointerEvent) {
+      if (e.button !== 0 && e.pointerType === "mouse") return
+      const target = e.target as HTMLElement
+      if (target.closest("[data-tk]") || target.closest("button") || target.closest("a") || target.closest("input") || target.closest("textarea")) return
+      isDown = true
+      moved = false
+      startX = e.clientX
+      startY = e.clientY
+      if (el) startScroll = el.scrollTop
+      el?.setPointerCapture(e.pointerId)
+    }
+    function onMove(e: PointerEvent) {
+      if (!isDown) return
+      const dx = e.clientX - startX
+      const dy = e.clientY - startY
+      if (!moved && Math.abs(dx) < EDGE && Math.abs(dy) < EDGE) return
+      moved = true
+      if (el) el.scrollTop = startScroll - dy
+      e.preventDefault()
+    }
+    function onUp(e: PointerEvent) {
+      if (!isDown) return
+      isDown = false
+      try { el?.releasePointerCapture(e.pointerId) } catch {}
+    }
+    el.addEventListener("pointerdown", onDown)
+    el.addEventListener("pointermove", onMove)
+    el.addEventListener("pointerup", onUp)
+    el.addEventListener("pointercancel", onUp)
+    return () => {
+      el.removeEventListener("pointerdown", onDown)
+      el.removeEventListener("pointermove", onMove)
+      el.removeEventListener("pointerup", onUp)
+      el.removeEventListener("pointercancel", onUp)
+    }
+  }, [articleId])
 
   useEffect(() => {
     if (!articleId) {
@@ -394,6 +441,16 @@ export default function WhiteboardShell() {
 
           <DictLookup />
 
+          <Button
+            size="sm"
+            variant={canvasFollowsText ? "default" : "ghost"}
+            onClick={() => setCanvasFollowsText((v) => !v)}
+            title={canvasFollowsText ? "畫板跟隨文字 — 點擊切換為固定" : "畫板固定在畫面 — 點擊切換為跟隨文字"}
+            className={cn(canvasFollowsText && "bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300")}
+          >
+            {canvasFollowsText ? <><Lock className="h-4 w-4" /> 跟隨</> : <><Unlock className="h-4 w-4" /> 固定</>}
+          </Button>
+
           <span className="mx-1 hidden h-6 w-px bg-slate-300/70 sm:block dark:bg-slate-700/70" />
 
           <Button size="sm" variant="secondary" onClick={saveCanvas} disabled={!article || savingCanvas} title="儲存白板圖層">
@@ -480,7 +537,13 @@ export default function WhiteboardShell() {
                 showExplanation={showExplanation}
               />
             </div>
-            <CanvasStage ref={canvasApiRef} articleId={article.id} dark={dark} />
+            <CanvasStage
+              ref={canvasApiRef}
+              articleId={article.id}
+              dark={dark}
+              followsText={canvasFollowsText}
+              scrollContainerRef={canvasFollowsText ? readingRef : null}
+            />
           </div>
         )}
 

@@ -19,6 +19,8 @@ interface Props {
   articleId: string
   dark: boolean
   onDirty?: () => void
+  followsText?: boolean
+  scrollContainerRef?: React.RefObject<HTMLDivElement> | null
 }
 
 const HL_COLORS = [
@@ -38,7 +40,7 @@ const TOOLS: { tool: CanvasTool; icon: React.ReactNode; label: string }[] = [
   { tool: "text", icon: <Type className="h-5 w-5" />, label: "文字（雙擊畫布）" }
 ]
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null }, ref) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
@@ -212,6 +214,23 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   useEffect(() => {
     if (fabricRef.current && ready) applyTool(fabricRef.current, tool, hlColor, dark)
   }, [tool, hlColor, dark, ready])
+
+  useEffect(() => {
+    if (!followsText || !scrollContainerRef?.current || !wrapRef.current) return
+    const scroller = scrollContainerRef.current
+    const wrap = wrapRef.current
+    function update() {
+      wrap.style.transform = `translateY(${scroller.scrollTop}px)`
+    }
+    update()
+    scroller.addEventListener("scroll", update, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(scroller)
+    return () => {
+      scroller.removeEventListener("scroll", update)
+      ro.disconnect()
+    }
+  }, [followsText, scrollContainerRef, articleId])
 
   async function uploadImage(file: File) {
     const fd = new FormData()
