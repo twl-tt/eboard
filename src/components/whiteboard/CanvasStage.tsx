@@ -13,6 +13,7 @@ export interface CanvasApi {
   load: (json: unknown) => void
   toDataURL: () => string | null
   isEmpty: () => boolean
+  addSticker: (text: string, color?: string) => void
 }
 
 interface Props {
@@ -87,7 +88,36 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         return null
       }
     },
-    isEmpty: () => (fabricRef.current?.getObjects().length ?? 0) === 0
+    isEmpty: () => (fabricRef.current?.getObjects().length ?? 0) === 0,
+    addSticker: (text: string, color = "#a78bfa") => {
+      if (!fabricRef.current) return
+      const c = fabricRef.current
+      const f = (window as any).fabric
+      if (!f) return
+      const padding = 10
+      const fontSize = 20
+      const temp = c.getObjects().length
+      const x = 80 + (temp % 6) * 30
+      const y = 80 + (temp % 6) * 30
+      const grp = new f.Group(
+        [
+          new f.Rect({
+            left: 0, top: 0, width: 100, height: 40, rx: 12, ry: 12,
+            fill: color, stroke: "rgba(255,255,255,0.5)", strokeWidth: 1.5, originX: "left", originY: "top"
+          }),
+          new f.IText(text, {
+            left: 50, top: 20, originX: "center", originY: "center",
+            fontSize, fontFamily: "ui-sans-serif, system-ui, sans-serif",
+            fontWeight: 700, fill: "#ffffff", editable: true
+          })
+        ],
+        { left: x, top: y, originX: "left", originY: "top" }
+      )
+      ;(grp as any).__sticker = true
+      c.add(grp)
+      c.setActiveObject(grp)
+      c.requestRenderAll()
+    }
   }))
 
   const toolRef = useRef(tool)
@@ -290,15 +320,16 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   return (
     <div
-      className={cn("z-30", "fixed inset-x-3")}
-      style={{ top: canvasTopOffset, bottom: 12, isolation: "isolate" }}
+      className={cn("z-20", forceActive ? "fixed inset-x-3" : "absolute inset-0")}
+      style={forceActive ? { top: canvasTopOffset, bottom: 12, isolation: "isolate" } : undefined}
       data-article={articleId}
     >
       <div
         ref={wrapRef}
         className={cn(
           "absolute inset-0 overflow-hidden rounded-3xl",
-          active ? "pointer-events-auto z-10" : "pointer-events-none opacity-0 z-0"
+          active ? "pointer-events-auto z-10" : "pointer-events-none opacity-0 z-0",
+          active && "inset-ring-2 inset-ring-indigo-500/50"
         )}
         aria-hidden={!active}
       >

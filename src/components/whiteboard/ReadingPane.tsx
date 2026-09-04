@@ -1,20 +1,10 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import type { ArticleFull, PhoneticMode, Sentence, TagDTO } from "@/lib/types"
+import type { ArticleFull, PhoneticMode, Sentence } from "@/lib/types"
 import { cn, isHanzi } from "@/lib/utils"
 import { speakSeq } from "@/lib/tts"
 import { HIGHLIGHT_BG, type Highlight, type HighlightColor } from "@/lib/highlight"
-import { Tag, X } from "lucide-react"
-
-const TAG_COLOR: Record<string, string> = {
-  violet: "bg-violet-500/20 border-violet-500/50 text-violet-700 dark:text-violet-200",
-  rose: "bg-rose-500/20 border-rose-500/50 text-rose-700 dark:text-rose-200",
-  amber: "bg-amber-500/20 border-amber-500/50 text-amber-700 dark:text-amber-200",
-  emerald: "bg-emerald-500/20 border-emerald-500/50 text-emerald-700 dark:text-emerald-200",
-  sky: "bg-sky-500/20 border-sky-500/50 text-sky-700 dark:text-sky-200",
-  fuchsia: "bg-fuchsia-500/20 border-fuchsia-500/50 text-fuchsia-700 dark:text-fuchsia-200"
-}
 
 interface Props {
   sentences: Sentence[]
@@ -29,75 +19,6 @@ interface Props {
   onAddHighlight: (h: { sentenceId: string; tokenStart: number; tokenEnd: number }) => void
   onRemoveHighlight: (id: string) => void
   showExplanation?: boolean
-  tags?: TagDTO[]
-  onAddTag?: (sentenceIndex: number, tagName: string) => void
-  onRemoveTag?: (sentenceIndex: number, tagName: string) => void
-}
-
-function TagPopover({
-  sentenceIndex,
-  currentTags,
-  availableTags,
-  onAdd,
-  onRemove,
-  onClose
-}: {
-  sentenceIndex: number
-  currentTags: string[]
-  availableTags: TagDTO[]
-  onAdd: (i: number, name: string) => void
-  onRemove: (i: number, name: string) => void
-  onClose: () => void
-}) {
-  const byCat = useMemo(() => {
-    const map = new Map<string, TagDTO[]>()
-    for (const t of availableTags) {
-      const list = map.get(t.category) ?? []
-      list.push(t)
-      map.set(t.category, list)
-    }
-    return map
-  }, [availableTags])
-  return (
-    <div className="absolute left-0 top-full z-30 mt-2 w-[360px] max-w-[90vw] rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95" onClick={(e) => e.stopPropagation()}>
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-bold text-slate-500">貼上標籤（句子 {sentenceIndex + 1}）</p>
-        <button onClick={onClose} className="rounded p-1 hover:bg-slate-100 dark:hover:bg-slate-800">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      {availableTags.length === 0 ? (
-        <p className="py-3 text-center text-xs text-slate-400">尚未有標籤，請到管理後台新增。</p>
-      ) : (
-        <div className="max-h-[60vh] space-y-2 overflow-y-auto">
-          {Array.from(byCat.entries()).map(([cat, list]) => (
-            <div key={cat}>
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{cat}</p>
-              <div className="flex flex-wrap gap-1">
-                {list.map((t) => {
-                  const on = currentTags.includes(t.name)
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => (on ? onRemove(sentenceIndex, t.name) : onAdd(sentenceIndex, t.name))}
-                      className={cn(
-                        "rounded-full border px-2.5 py-1 text-xs font-semibold transition-all",
-                        on
-                          ? cn(TAG_COLOR[t.color] ?? TAG_COLOR.violet, "ring-2 ring-offset-1 ring-slate-400 dark:ring-offset-slate-900")
-                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                      )}
-                    >
-                      {on ? "✓ " : ""}{t.name}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
 }
 
 export function ReadingPane({
@@ -112,18 +33,9 @@ export function ReadingPane({
   highlights,
   onAddHighlight,
   onRemoveHighlight,
-  showExplanation = false,
-  tags = [],
-  onAddTag,
-  onRemoveTag
+  showExplanation = false
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [openTagFor, setOpenTagFor] = useState<number | null>(null)
-  const tagColorByName = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const t of tags) map.set(t.name, t.color)
-    return map
-  }, [tags])
   const hlBySentence = useMemo(() => {
     const map = new Map<string, Highlight[]>()
     for (const h of highlights) {
@@ -177,14 +89,13 @@ export function ReadingPane({
       className="font-han select-text"
       style={{ fontSize: `${fontSizeRem}rem`, lineHeight: 1.9 }}
     >
-      {sentences.map((s, si) => {
-        const sentTags = s.tags ?? []
-        return s.text.trim() === "" ? (
+      {sentences.map((s) =>
+        s.text.trim() === "" ? (
           <div key={s.id} className="h-6" />
         ) : (
           <span
             key={s.id}
-            className="relative inline-block rounded-xl border-2 border-transparent transition-all"
+            className="inline-block rounded-xl border-2 border-transparent transition-all"
           >
             <span
               onClick={() => onSentenceClick(s)}
@@ -248,47 +159,6 @@ export function ReadingPane({
                 🔊
               </button>
             </span>
-            {(sentTags.length > 0 || onAddTag) && (
-              <span className="ml-1 inline-flex flex-wrap items-center gap-1 align-middle">
-                {sentTags.map((t) => {
-                  const c = tagColorByName.get(t) ?? "violet"
-                  return (
-                    <button
-                      key={t}
-                      onClick={(e) => { e.stopPropagation(); onRemoveTag?.(si, t) }}
-                      title="點擊移除標籤"
-                      className={cn(
-                        "inline-flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-[11px] font-bold shadow-sm transition-all hover:scale-105",
-                        TAG_COLOR[c] ?? TAG_COLOR.violet
-                      )}
-                    >
-                      {t} <X className="h-2.5 w-2.5 opacity-60" />
-                    </button>
-                  )
-                })}
-                {onAddTag && (
-                  <span className="relative inline-block">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setOpenTagFor(openTagFor === si ? null : si) }}
-                      title="貼上標籤"
-                      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-dashed border-slate-300 bg-white/70 text-slate-500 transition-all hover:scale-110 hover:border-sky-400 hover:bg-sky-50 hover:text-sky-600 dark:border-slate-600 dark:bg-slate-800/70 dark:text-slate-400"
-                    >
-                      <Tag className="h-3 w-3" />
-                    </button>
-                    {openTagFor === si && onAddTag && onRemoveTag && (
-                      <TagPopover
-                        sentenceIndex={si}
-                        currentTags={sentTags}
-                        availableTags={tags}
-                        onAdd={onAddTag}
-                        onRemove={onRemoveTag}
-                        onClose={() => setOpenTagFor(null)}
-                      />
-                    )}
-                  </span>
-                )}
-              </span>
-            )}
             {showExplanation && s.explanation && (
               <span className="ml-2 mr-2 inline-block translate-y-[-0.35em] rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1 align-middle text-xs text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-900/30 dark:text-emerald-300">
                 語譯：{s.explanation}
@@ -296,7 +166,7 @@ export function ReadingPane({
             )}
           </span>
         )
-      })}
+      )}
     </div>
   )
 }

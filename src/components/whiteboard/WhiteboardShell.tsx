@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
-  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock, Maximize2, Minimize2, Brush
+  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock, Maximize2, Minimize2, Brush, Sticker
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -18,6 +18,7 @@ import { CanvasStage, type CanvasApi } from "./CanvasStage"
 import { ClassroomSuite } from "./ClassroomSuite"
 import { ReorderMode } from "./ReorderMode"
 import { DictLookup } from "./DictLookup"
+import { StickerBar } from "./StickerBar"
 
 type Mode = "read" | "reorder"
 
@@ -45,6 +46,7 @@ export default function WhiteboardShell() {
   const [boardMode, setBoardMode] = useState<"normal" | "whiteboard" | "blackboard">("normal")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
+  const [stickerBarOpen, setStickerBarOpen] = useState(false)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -351,7 +353,7 @@ export default function WhiteboardShell() {
   return (
     <div
       className={cn(
-        "relative flex min-h-screen flex-col text-slate-900 transition-colors",
+        "relative flex h-screen flex-col overflow-hidden text-slate-900 transition-colors",
         "bg-gradient-to-br from-sky-50 via-white to-violet-50",
         "dark:bg-gradient-to-br dark:from-[#0a0f1e] dark:via-slate-950 dark:to-indigo-950 dark:text-slate-100"
       )}
@@ -520,6 +522,15 @@ export default function WhiteboardShell() {
           <DictLookup />
 
           <Button
+            size="icon"
+            variant={stickerBarOpen ? "default" : "ghost"}
+            onClick={() => setStickerBarOpen((v) => !v)}
+            title="貼紙標籤（拖到白板任意位置）"
+          >
+            <Sticker className="h-5 w-5" />
+          </Button>
+
+          <Button
             size="sm"
             variant={boardMode === "whiteboard" ? "default" : "ghost"}
             onClick={() => (boardMode === "whiteboard" ? exitBoardMode() : enterBoardMode("whiteboard"))}
@@ -578,7 +589,7 @@ export default function WhiteboardShell() {
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 px-3 pb-32 pt-3">
+      <main className="relative z-10 min-h-0 flex-1 overflow-hidden px-3 pb-16 pt-3">
         {!article && mode === "read" && (
           <div className="flex h-full items-center justify-center">
             <motion.div
@@ -604,16 +615,35 @@ export default function WhiteboardShell() {
           <div
             ref={shellRef}
             className={cn(
-              "relative min-h-[calc(100vh-200px)]",
-              boardMode === "blackboard" && "rounded-3xl bg-slate-900 p-6 ring-1 ring-slate-700 min-h-[calc(100vh-200px)]",
-              boardMode === "whiteboard" && "rounded-3xl bg-white p-6 ring-1 ring-slate-200 min-h-[calc(100vh-200px)]"
+              "relative h-full overflow-hidden",
+              boardMode === "blackboard" && "rounded-3xl bg-slate-900 ring-1 ring-slate-700",
+              boardMode === "whiteboard" && "rounded-3xl bg-white ring-1 ring-slate-200"
             )}
+            onDragOver={(e) => {
+              if (e.dataTransfer.types.includes("application/x-sticker")) {
+                e.preventDefault()
+                e.dataTransfer.dropEffect = "copy"
+              }
+            }}
+            onDrop={(e) => {
+              const tagId = e.dataTransfer.getData("application/x-sticker")
+              if (!tagId || !canvasApiRef.current) return
+              e.preventDefault()
+              const tag = tags.find((t) => t.id === tagId)
+              if (!tag) return
+              const COLORS: Record<string, string> = {
+                violet: "#a78bfa", rose: "#fb7185", amber: "#fbbf24",
+                emerald: "#34d399", sky: "#38bdf8", fuchsia: "#e879f9"
+              }
+              canvasApiRef.current.addSticker(tag.name, COLORS[tag.color] ?? "#a78bfa")
+              setStickerBarOpen(false)
+            }}
           >
             {boardMode === "normal" && (
             <div
               ref={readingRef}
               className={cn(
-                "rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
+                "absolute inset-0 overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
                 "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80",
                 "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10"
               )}
@@ -646,9 +676,6 @@ export default function WhiteboardShell() {
                 highlights={highlights}
                 onAddHighlight={addHighlight}
                 onRemoveHighlight={removeHighlight}
-                tags={tags}
-                onAddTag={addTagToSentence}
-                onRemoveTag={removeTagFromSentence}
                 onSentenceClick={(s) => {
                   if (focusMode) {
                     setFocusId(s.id === focusId ? null : s.id)
@@ -684,6 +711,7 @@ export default function WhiteboardShell() {
         {mode === "reorder" && !article && (
           <div className="flex h-full items-center justify-center text-lg text-slate-400">請先選擇一篇課文進行卡片重組。</div>
         )}
+        <StickerBar tags={tags} open={stickerBarOpen} onClose={() => setStickerBarOpen(false)} onDragStart={() => {}} onDragEnd={() => {}} />
       </main>
 
       <ClassroomSuite />
