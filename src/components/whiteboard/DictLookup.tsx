@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Search, X, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -15,6 +15,7 @@ export function DictLookup() {
   const [result, setResult] = useState<LookupResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const composingRef = useRef(false)
 
   async function lookup(char: string) {
     if (!char) return
@@ -40,12 +41,20 @@ export function DictLookup() {
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const v = e.target.value
     setQuery(v)
+    if (composingRef.current) return
     if (v.length === 0) {
       setResult(null)
       setError("")
       return
     }
     lookup(v[v.length - 1])
+  }
+
+  function handleCompositionEnd(e: React.CompositionEvent<HTMLInputElement>) {
+    composingRef.current = false
+    const v = (e.target as HTMLInputElement).value
+    setQuery(v)
+    if (v.length > 0) lookup(v[v.length - 1])
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -80,6 +89,8 @@ export function DictLookup() {
                 type="text"
                 value={query}
                 onChange={handleChange}
+                onCompositionStart={() => { composingRef.current = true }}
+                onCompositionEnd={handleCompositionEnd}
                 onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault() }}
                 placeholder="輸入或貼上漢字（取最後一字查詢）"
                 autoFocus
