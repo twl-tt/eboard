@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
-  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock, Maximize2, Minimize2, Brush, Sticker
+  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock, Maximize2, Minimize2, Brush, Sticker, Pencil
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -47,8 +47,10 @@ export default function WhiteboardShell() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
+  const [textCanvasActive, setTextCanvasActive] = useState(false)
 
   const canvasApiRef = useRef<CanvasApi>(null)
+  const textCanvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
   const shellRef = useRef<HTMLDivElement>(null)
 
@@ -532,6 +534,16 @@ export default function WhiteboardShell() {
 
           <Button
             size="sm"
+            variant={textCanvasActive ? "default" : "ghost"}
+            onClick={() => setTextCanvasActive(v => !v)}
+            title={textCanvasActive ? "關閉文字區域畫板" : "在文字上作畫"}
+            className={cn(textCanvasActive && "bg-indigo-500/20 text-indigo-700 hover:bg-indigo-500/30 dark:bg-indigo-500/20 dark:text-indigo-300")}
+          >
+            <Pencil className="h-4 w-4" /> 文字區
+          </Button>
+
+          <Button
+            size="sm"
             variant={boardMode === "whiteboard" ? "default" : "ghost"}
             onClick={() => (boardMode === "whiteboard" ? exitBoardMode() : enterBoardMode("whiteboard"))}
             title="純白板模式（隱藏文字）"
@@ -612,7 +624,18 @@ export default function WhiteboardShell() {
         )}
 
         {mode === "read" && article && (
-          <div className="grid h-[calc(100vh-180px)] grid-cols-1 gap-3 lg:grid-cols-[1fr_460px]">
+          <div className="relative grid h-[calc(100vh-180px)] grid-cols-1 gap-3 lg:grid-cols-[1fr_460px]">
+            {textCanvasActive && (
+              <CanvasStage
+                ref={textCanvasApiRef}
+                articleId={article.id}
+                dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
+                followsText={false}
+                scrollContainerRef={null}
+                forceActive={false}
+                canvasTopOffset={0}
+              />
+            )}
             <div
               ref={readingRef}
               className={cn(
