@@ -22,6 +22,7 @@ interface Props {
   followsText?: boolean
   scrollContainerRef?: React.RefObject<HTMLDivElement> | null
   forceActive?: boolean
+  canvasTopOffset?: number
 }
 
 const HL_COLORS = [
@@ -41,7 +42,7 @@ const TOOLS: { tool: CanvasTool; icon: React.ReactNode; label: string }[] = [
   { tool: "text", icon: <Type className="h-5 w-5" />, label: "文字（雙擊畫布）" }
 ]
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null, forceActive = false }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null, forceActive = false, canvasTopOffset = 0 }, ref) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
@@ -238,6 +239,22 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     }
   }, [followsText, scrollContainerRef, articleId])
 
+  useEffect(() => {
+    if (!followsText || !wrapRef.current) return
+    const wrap = wrapRef.current
+    function update() {
+      const y = window.scrollY
+      wrap.style.transform = `translateY(${y}px)`
+    }
+    update()
+    window.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update)
+    return () => {
+      window.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+    }
+  }, [followsText, articleId])
+
   async function uploadImage(file: File) {
     const fd = new FormData()
     fd.append("file", file)
@@ -272,7 +289,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }
 
   return (
-    <div className={cn("absolute inset-0 z-20", !active && "pointer-events-none")} data-article={articleId}>
+    <div
+      className={cn("z-20", forceActive ? "fixed inset-x-3" : "absolute inset-0")}
+      style={forceActive ? { top: canvasTopOffset, bottom: 12 } : undefined}
+      data-article={articleId}
+    >
       <div
         ref={wrapRef}
         className={cn(

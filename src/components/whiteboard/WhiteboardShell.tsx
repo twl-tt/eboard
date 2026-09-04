@@ -304,7 +304,7 @@ export default function WhiteboardShell() {
   return (
     <div
       className={cn(
-        "relative flex h-screen flex-col overflow-hidden text-slate-900 transition-colors",
+        "relative flex min-h-screen flex-col text-slate-900 transition-colors",
         "bg-gradient-to-br from-sky-50 via-white to-violet-50",
         "dark:bg-gradient-to-br dark:from-[#0a0f1e] dark:via-slate-950 dark:to-indigo-950 dark:text-slate-100"
       )}
@@ -531,7 +531,7 @@ export default function WhiteboardShell() {
         </div>
       </header>
 
-      <main className="relative z-10 min-h-0 flex-1 px-3 pb-16 pt-3">
+      <main className="relative z-10 flex-1 px-3 pb-32 pt-3">
         {!article && mode === "read" && (
           <div className="flex h-full items-center justify-center">
             <motion.div
@@ -557,16 +557,16 @@ export default function WhiteboardShell() {
           <div
             ref={shellRef}
             className={cn(
-              "relative h-full",
-              boardMode === "blackboard" && "rounded-3xl bg-slate-900 ring-1 ring-slate-700",
-              boardMode === "whiteboard" && "rounded-3xl bg-white ring-1 ring-slate-200"
+              "relative min-h-[calc(100vh-200px)]",
+              boardMode === "blackboard" && "rounded-3xl bg-slate-900 p-6 ring-1 ring-slate-700 min-h-[calc(100vh-200px)]",
+              boardMode === "whiteboard" && "rounded-3xl bg-white p-6 ring-1 ring-slate-200 min-h-[calc(100vh-200px)]"
             )}
           >
             {boardMode === "normal" && (
             <div
               ref={readingRef}
               className={cn(
-                "absolute inset-0 overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
+                "rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
                 "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80",
                 "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10"
               )}
@@ -618,9 +618,10 @@ export default function WhiteboardShell() {
               ref={canvasApiRef}
               articleId={article.id}
               dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
-              followsText={canvasFollowsText && boardMode === "normal"}
-              scrollContainerRef={canvasFollowsText && boardMode === "normal" ? readingRef : null}
+              followsText={canvasFollowsText}
+              scrollContainerRef={null}
               forceActive={boardMode !== "normal"}
+              canvasTopOffset={180}
             />
           </div>
         )}
