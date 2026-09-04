@@ -290,8 +290,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   return (
     <div
-      className={cn("z-20", forceActive ? "fixed inset-x-3" : "absolute inset-0")}
-      style={forceActive ? { top: canvasTopOffset, bottom: 12 } : undefined}
+      className={cn("z-20", "fixed inset-x-3")}
+      style={{ top: canvasTopOffset, bottom: 12 }}
       data-article={articleId}
     >
       <div
