@@ -53,6 +53,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const origRef = useRef<{ x: number; y: number } | null>(null)
   const resizeRef = useRef<(() => void) | null>(null)
   const roRef = useRef<ResizeObserver | null>(null)
+  const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [tool, setTool] = useState<CanvasTool>("none")
   const [hlColor, setHlColor] = useState(HL_COLORS[0].rgba)
@@ -174,11 +175,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       fabricRef.current = c
 
       const resize = () => {
-        if (!wrapRef.current || !c) return
-        c.setWidth(wrapRef.current.clientWidth)
-        c.setHeight(wrapRef.current.clientHeight)
-        c.calcOffset()
-        c.renderAll()
+        if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current)
+        resizeTimerRef.current = setTimeout(() => {
+          if (!wrapRef.current || !c || (c as any).disposed) return
+          c.setWidth(wrapRef.current.clientWidth)
+          c.setHeight(wrapRef.current.clientHeight)
+          c.calcOffset()
+          c.renderAll()
+        }, 100)
       }
       resizeRef.current = resize
 
@@ -262,6 +266,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
     return () => {
       disposed = true
+      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current)
       if (resizeRef.current) window.removeEventListener("resize", resizeRef.current)
       if (roRef.current) {
         roRef.current.disconnect()
@@ -274,7 +279,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }, [tool])
 
   useEffect(() => {
-    if (fabricRef.current && ready) applyTool(fabricRef.current, tool, hlColor, dark)
+    if (!fabricRef.current || fabricRef.current.disposed || !ready) return
+    applyTool(fabricRef.current, tool, hlColor, dark)
   }, [tool, hlColor, dark, ready])
 
   useEffect(() => {
