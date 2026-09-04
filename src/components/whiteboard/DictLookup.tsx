@@ -23,7 +23,12 @@ export function DictLookup() {
     try {
       const res = await fetch(`/api/dict/lookup?q=${encodeURIComponent(char)}`)
       const data = await res.json()
-      setResult(data)
+      if (data.error) {
+        setError(data.error)
+        setResult(null)
+      } else {
+        setResult(data)
+      }
     } catch {
       setError("查詢失敗")
       setResult(null)
@@ -32,10 +37,21 @@ export function DictLookup() {
     }
   }
 
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value
+    setQuery(v)
+    if (v.length === 0) {
+      setResult(null)
+      setError("")
+      return
+    }
+    lookup(v[v.length - 1])
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (query.length > 0) {
-      lookup(query[0])
+      lookup(query[query.length - 1])
     }
   }
 
@@ -63,10 +79,9 @@ export function DictLookup() {
               <input
                 type="text"
                 value={query}
-                onChange={(e) => { setQuery(e.target.value.slice(0, 1)); if (e.target.value) lookup(e.target.value[0]) }}
+                onChange={handleChange}
                 onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault() }}
-                placeholder="輸入或貼上一個漢字"
-                maxLength={1}
+                placeholder="輸入或貼上漢字（取最後一字查詢）"
                 autoFocus
                 className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2 text-2xl font-bold text-center focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800"
               />
@@ -79,7 +94,7 @@ export function DictLookup() {
                 查詢
               </button>
             </form>
-            <p className="mt-2 text-xs text-slate-400 text-center">直接貼上或輸入漢字，無需按 Enter</p>
+            <p className="mt-2 text-xs text-slate-400 text-center">直接貼上或輸入漢字，無需按 Enter（自動查最後一字）</p>
 
             {error && <p className="text-center text-red-500">{error}</p>}
 
