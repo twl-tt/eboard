@@ -1,18 +1,21 @@
 "use client"
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
 import {
-  MousePointer2, Pencil, Highlighter, Eraser, Square, Circle, Type, ImagePlus, Undo2, Trash2, Hand
+  MousePointer2, Pencil, Highlighter, Eraser, Square, Circle, Type, ImagePlus, Undo2, Redo2, Trash2, Hand
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type CanvasTool = "none" | "move" | "pen" | "hl" | "eraser" | "rect" | "ellipse" | "text"
+export type CanvasTool = "select" | "pen" | "hl" | "eraser" | "rect" | "ellipse" | "text" | "pan"
 
 export interface CanvasApi {
   toJSON: () => string | null
   load: (json: unknown) => void
   toDataURL: () => string | null
   isEmpty: () => boolean
+  clear: () => void
+  undo: () => boolean
+  redo: () => boolean
   addSticker: (text: string, color?: string) => void
 }
 
@@ -27,406 +30,465 @@ interface Props {
 }
 
 const HL_COLORS = [
-  { key: "purple", label: "紫", rgba: "rgba(168,85,247,0.35)" },
-  { key: "red", label: "紅", rgba: "rgba(239,68,68,0.35)" },
-  { key: "blue", label: "藍", rgba: "rgba(59,130,246,0.35)" }
+  { key: "purple", rgba: "rgba(168,85,247,0.35)" },
+  { key: "red", rgba: "rgba(239,68,68,0.35)" },
+  { key: "blue", rgba: "rgba(59,130,246,0.35)" }
+]
+
+const PEN_COLORS = [
+  { key: "black", color: "#111827" },
+  { key: "white", color: "#f8fafc" },
+  { key: "red", color: "#ef4444" },
+  { key: "blue", color: "#3b82f6" },
+  { key: "green", color: "#22c55e" },
+  { key: "yellow", color: "#eab308" }
 ]
 
 const TOOLS: { tool: CanvasTool; icon: React.ReactNode; label: string }[] = [
-  { tool: "none", icon: <MousePointer2 className="h-5 w-5" />, label: "閱讀模式（畫筆關閉）" },
-  { tool: "move", icon: <Hand className="h-5 w-5" />, label: "移動圖層" },
+  { tool: "select", icon: <MousePointer2 className="h-5 w-5" />, label: "選擇" },
+  { tool: "pan", icon: <Hand className="h-5 w-5" />, label: "拖曳" },
   { tool: "pen", icon: <Pencil className="h-5 w-5" />, label: "畫筆" },
   { tool: "hl", icon: <Highlighter className="h-5 w-5" />, label: "螢光筆" },
   { tool: "eraser", icon: <Eraser className="h-5 w-5" />, label: "橡皮擦" },
   { tool: "rect", icon: <Square className="h-5 w-5" />, label: "矩形" },
-  { tool: "ellipse", icon: <Circle className="h-5 w-5" />, label: "圓形" },
-  { tool: "text", icon: <Type className="h-5 w-5" />, label: "文字（雙擊畫布）" }
+  { tool: "ellipse", icon: <Circle className="h-5 w-5" />, label: "橢圓" },
+  { tool: "text", icon: <Type className="h-5 w-5" />, label: "文字" }
 ]
 
 export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null, forceActive = false, canvasTopOffset = 0 }, ref) {
-  const wrapRef = useRef<HTMLDivElement>(null)
+  const canvasWrapRef = useRef<HTMLDivElement>(null)
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
   const historyRef = useRef<string[]>([])
-  const loadingRef = useRef(false)
-  const shapeRef = useRef<any>(null)
-  const origRef = useRef<{ x: number; y: number } | null>(null)
-  const resizeRef = useRef<(() => void) | null>(null)
-  const roRef = useRef<ResizeObserver | null>(null)
-  const resizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const [tool, setTool] = useState<CanvasTool>("none")
-  const [hlColor, setHlColor] = useState(HL_COLORS[0].rgba)
-  const [ready, setReady] = useState(false)
+  const historyIndexRef = useRef(-1)
+  const isLoadingRef = useRef(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const fabricLibRef = useRef<any>(null)
+
+  const [active, setActive] = useState(false)
+  const [tool, setTool] = useState<CanvasTool>("select")
+  const [penColor, setPenColor] = useState(PEN_COLORS[0].color)
+  const [hlColor, setHlColor] = useState(HL_COLORS[0].rgba)
+  const [initialized, setInitialized] = useState(false)
+  const [showColorPicker, setShowColorPicker] = useState(false)
+  const [showHlColors, setShowHlColors] = useState(false)
+
+  const initCanvas = useCallback(async () => {
+    if (fabricRef.current) return
+    if (!canvasElRef.current) return
+
+    const mod = await import("fabric")
+    const fabric: any = (mod as any).fabric ?? (mod as any).default ?? mod
+    ;(window as any).fabric = fabric
+    fabricLibRef.current = fabric
+    const canvas = new fabric.Canvas(canvasElRef.current, {
+      width: canvasWrapRef.current?.clientWidth || 800,
+      height: canvasWrapRef.current?.clientHeight || 600,
+      selection: true,
+      preserveObjectStacking: true
+    })
+
+    fabricRef.current = canvas
+
+    const saveHistory = () => {
+      if (isLoadingRef.current) return
+      const json = JSON.stringify(canvas.toJSON())
+      historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1)
+      historyRef.current.push(json)
+      if (historyRef.current.length > 50) historyRef.current.shift()
+      historyIndexRef.current = historyRef.current.length - 1
+      onDirty?.()
+    }
+
+    canvas.on("object:added", saveHistory)
+    canvas.on("object:modified", saveHistory)
+    canvas.on("object:removed", saveHistory)
+
+    setInitialized(true)
+  }, [onDirty])
 
   useEffect(() => {
-    if (forceActive && tool === "none") setTool("pen")
-    if (!forceActive && tool !== "none" && tool !== "move") setTool("none")
-  }, [forceActive, tool])
+    if (active && !fabricRef.current) {
+      initCanvas()
+    }
+  }, [active, initCanvas])
 
-  const active = tool !== "none" || forceActive
+  useEffect(() => {
+    if (!initialized || !fabricRef.current) return
+    const canvas = fabricRef.current
+
+    canvas.isDrawingMode = false
+    canvas.selection = tool === "select"
+    canvas.defaultCursor = tool === "pan" ? "grab" : "crosshair"
+
+    canvas.forEachObject((obj: any) => {
+      obj.selectable = tool === "select" || tool === "pan"
+      obj.evented = tool === "select" || tool === "pan" || tool === "eraser"
+    })
+
+    if (tool === "pen" || tool === "hl") {
+      canvas.isDrawingMode = true
+      const brush = new fabricLibRef.current.PencilBrush(canvas)
+      brush.color = tool === "pen" ? penColor : hlColor
+      brush.width = tool === "pen" ? 3 : 24
+      canvas.freeDrawingBrush = brush
+    }
+
+    if (tool === "eraser") {
+      canvas.defaultCursor = "cell"
+    }
+
+    canvas.renderAll()
+  }, [tool, penColor, hlColor, initialized])
+
+  useEffect(() => {
+    if (!initialized) return
+    const canvas = fabricRef.current
+    if (!canvas) return
+
+    const handleMouseDown = (e: any) => {
+      if (tool !== "rect" && tool !== "ellipse") return
+      const pointer = canvas.getPointer(e.e)
+      const common = {
+        left: pointer.x,
+        top: pointer.y,
+        width: 1,
+        height: 1,
+        fill: "transparent",
+        stroke: penColor,
+        strokeWidth: 3
+      }
+      const shape = tool === "rect"
+        ? new fabricLibRef.current.Rect(common)
+        : new fabricLibRef.current.Ellipse({ ...common, rx: 1, ry: 1 })
+      ;(shape as any)._isDrawingShape = true
+      canvas.add(shape)
+    }
+
+    const handleMouseMove = (e: any) => {
+      if (tool !== "rect" && tool !== "ellipse") return
+      const activeShape = canvas.getObjects().find((o: any) => o._isDrawingShape)
+      if (!activeShape) return
+      const pointer = canvas.getPointer(e.e)
+      const left = Math.min(activeShape.left!, pointer.x)
+      const top = Math.min(activeShape.top!, pointer.y)
+      const width = Math.abs(pointer.x - activeShape.left!)
+      const height = Math.abs(pointer.y - activeShape.top!)
+
+      if (tool === "rect") {
+        activeShape.set({ left, top, width, height })
+      } else {
+        activeShape.set({ left, top, rx: width / 2, ry: height / 2 })
+      }
+      canvas.renderAll()
+    }
+
+    const handleMouseUp = (e: any) => {
+      if (tool !== "rect" && tool !== "ellipse") return
+      const activeShape = canvas.getObjects().find((o: any) => o._isDrawingShape)
+      if (!activeShape) return
+      ;(activeShape as any)._isDrawingShape = false
+      activeShape.setCoords()
+    }
+
+    const handleDblClick = (e: any) => {
+      if (tool !== "text") return
+      const pointer = canvas.getPointer(e.e)
+      const text = new fabricLibRef.current.IText("", {
+        left: pointer.x,
+        top: pointer.y,
+        fontSize: 24,
+        fill: penColor,
+        fontFamily: "system-ui, sans-serif"
+      })
+      canvas.add(text)
+      canvas.setActiveObject(text)
+      text.enterEditing()
+    }
+
+    canvas.on("mouse:down", handleMouseDown)
+    canvas.on("mouse:move", handleMouseMove)
+    canvas.on("mouse:up", handleMouseUp)
+    canvas.on("mouse:dblclick", handleDblClick)
+
+    return () => {
+      canvas.off("mouse:down", handleMouseDown)
+      canvas.off("mouse:move", handleMouseMove)
+      canvas.off("mouse:up", handleMouseUp)
+      canvas.off("mouse:dblclick", handleDblClick)
+    }
+  }, [tool, penColor, initialized])
+
+  useEffect(() => {
+    if (!initialized) return
+    const canvas = fabricRef.current
+    if (!canvas) return
+
+    const handleEraser = (e: any) => {
+      if (tool !== "eraser") return
+      const target = canvas.findTarget(e.e)
+      if (target) canvas.remove(target)
+    }
+
+    canvas.on("mouse:down", handleEraser)
+    return () => canvas.off("mouse:down", handleEraser)
+  }, [tool, initialized])
+
+  const handleResize = useCallback(() => {
+    if (!fabricRef.current || !canvasWrapRef.current) return
+    fabricRef.current.setDimensions({
+      width: canvasWrapRef.current.clientWidth,
+      height: canvasWrapRef.current.clientHeight
+    })
+    fabricRef.current.renderAll()
+  }, [])
+
+  useEffect(() => {
+    if (!initialized) return
+    window.addEventListener("resize", handleResize)
+    const ro = new ResizeObserver(handleResize)
+    if (canvasWrapRef.current) ro.observe(canvasWrapRef.current)
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      ro.disconnect()
+    }
+  }, [initialized, handleResize])
 
   useImperativeHandle(ref, (): CanvasApi => ({
     toJSON: () => {
       try {
         return JSON.stringify(fabricRef.current?.toJSON() ?? null)
-      } catch {
-        return null
-      }
+      } catch { return null }
     },
     load: (json) => {
       if (!fabricRef.current || !json) return
-      loadingRef.current = true
+      isLoadingRef.current = true
       fabricRef.current.loadFromJSON(json, () => {
-        applyTool(fabricRef.current, toolRef.current, hlColor, dark)
         fabricRef.current.renderAll()
-        loadingRef.current = false
+        isLoadingRef.current = false
       })
     },
     toDataURL: () => {
       try {
         return fabricRef.current?.toDataURL({ format: "png", multiplier: 2 }) ?? null
-      } catch {
-        return null
-      }
+      } catch { return null }
     },
     isEmpty: () => (fabricRef.current?.getObjects().length ?? 0) === 0,
+    clear: () => {
+      if (!fabricRef.current) return
+      fabricRef.current.getObjects().forEach((o: any) => fabricRef.current.remove(o))
+      fabricRef.current.renderAll()
+    },
+    undo: () => {
+      if (historyIndexRef.current <= 0) return false
+      historyIndexRef.current--
+      const json = historyRef.current[historyIndexRef.current]
+      if (!json || !fabricRef.current) return false
+      isLoadingRef.current = true
+      fabricRef.current.loadFromJSON(json, () => {
+        fabricRef.current.renderAll()
+        isLoadingRef.current = false
+      })
+      return true
+    },
+    redo: () => {
+      if (historyIndexRef.current >= historyRef.current.length - 1) return false
+      historyIndexRef.current++
+      const json = historyRef.current[historyIndexRef.current]
+      if (!json || !fabricRef.current) return false
+      isLoadingRef.current = true
+      fabricRef.current.loadFromJSON(json, () => {
+        fabricRef.current.renderAll()
+        isLoadingRef.current = false
+      })
+      return true
+    },
     addSticker: (text: string, color = "#a78bfa") => {
       if (!fabricRef.current) return
-      const c = fabricRef.current
-      const f = (window as any).fabric
-      if (!f) return
-      const padding = 10
-      const fontSize = 20
-      const temp = c.getObjects().length
-      const x = 80 + (temp % 6) * 30
-      const y = 80 + (temp % 6) * 30
-      const grp = new f.Group(
-        [
-          new f.Rect({
-            left: 0, top: 0, width: 100, height: 40, rx: 12, ry: 12,
-            fill: color, stroke: "rgba(255,255,255,0.5)", strokeWidth: 1.5, originX: "left", originY: "top"
-          }),
-          new f.IText(text, {
-            left: 50, top: 20, originX: "center", originY: "center",
-            fontSize, fontFamily: "ui-sans-serif, system-ui, sans-serif",
-            fontWeight: 700, fill: "#ffffff", editable: true
-          })
-        ],
-        { left: x, top: y, originX: "left", originY: "top" }
-      )
-      ;(grp as any).__sticker = true
-      c.add(grp)
-      c.setActiveObject(grp)
-      c.requestRenderAll()
+      const { fabric } = window as any
+      if (!fabric) return
+      const count = fabricRef.current.getObjects().length
+      const x = 60 + (count % 8) * 40
+      const y = 60 + (count % 8) * 40
+      const bg = new fabric.Rect({
+        left: 0, top: 0, width: 120, height: 44, rx: 12, ry: 12,
+        fill: color, stroke: "rgba(255,255,255,0.5)", strokeWidth: 2
+      })
+      const label = new fabric.Text(text, {
+        left: 60, top: 22, originX: "center", originY: "center",
+        fontSize: 16, fontFamily: "system-ui, sans-serif", fontWeight: "bold",
+        fill: "#ffffff"
+      })
+      const group = new fabric.Group([bg, label], {
+        left: x, top: y,
+        selectable: true, evented: true
+      })
+      ;(group as any)._isSticker = true
+      fabricRef.current.add(group)
+      fabricRef.current.setActiveObject(group)
+      fabricRef.current.renderAll()
     }
-  }))
+  }), [])
 
-  const toolRef = useRef(tool)
-  toolRef.current = tool
-
-  function applyTool(c: any, t: CanvasTool, color: string, dk: boolean) {
-    c.selection = t === "move"
-    c.isDrawingMode = t === "pen" || t === "hl"
-    c.defaultCursor = t === "move" ? "default" : "crosshair"
-    const objsSelectable = t === "move" || t === "text"
-    const objsEvented = t === "move" || t === "text" || t === "eraser"
-    c.forEachObject((o: any) => {
-      o.selectable = objsSelectable
-      o.evented = objsEvented
-    })
-    if (c.isDrawingMode) {
-      const brush = new (window as any).fabric.PencilBrush(c)
-      brush.color = t === "pen" ? (dk ? "#f8fafc" : "#111827") : color
-      brush.width = t === "pen" ? 3.5 : 26
-      c.freeDrawingBrush = brush
-    }
-    if (t !== "move") c.discardActiveObject()
-    c.requestRenderAll()
+  const toggleCanvas = () => {
+    setActive(prev => !prev)
+    setTool("select")
   }
 
-  useEffect(() => {
-    if (tool === "none") {
-      if (roRef.current) {
-        roRef.current.disconnect()
-        roRef.current = null
-      }
-      fabricRef.current?.dispose()
-      fabricRef.current = null
-      setReady(false)
-      return
-    }
-    if (fabricRef.current) {
-      setReady(true)
-      return
-    }
-    let disposed = false
-    ;(async () => {
-      const mod = await import("fabric")
-      const fabric: any = (mod as any).fabric ?? (mod as any).default ?? mod
-      if (disposed || !canvasElRef.current) return
-      ;(window as any).fabric = fabric
-      const c = new fabric.Canvas(canvasElRef.current, {
-        isDrawingMode: false,
-        selection: true,
-        preserveObjectStacking: true
-      })
-      fabricRef.current = c
-
-      const resize = () => {
-        if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current)
-        resizeTimerRef.current = setTimeout(() => {
-          if (!wrapRef.current || !c || (c as any).disposed) return
-          c.setWidth(wrapRef.current.clientWidth)
-          c.setHeight(wrapRef.current.clientHeight)
-          c.calcOffset()
-          c.renderAll()
-        }, 100)
-      }
-      resizeRef.current = resize
-
-      window.addEventListener("resize", resize)
-      const ro = new ResizeObserver(resize)
-      ro.observe(wrapRef.current!)
-      roRef.current = ro
-      setReady(true)
-
-      const pushHistory = () => {
-        if (loadingRef.current) return
-        historyRef.current.push(JSON.stringify(c.toJSON()))
-        if (historyRef.current.length > 40) historyRef.current.shift()
-        onDirty?.()
-      }
-      c.on("object:added", pushHistory)
-      c.on("object:removed", pushHistory)
-      c.on("object:modified", pushHistory)
-
-      c.on("mouse:down", (evt: any) => {
-        const t = toolRef.current
-        if (t === "eraser") {
-          const target = c.findTarget(evt.e)
-          if (target) c.remove(target)
-          return
-        }
-        if (t === "rect" || t === "ellipse") {
-          const pointer = c.getPointer(evt.e)
-          origRef.current = pointer
-          const common = {
-            left: pointer.x,
-            top: pointer.y,
-            width: 1,
-            height: 1,
-            fill: "transparent",
-            stroke: dark ? "#f8fafc" : "#111827",
-            strokeWidth: 4
-          }
-          shapeRef.current = t === "rect" ? new (fabric as any).Rect(common) : new (fabric as any).Ellipse({ ...common, rx: 1, ry: 1 })
-          c.add(shapeRef.current)
-        }
-      })
-      c.on("mouse:move", (evt: any) => {
-        if (!shapeRef.current || !origRef.current) return
-        const p = c.getPointer(evt.e)
-        const o = origRef.current
-        if (toolRef.current === "rect") {
-          shapeRef.current.set({ left: Math.min(o.x, p.x), top: Math.min(o.y, p.y), width: Math.abs(p.x - o.x), height: Math.abs(p.y - o.y) })
-        } else {
-          const rx = Math.abs(p.x - o.x) / 2
-          const ry = Math.abs(p.y - o.y) / 2
-          shapeRef.current.set({ left: Math.min(o.x, p.x), top: Math.min(o.y, p.y), rx, ry })
-        }
-        c.requestRenderAll()
-      })
-      c.on("mouse:up", () => {
-        if (shapeRef.current) {
-          shapeRef.current.setCoords()
-          shapeRef.current.selectable = false
-          shapeRef.current.evented = false
-          shapeRef.current = null
-          origRef.current = null
-        }
-      })
-
-      c.on("mouse:dblclick", (evt: any) => {
-        if (toolRef.current !== "text") return
-        const p = c.getPointer(evt.e)
-        const t = new (fabric as any).IText("", {
-          left: p.x,
-          top: p.y,
-          fontSize: 36,
-          fill: dark ? "#f8fafc" : "#111827",
-          fontFamily: '"Noto Sans TC","Microsoft JhengHei",sans-serif'
-        })
-        c.add(t)
-        c.setActiveObject(t)
-        t.enterEditing()
-      })
-    })()
-
-    return () => {
-      disposed = true
-      if (resizeTimerRef.current) clearTimeout(resizeTimerRef.current)
-      if (resizeRef.current) window.removeEventListener("resize", resizeRef.current)
-      if (roRef.current) {
-        roRef.current.disconnect()
-        roRef.current = null
-      }
-      fabricRef.current?.dispose()
-      fabricRef.current = null
-      resizeRef.current = null
-    }
-  }, [tool])
-
-  useEffect(() => {
-    if (!fabricRef.current || fabricRef.current.disposed || !ready) return
-    applyTool(fabricRef.current, tool, hlColor, dark)
-  }, [tool, hlColor, dark, ready])
-
-  useEffect(() => {
-    if (!followsText || !scrollContainerRef?.current || !wrapRef.current) return
-    const scroller = scrollContainerRef.current
-    const wrap = wrapRef.current
-    function update() {
-      wrap.style.transform = `translateY(${scroller.scrollTop}px)`
-    }
-    update()
-    scroller.addEventListener("scroll", update, { passive: true })
-    const ro = new ResizeObserver(update)
-    ro.observe(scroller)
-    return () => {
-      scroller.removeEventListener("scroll", update)
-      ro.disconnect()
-    }
-  }, [followsText, scrollContainerRef, articleId])
-
-  useEffect(() => {
-    if (!followsText || !wrapRef.current) return
-    const wrap = wrapRef.current
-    function update() {
-      const y = window.scrollY
-      wrap.style.transform = `translateY(${y}px)`
-    }
-    update()
-    window.addEventListener("scroll", update, { passive: true })
-    window.addEventListener("resize", update)
-    return () => {
-      window.removeEventListener("scroll", update)
-      window.removeEventListener("resize", update)
-    }
-  }, [followsText, articleId])
-
-  async function uploadImage(file: File) {
+  const uploadImage = async (file: File) => {
     const fd = new FormData()
     fd.append("file", file)
     const res = await fetch("/api/upload", { method: "POST", body: fd })
     const data = await res.json()
-    if (!res.ok || !data.url) return
-    const mod = await import("fabric")
-    const fabric: any = (mod as any).fabric ?? (mod as any).default ?? mod
-    const c = fabricRef.current
-    if (!c) return
-    ;(fabric as any).Image.fromURL(data.url, (img: any) => {
-      const scale = Math.min(360 / img.width, 280 / img.height, 1.5)
+    if (!res.ok || !data.url || !fabricRef.current) return
+    const { fabric } = await import("fabric")
+    fabric.Image.fromURL(data.url, (img: any) => {
+      const scale = Math.min(400 / img.width, 300 / img.height, 1)
       img.scale(scale)
-      img.set({ left: 60, top: 60 })
-      c.add(img)
-      c.setActiveObject(img)
-      applyTool(c, toolRef.current, hlColor, dark)
-    })
-  }
-
-  function undo() {
-    const c = fabricRef.current
-    if (!c) return
-    const prev = historyRef.current.pop()
-    if (!prev) return
-    loadingRef.current = true
-    c.loadFromJSON(prev, () => {
-      applyTool(c, toolRef.current, hlColor, dark)
-      c.renderAll()
-      loadingRef.current = false
+      img.set({ left: 50, top: 50 })
+      fabricRef.current.add(img)
+      fabricRef.current.setActiveObject(img)
+      fabricRef.current.renderAll()
     })
   }
 
   return (
-    <div
-      className="absolute inset-0"
-      style={{ pointerEvents: "none" }}
-      data-article={articleId}
-    >
+    <div className="absolute inset-0 pointer-events-none">
       <div
-        ref={wrapRef}
+        ref={canvasWrapRef}
         className={cn(
-          "absolute inset-0 overflow-hidden rounded-3xl",
-          active ? "pointer-events-auto" : "opacity-0"
+          "absolute inset-0 overflow-hidden rounded-3xl transition-opacity duration-200",
+          active ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
-        style={{ zIndex: active ? 30 : 0 }}
-        aria-hidden={!active}
+        style={{ zIndex: 30, background: dark ? "#1a1a1a" : "#ffffff" }}
       >
         <canvas ref={canvasElRef} />
       </div>
 
-      <div className="pointer-events-auto absolute left-3 top-3 z-20 flex max-w-[92%] flex-wrap items-center gap-1.5 rounded-2xl border border-white/60 bg-white/85 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/85">
-        {TOOLS.map((t) => (
-          <button
-            key={t.tool}
-            title={t.label}
-            onClick={() => setTool(t.tool)}
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-105",
-              tool === t.tool
-                ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
-                : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
-            )}
-          >
-            {t.icon}
-          </button>
-        ))}
-        {tool === "hl" && (
-          <span className="ml-1 flex items-center gap-1">
-            {HL_COLORS.map((c) => (
+      <div className="pointer-events-auto fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-black/10 bg-white/90 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-black/80">
+        <button
+          onClick={toggleCanvas}
+          className={cn(
+            "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
+            active ? "bg-red-500 text-white hover:bg-red-600" : "bg-sky-500 text-white hover:bg-sky-600"
+          )}
+          title={active ? "關閉畫板" : "開啟畫板"}
+        >
+          {active ? <Trash2 className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
+        </button>
+
+        {active && (
+          <>
+            <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
+
+            {TOOLS.map((t) => (
               <button
-                key={c.key}
-                onClick={() => setHlColor(c.rgba)}
-                title={`螢光 ${c.label}`}
+                key={t.tool}
+                onClick={() => setTool(t.tool)}
                 className={cn(
-                  "h-7 w-7 rounded-full border-2",
-                  hlColor === c.rgba ? "border-white ring-2 ring-sky-500" : "border-transparent"
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-105",
+                  tool === t.tool
+                    ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
+                    : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
                 )}
-                style={{ backgroundColor: c.rgba }}
-              />
+                title={t.label}
+              >
+                {t.icon}
+              </button>
             ))}
-          </span>
+
+            {(tool === "pen" || tool === "rect" || tool === "ellipse" || tool === "text") && (
+              <>
+                <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      setShowColorPicker(!showColorPicker)
+                      setShowHlColors(false)
+                    }}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-transparent hover:border-sky-500"
+                    style={{ backgroundColor: penColor }}
+                    title="顏色"
+                  />
+                  {showColorPicker && (
+                    <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 gap-1 rounded-xl bg-white p-2 shadow-xl dark:bg-slate-800">
+                      {PEN_COLORS.map((c) => (
+                        <button
+                          key={c.key}
+                          onClick={() => { setPenColor(c.color); setShowColorPicker(false) }}
+                          className={cn(
+                            "h-7 w-7 rounded-full border-2 border-white shadow",
+                            penColor === c.color ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                          )}
+                          style={{ backgroundColor: c.color }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {tool === "hl" && (
+              <>
+                <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
+                <div className="relative flex gap-1">
+                  {HL_COLORS.map((c) => (
+                    <button
+                      key={c.key}
+                      onClick={() => setHlColor(c.rgba)}
+                      className={cn(
+                        "h-8 w-8 rounded-full border-2 border-white shadow",
+                        hlColor === c.rgba ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                      )}
+                      style={{ backgroundColor: c.rgba }}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
+
+            <button
+              onClick={() => { (ref as any).current?.undo() }}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              title="復原"
+            >
+              <Undo2 className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={() => { (ref as any).current?.redo() }}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              title="重做"
+            >
+              <Redo2 className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              title="插入圖片"
+            >
+              <ImagePlus className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={() => { (ref as any).current?.clear() }}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="清空"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </>
         )}
-        <span className="mx-1 h-6 w-px bg-slate-200 dark:bg-slate-700" />
-        <button
-          title="插入圖片"
-          onClick={() => fileRef.current?.click()}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          <ImagePlus className="h-5 w-5" />
-        </button>
-        <button
-          title="復原"
-          onClick={undo}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-        >
-          <Undo2 className="h-5 w-5" />
-        </button>
-        <button
-          title="清空畫布"
-          onClick={() => fabricRef.current?.getObjects().slice().forEach((o: any) => fabricRef.current.remove(o))}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-500/10"
-        >
-          <Trash2 className="h-5 w-5" />
-        </button>
       </div>
 
       <input
         ref={fileRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
+        accept="image/*"
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0]
