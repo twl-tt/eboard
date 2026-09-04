@@ -16,6 +16,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       name: s.name,
       seatNo: s.seatNo,
       className: s.className,
+      group: s.group,
       points: s.points,
       recentLogs: s.scoreLogs
     })

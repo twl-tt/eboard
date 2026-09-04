@@ -19,6 +19,7 @@ export async function GET() {
         name: s.name,
         seatNo: s.seatNo,
         className: s.className,
+        group: s.group,
         points: s.points,
         recentLogs: s.scoreLogs
       }))

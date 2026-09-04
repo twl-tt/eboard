@@ -2,18 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Dices, Star, BarChart3, Brain, X } from "lucide-react"
+import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
 import { LuckyPicker } from "./LuckyPicker"
 import { PointsPanel } from "./PointsPanel"
 import { PollPanel } from "./PollPanel"
 import { QuizPanel } from "./QuizPanel"
+import { GroupPanel } from "./GroupPanel"
 import { cn } from "@/lib/utils"
 
-type PanelKey = "picker" | "points" | "poll" | "quiz" | null
+type PanelKey = "group" | "picker" | "points" | "poll" | "quiz" | null
 
 const GRADIENTS: Record<Exclude<PanelKey, null>, { grad: string; glow: string; label: string }> = {
+  group: { grad: "from-pink-500 to-rose-600", glow: "shadow-rose-500/40", label: "分組" },
   picker: { grad: "from-violet-500 to-fuchsia-600", glow: "shadow-fuchsia-500/40", label: "抽籤" },
   points: { grad: "from-amber-400 to-orange-500", glow: "shadow-orange-500/40", label: "加分" },
   poll: { grad: "from-emerald-400 to-teal-600", glow: "shadow-emerald-500/40", label: "投票" },
@@ -21,6 +23,7 @@ const GRADIENTS: Record<Exclude<PanelKey, null>, { grad: string; glow: string; l
 }
 
 const ICONS: Record<Exclude<PanelKey, null>, React.ReactNode> = {
+  group: <Users className="h-7 w-7" />,
   picker: <Dices className="h-7 w-7" />,
   points: <Star className="h-7 w-7" />,
   poll: <BarChart3 className="h-7 w-7" />,
@@ -40,10 +43,10 @@ export function ClassroomSuite() {
   }, [])
 
   useEffect(() => {
-    if (panel === "picker" || panel === "points") loadStudents()
+    if (panel === "picker" || panel === "points" || panel === "group") loadStudents()
   }, [panel, loadStudents])
 
-  const keys: Exclude<PanelKey, null>[] = ["picker", "points", "poll", "quiz"]
+  const keys: Exclude<PanelKey, null>[] = ["group", "picker", "points", "poll", "quiz"]
 
   return (
     <>
@@ -82,13 +85,14 @@ export function ClassroomSuite() {
             <div className={cn("h-1.5 w-full bg-gradient-to-r", GRADIENTS[panel].grad)} />
             <div className="flex items-center justify-between px-4 py-2.5">
               <h3 className="font-bold">
-                {panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : "🧠 AI 測驗"}
+                {panel === "group" ? "🧩 分組" : panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : "🧠 AI 測驗"}
               </h3>
               <Button variant="ghost" size="icon" onClick={() => setPanel(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <div className="overflow-y-auto p-4 pt-0">
+              {panel === "group" && <GroupPanel students={students} onRefresh={loadStudents} />}
               {panel === "picker" && <LuckyPicker students={students} />}
               {panel === "points" && <PointsPanel students={students} onRefresh={loadStudents} />}
               {panel === "poll" && <PollPanel />}

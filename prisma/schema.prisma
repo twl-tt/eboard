@@ -51,11 +51,13 @@ model Student {
   name      String
   seatNo    Int?
   className String?    @map("class")
+  group     String?
   points    Int        @default(0)
   scoreLogs ScoreLog[]
   createdAt DateTime   @default(now())
 
   @@index([className])
+  @@index([group])
 }
 
 model ScoreLog {
