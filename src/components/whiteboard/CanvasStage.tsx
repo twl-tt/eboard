@@ -416,15 +416,15 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const isActive = canvasMode !== "hidden"
 
   const containerClasses = cn(
-    "absolute inset-0 overflow-hidden transition-all duration-300",
+    "absolute inset-0 transition-all duration-300",
     canvasMode === "hidden" && "opacity-0 pointer-events-none",
-    canvasMode === "overlay" && "rounded-3xl",
-    canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none"
+    canvasMode === "overlay" && "overflow-hidden rounded-3xl",
+    canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none overflow-hidden"
   )
 
   const toolbarClasses = cn(
-    "absolute left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95",
-    canvasMode === "fullscreen" ? "top-4" : "top-3"
+    "sticky top-0 z-50 flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95 mx-auto w-fit mt-3",
+    canvasMode === "fullscreen" && "absolute left-1/2 -translate-x-1/2 top-4"
   )
 
   return (
@@ -438,9 +438,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             : "transparent"
         }}
       >
-        {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full" />}
-
-        {isActive && (
+        <div className="sticky top-0 z-50 flex justify-center">
           <div className={toolbarClasses}>
             <button
               onClick={cycleMode}
@@ -554,7 +552,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
               <Trash2 className="h-5 w-5" />
             </button>
           </div>
-        )}
+        </div>
+
+        {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full" />}
       </div>
 
       <input
