@@ -2,11 +2,12 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
 import {
-  MousePointer2, Pencil, Highlighter, Eraser, Square, Circle, Type, ImagePlus, Undo2, Redo2, Trash2, Hand, X, ArrowLeft
+  MousePointer2, Pencil, Highlighter, Eraser, Square, Circle, Type, ImagePlus, Undo2, Redo2, Trash2, Hand, Minimize2, Maximize2, Eye, EyeOff, X
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export type CanvasTool = "select" | "pen" | "hl" | "eraser" | "rect" | "ellipse" | "text" | "pan"
+export type CanvasMode = "hidden" | "overlay" | "fullscreen"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -30,11 +31,11 @@ interface Props {
 }
 
 const HL_COLORS = [
-  { key: "yellow", rgba: "rgba(250,204,21,0.5)" },
-  { key: "green", rgba: "rgba(74,222,128,0.5)" },
-  { key: "pink", rgba: "rgba(244,114,182,0.5)" },
-  { key: "blue", rgba: "rgba(96,165,250,0.5)" },
-  { key: "orange", rgba: "rgba(249,115,22,0.5)" }
+  { key: "yellow", rgba: "rgba(250,204,21,0.55)" },
+  { key: "green", rgba: "rgba(74,222,128,0.55)" },
+  { key: "pink", rgba: "rgba(244,114,182,0.55)" },
+  { key: "blue", rgba: "rgba(96,165,250,0.55)" },
+  { key: "orange", rgba: "rgba(249,115,22,0.55)" }
 ]
 
 const PEN_COLORS = [
@@ -70,7 +71,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const penColorRef = useRef(PEN_COLORS[0].color)
   const hlColorRef = useRef(HL_COLORS[0].rgba)
 
-  const [isWhiteboard, setIsWhiteboard] = useState(false)
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>("overlay")
   const [tool, setTool] = useState<CanvasTool>("select")
   const [penColor, setPenColor] = useState(PEN_COLORS[0].color)
   const [hlColor, setHlColor] = useState(HL_COLORS[0].rgba)
@@ -91,7 +92,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     const canvas = new fabric.Canvas(canvasElRef.current, {
       width: container.clientWidth,
       height: container.clientHeight,
-      backgroundColor: dark ? "#1f1f1f" : "#ffffff",
+      backgroundColor: "transparent",
       selection: true,
       preserveObjectStacking: true
     })
@@ -112,21 +113,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     canvas.on("object:modified", saveHistory)
     canvas.on("object:removed", saveHistory)
 
-    canvas.on("mouse:down", (opt: any) => {
-      if (toolRef.current === "eraser") {
-        const target = canvas.findTarget(opt.e)
-        if (target && target !== canvas.backgroundImage) {
-          canvas.remove(target)
-        }
-      }
-    })
-
-    canvas.on("path:created", (opt: any) => {
-      saveHistory()
-    })
+    canvas.on("path:created", saveHistory)
 
     setInitialized(true)
-  }, [dark, onDirty])
+  }, [onDirty])
 
   const setupTool = useCallback(() => {
     const canvas = fabricRef.current
@@ -161,32 +151,31 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.freeDrawingBrush = brush
     }
 
-    if (toolRef.current === "eraser") {
-      canvas.defaultCursor = "crosshair"
-    }
-
     canvas.renderAll()
   }, [])
 
   useEffect(() => {
-    if (!isWhiteboard) return
+    if (canvasMode === "hidden") {
+      if (fabricRef.current) {
+        fabricRef.current.dispose()
+        fabricRef.current = null
+      }
+      setInitialized(false)
+      return
+    }
 
     const init = async () => {
-      if (fabricLibRef.current) {
-        if (!fabricRef.current) {
-          initCanvas()
-        }
-        return
+      if (!fabricLibRef.current) {
+        const mod = await import("fabric")
+        const f: any = (mod as any).fabric ?? (mod as any).default ?? mod
+        fabricLibRef.current = f
+        ;(window as any).fabric = f
       }
-      const mod = await import("fabric")
-      const f: any = (mod as any).fabric ?? (mod as any).default ?? mod
-      fabricLibRef.current = f
-      ;(window as any).fabric = f
       initCanvas()
     }
 
     init()
-  }, [isWhiteboard, initCanvas])
+  }, [canvasMode, initCanvas])
 
   useEffect(() => {
     if (!initialized) return
@@ -221,15 +210,23 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }, [initialized])
 
   useEffect(() => {
-    if (!initialized) return
+    if (!initialized || !fabricRef.current || !fabricLibRef.current) return
+
     const canvas = fabricRef.current
     const fabric = fabricLibRef.current
-    if (!canvas || !fabric) return
 
     let isDrawing = false
     let startX = 0, startY = 0
 
     const handleMouseDown = (opt: any) => {
+      if (toolRef.current === "eraser") {
+        const target = canvas.findTarget(opt.e)
+        if (target && target !== canvas.backgroundImage) {
+          canvas.remove(target)
+        }
+        return
+      }
+
       if (toolRef.current !== "rect" && toolRef.current !== "ellipse") return
       if (opt.target) return
 
@@ -392,8 +389,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     }
   }), [])
 
-  const enterWhiteboard = () => setIsWhiteboard(true)
-  const exitWhiteboard = () => setIsWhiteboard(false)
+  const cycleMode = () => {
+    if (canvasMode === "hidden") setCanvasMode("overlay")
+    else if (canvasMode === "overlay") setCanvasMode("fullscreen")
+    else setCanvasMode("hidden")
+  }
 
   const uploadImage = async (file: File) => {
     if (!fabricRef.current || !fabricLibRef.current) return
@@ -413,131 +413,148 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     })
   }
 
-  if (!isWhiteboard) {
-    return (
-      <div className="pointer-events-auto fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95">
-        <button
-          onClick={enterWhiteboard}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-2.5 text-white shadow-lg shadow-indigo-500/40 transition-all hover:scale-105"
-        >
-          <Pencil className="h-5 w-5" />
-          <span className="font-semibold">白板模式</span>
-        </button>
-      </div>
-    )
-  }
+  const isActive = canvasMode !== "hidden"
+
+  const containerClasses = cn(
+    "relative overflow-hidden transition-all duration-300",
+    canvasMode === "hidden" && "opacity-0 pointer-events-none",
+    canvasMode === "overlay" && "absolute inset-0 rounded-3xl",
+    canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none"
+  )
+
+  const toolbarClasses = cn(
+    "absolute left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95",
+    canvasMode === "fullscreen" ? "top-4" : "top-3"
+  )
 
   return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 z-[100] bg-white dark:bg-[#1f1f1f]"
-    >
-      <canvas ref={canvasElRef} />
+    <>
+      <div
+        ref={containerRef}
+        className={containerClasses}
+        style={{
+          backgroundColor: canvasMode === "fullscreen"
+            ? (dark ? "#1f1f1f" : "#ffffff")
+            : "transparent"
+        }}
+      >
+        {isActive && <canvas ref={canvasElRef} />}
 
-      <div className="pointer-events-auto absolute left-1/2 top-4 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95">
-        <button
-          onClick={exitWhiteboard}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
-          title="返回"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-
-        <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
-
-        {TOOLS.map((t) => (
-          <button
-            key={t.tool}
-            onClick={() => setTool(t.tool)}
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-110",
-              tool === t.tool
-                ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
-                : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
-            )}
-            title={t.label}
-          >
-            {t.icon}
-          </button>
-        ))}
-
-        <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
-
-        {(tool === "pen" || tool === "rect" || tool === "ellipse" || tool === "text") && (
-          <div className="relative">
+        {isActive && (
+          <div className={toolbarClasses}>
             <button
-              onClick={() => setShowColorPicker(!showColorPicker)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-slate-300 transition-all hover:scale-110"
-              style={{ backgroundColor: penColor }}
-              title="顏色"
-            />
-            {showColorPicker && (
-              <div className="absolute top-full left-1/2 mt-2 flex -translate-x-1/2 gap-1.5 rounded-xl bg-white p-2 shadow-xl dark:bg-slate-800">
-                {PEN_COLORS.map((c) => (
+              onClick={cycleMode}
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white transition-all hover:bg-sky-600 hover:scale-105"
+              title={canvasMode === "overlay" ? "全螢幕" : "返回"}
+            >
+              {canvasMode === "overlay" ? <Maximize2 className="h-5 w-5" /> : <Minimize2 className="h-5 w-5" />}
+            </button>
+
+            <button
+              onClick={() => setCanvasMode("hidden")}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
+              title="隱藏"
+            >
+              <EyeOff className="h-5 w-5" />
+            </button>
+
+            <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+
+            {TOOLS.map((t) => (
+              <button
+                key={t.tool}
+                onClick={() => setTool(t.tool)}
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-110",
+                  tool === t.tool
+                    ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
+                    : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
+                )}
+                title={t.label}
+              >
+                {t.icon}
+              </button>
+            ))}
+
+            <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+
+            {(tool === "pen" || tool === "rect" || tool === "ellipse" || tool === "text") && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowColorPicker(!showColorPicker)}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-slate-300 transition-all hover:scale-110"
+                  style={{ backgroundColor: penColor }}
+                  title="顏色"
+                />
+                {showColorPicker && (
+                  <div className="absolute top-full left-1/2 mt-2 flex -translate-x-1/2 gap-1.5 rounded-xl bg-white p-2 shadow-xl dark:bg-slate-800">
+                    {PEN_COLORS.map((c) => (
+                      <button
+                        key={c.key}
+                        onClick={() => { setPenColor(c.color); setShowColorPicker(false) }}
+                        className={cn(
+                          "h-8 w-8 rounded-full border-2 border-white shadow transition-all hover:scale-110",
+                          penColor === c.color ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                        )}
+                        style={{ backgroundColor: c.color }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {tool === "hl" && (
+              <div className="flex gap-1.5">
+                {HL_COLORS.map((c) => (
                   <button
                     key={c.key}
-                    onClick={() => { setPenColor(c.color); setShowColorPicker(false) }}
+                    onClick={() => setHlColor(c.rgba)}
                     className={cn(
-                      "h-8 w-8 rounded-full border-2 border-white shadow transition-all hover:scale-110",
-                      penColor === c.color ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                      "h-9 w-9 rounded-full border-2 border-white shadow transition-all hover:scale-110",
+                      hlColor === c.rgba ? "ring-2 ring-sky-500 ring-offset-2" : ""
                     )}
-                    style={{ backgroundColor: c.color }}
+                    style={{ backgroundColor: c.rgba }}
                   />
                 ))}
               </div>
             )}
+
+            <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+
+            <button
+              onClick={() => (ref as any).current?.undo()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              title="復原"
+            >
+              <Undo2 className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={() => (ref as any).current?.redo()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              title="重做"
+            >
+              <Redo2 className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              title="插入圖片"
+            >
+              <ImagePlus className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={() => (ref as any).current?.clear()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+              title="清空"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
           </div>
         )}
-
-        {tool === "hl" && (
-          <div className="flex gap-1.5">
-            {HL_COLORS.map((c) => (
-              <button
-                key={c.key}
-                onClick={() => setHlColor(c.rgba)}
-                className={cn(
-                  "h-9 w-9 rounded-full border-2 border-white shadow transition-all hover:scale-110",
-                  hlColor === c.rgba ? "ring-2 ring-sky-500 ring-offset-2" : ""
-                )}
-                style={{ backgroundColor: c.rgba }}
-              />
-            ))}
-          </div>
-        )}
-
-        <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
-
-        <button
-          onClick={() => (ref as any).current?.undo()}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          title="復原"
-        >
-          <Undo2 className="h-5 w-5" />
-        </button>
-
-        <button
-          onClick={() => (ref as any).current?.redo()}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          title="重做"
-        >
-          <Redo2 className="h-5 w-5" />
-        </button>
-
-        <button
-          onClick={() => fileRef.current?.click()}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-          title="插入圖片"
-        >
-          <ImagePlus className="h-5 w-5" />
-        </button>
-
-        <button
-          onClick={() => (ref as any).current?.clear()}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-          title="清空"
-        >
-          <Trash2 className="h-5 w-5" />
-        </button>
       </div>
 
       <input
@@ -551,6 +568,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
           e.target.value = ""
         }}
       />
-    </div>
+    </>
   )
 })
