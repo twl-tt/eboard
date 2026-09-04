@@ -438,7 +438,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             : "transparent"
         }}
       >
-        {isActive && <canvas ref={canvasElRef} />}
+        {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full" />}
 
         {isActive && (
           <div className={toolbarClasses}>
