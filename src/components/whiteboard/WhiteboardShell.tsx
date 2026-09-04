@@ -6,7 +6,7 @@ import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
   BookOpen, Puzzle, Loader2, Highlighter, X, Languages
 } from "lucide-react"
-import type { ArticleFull, PhoneticMode, RhetoricKey } from "@/lib/types"
+import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { speakSeq, stopSpeak, warmVoices } from "@/lib/tts"
 import { celebrate } from "@/lib/sound"
@@ -115,28 +115,6 @@ export default function WhiteboardShell() {
   const removeHighlight = useCallback((id: string) => {
     setHighlights((prev) => prev.filter((h) => h.id !== id))
   }, [])
-
-  const handleDropRhetoric = useCallback(
-    async (sentenceId: string, rhetoric: RhetoricKey) => {
-      if (!article) return
-      const si = article.sentences.findIndex((s) => s.id === sentenceId)
-      if (si === -1) return
-      try {
-        const res = await fetch(`/api/articles/${article.id}/token`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sentenceIndex: si, rhetoric })
-        })
-        if (res.ok) {
-          const updated = await res.json()
-          setArticle((prev) =>
-            prev ? { ...prev, sentences: updated } : prev
-          )
-        }
-      } catch {}
-    },
-    [article]
-  )
 
   const speakableItems = useCallback(
     () =>
@@ -543,7 +521,6 @@ export default function WhiteboardShell() {
                   }
                 }}
                 showExplanation={showExplanation}
-                onDropRhetoric={handleDropRhetoric}
               />
             </div>
             <CanvasStage ref={canvasApiRef} articleId={article.id} dark={dark} />

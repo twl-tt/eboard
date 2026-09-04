@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         const parts = splitSentences(parsed.content)
 
         const sentences = parts.map((text, i) => {
-          if (!text.trim()) return { id: `p${i}`, text: "", tokens: [], rhetoric: null, explanation: null as string | null }
+          if (!text.trim()) return { id: `p${i}`, text: "", tokens: [], explanation: null }
 
           const paraIdx = paragraphs.findIndex(p => p.includes(text.trim()))
           let explanation: string | null = null
@@ -104,14 +104,12 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          const s = {
+          return {
             id: `s${i}`,
             text,
             tokens: tokenize(text),
-            rhetoric: null,
             explanation
           }
-          return s
         })
 
         await db.article.create({

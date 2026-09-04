@@ -5,7 +5,6 @@ import type { ArticleFull, PhoneticMode, Sentence } from "@/lib/types"
 import { cn, isHanzi } from "@/lib/utils"
 import { speakSeq } from "@/lib/tts"
 import { HIGHLIGHT_BG, type Highlight, type HighlightColor } from "@/lib/highlight"
-import type { RhetoricKey } from "@/lib/types"
 
 interface Props {
   sentences: Sentence[]
@@ -20,8 +19,6 @@ interface Props {
   onAddHighlight: (h: { sentenceId: string; tokenStart: number; tokenEnd: number }) => void
   onRemoveHighlight: (id: string) => void
   showExplanation?: boolean
-  onDropRhetoric?: (sentenceId: string, rhetoric: RhetoricKey) => void
-  selectedRhetoric?: RhetoricKey | null
 }
 
 export function ReadingPane({
@@ -36,9 +33,7 @@ export function ReadingPane({
   highlights,
   onAddHighlight,
   onRemoveHighlight,
-  showExplanation = false,
-  onDropRhetoric,
-  selectedRhetoric
+  showExplanation = false
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const hlBySentence = useMemo(() => {
@@ -88,21 +83,6 @@ export function ReadingPane({
     return () => document.removeEventListener("mouseup", onMouseUp)
   }, [onAddHighlight])
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes("rhetoric")) {
-      e.preventDefault()
-      e.dataTransfer.dropEffect = "copy"
-    }
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent, sentenceId: string) => {
-    const rhetoric = e.dataTransfer.getData("rhetoric") as RhetoricKey
-    if (rhetoric && onDropRhetoric) {
-      e.preventDefault()
-      onDropRhetoric(sentenceId, rhetoric)
-    }
-  }, [onDropRhetoric])
-
   return (
     <div
       ref={containerRef}
@@ -115,28 +95,16 @@ export function ReadingPane({
         ) : (
           <span
             key={s.id}
-            className={cn(
-              "inline-block rounded-xl border-2 border-transparent transition-all",
-              "hover:border-pink-300 hover:bg-pink-50/30 dark:hover:border-pink-500/50 dark:hover:bg-pink-900/20"
-            )}
-            onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
-            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); handleDrop(e, s.id) }}
+            className="inline-block rounded-xl border-2 border-transparent transition-all"
           >
             <span
-              onClick={() => {
-                if (selectedRhetoric && onDropRhetoric) {
-                  onDropRhetoric(s.id, selectedRhetoric)
-                } else {
-                  onSentenceClick(s)
-                }
-              }}
+              onClick={() => onSentenceClick(s)}
               className={cn(
                 "group relative mr-1 inline-block cursor-pointer rounded-xl px-1 transition-all hover:-translate-y-[2px]",
                 "hover:bg-sky-400/15 hover:shadow-sm",
                 focusMode && focusId && focusId !== s.id && "opacity-25 blur-[1px]",
                 focusMode && focusId === s.id && "bg-amber-400/20 ring-2 ring-amber-400",
-                speakingId === s.id && "animate-pulse bg-amber-400/30 shadow-lg shadow-amber-500/20 ring-2 ring-amber-400",
-                selectedRhetoric && "ring-2 ring-pink-400 ring-dashed"
+                speakingId === s.id && "animate-pulse bg-amber-400/30 shadow-lg shadow-amber-500/20 ring-2 ring-amber-400"
               )}
             >
               {s.tokens.map((t, ti) => {
@@ -191,17 +159,6 @@ export function ReadingPane({
                 🔊
               </button>
             </span>
-            {s.rhetoric && (
-              <span
-                className={cn(
-                  "mr-2 inline-block translate-y-[-0.35em] rounded-full border px-2 py-0.5 align-middle text-xs",
-                  rhetoricClass(s.rhetoric)
-                )}
-                style={{ fontSize: "0.85rem" }}
-              >
-                {s.rhetoric}
-              </span>
-            )}
             {showExplanation && s.explanation && (
               <span className="ml-2 mr-2 inline-block translate-y-[-0.35em] rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1 align-middle text-xs text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-900/30 dark:text-emerald-300">
                 語譯：{s.explanation}
@@ -212,24 +169,4 @@ export function ReadingPane({
       )}
     </div>
   )
-}
-
-const RHETORIC_BADGE: Record<string, string> = {
-  比喻: "bg-pink-500/15 text-pink-600 border-pink-500/40 dark:text-pink-300",
-  擬人: "bg-emerald-500/15 text-emerald-600 border-emerald-500/40 dark:text-emerald-300",
-  排比: "bg-sky-500/15 text-sky-600 border-sky-500/40 dark:text-sky-300",
-  誇張: "bg-orange-500/15 text-orange-600 border-orange-500/40 dark:text-orange-300",
-  反問: "bg-violet-500/15 text-violet-600 border-violet-500/40 dark:text-violet-300",
-  設問: "bg-cyan-500/15 text-cyan-600 border-cyan-500/40 dark:text-cyan-300",
-  對偶: "bg-yellow-500/15 text-yellow-700 border-yellow-500/40 dark:text-yellow-300",
-  借代: "bg-rose-500/15 text-rose-600 border-rose-500/40 dark:text-rose-300",
-  疊詞: "bg-purple-500/15 text-purple-600 border-purple-500/40 dark:text-purple-300",
-  感嘆: "bg-red-500/15 text-red-600 border-red-500/40 dark:text-red-300",
-  引用: "bg-blue-500/15 text-blue-600 border-blue-500/40 dark:text-blue-300",
-  對比: "bg-teal-500/15 text-teal-600 border-teal-500/40 dark:text-teal-300",
-  聯想: "bg-amber-500/15 text-amber-600 border-amber-500/40 dark:text-amber-300"
-}
-
-function rhetoricClass(key: string) {
-  return RHETORIC_BADGE[key] ?? "bg-slate-500/15 text-slate-600 border-slate-500/40"
 }

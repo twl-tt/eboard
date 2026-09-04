@@ -1,7 +1,5 @@
-import type { RhetoricKey } from "./types"
 import type { CharToken, Sentence } from "./types"
 import { sentencePinyinArray, charPinyin } from "./pinyin"
-import { detectRhetoricBatch } from "./rhetoric"
 
 const HANZI_RE = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/
 
@@ -82,39 +80,24 @@ export function tokenize(sentence: string): CharToken[] {
 export interface TokenOverride {
   ch: string
   py?: string | null
-  rhetoric?: RhetoricKey | null
 }
 
 export function extractOverrides(sentences: Sentence[]): Map<string, TokenOverride> {
-  const map = new Map<string, TokenOverride>()
-  sentences.forEach((s, si) => {
-    if (s.rhetoric) map.set(`${si}:r`, { ch: "", rhetoric: s.rhetoric })
-  })
-  return map
+  return new Map()
 }
 
-export function applyOverrides(sentences: Sentence[], overrides: Map<string, TokenOverride>) {
-  overrides.forEach((v, key) => {
-    const [siStr, tiStr] = key.split(":")
-    const si = Number(siStr)
-    if (si >= sentences.length) return
-    if (tiStr === "r") {
-      sentences[si].rhetoric = v.rhetoric ?? null
-      return
-    }
-  })
+export function applyOverrides(sentences: Sentence[], _overrides: Map<string, TokenOverride>) {
+  void sentences
 }
 
 export async function buildSentences(rawContent: string): Promise<Sentence[]> {
   const parts = splitSentences(rawContent)
   return parts.map((text, i) => {
-    if (!text.trim()) return { id: `p${i}`, text: "", tokens: [], rhetoric: null }
-    const s: Sentence = {
+    if (!text.trim()) return { id: `p${i}`, text: "", tokens: [] }
+    return {
       id: `s${i}`,
       text,
-      tokens: tokenize(text),
-      rhetoric: null
+      tokens: tokenize(text)
     }
-    return s
   })
 }

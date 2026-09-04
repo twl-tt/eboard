@@ -1,22 +1,5 @@
 export type PhoneticMode = "off" | "pinyin" | "jyutping"
 
-export type RhetoricKey =
-  | "比喻"
-  | "擬人"
-  | "排比"
-  | "誇張"
-  | "反問"
-  | "設問"
-  | "對偶"
-  | "借代"
-  | "疊詞"
-  | "感嘆"
-  | "引用"
-  | "對比"
-  | "聯想"
-
-export const RHETORIC_KEYS: RhetoricKey[] = ["比喻", "擬人", "排比", "誇張", "反問", "設問", "對偶", "借代", "疊詞", "感嘆", "引用", "對比", "聯想"]
-
 export interface CharToken {
   ch: string
   py: string | null
@@ -26,7 +9,6 @@ export interface Sentence {
   id: string
   text: string
   tokens: CharToken[]
-  rhetoric: RhetoricKey | null
   explanation?: string
 }
 

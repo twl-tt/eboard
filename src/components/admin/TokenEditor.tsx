@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { Save } from "lucide-react"
-import { Dialog, Select } from "@/components/ui/dialog"
+import { Dialog } from "@/components/ui/dialog"
 import { Input, Label } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import type { ArticleFull, RhetoricKey, Sentence } from "@/lib/types"
-import { RHETORIC_KEYS } from "@/lib/types"
+import type { ArticleFull, Sentence } from "@/lib/types"
 import { cn, isHanzi } from "@/lib/utils"
 
 interface Props {
@@ -23,7 +22,6 @@ export function TokenEditor({ articleId, onClose }: Props) {
   const [article, setArticle] = useState<ArticleFull | null>(null)
   const [sel, setSel] = useState<Selection>({ sentenceIndex: 0, tokenIndex: 0 })
   const [py, setPy] = useState("")
-  const [rhetoric, setRhetoric] = useState<string>("")
   const [saving, setSaving] = useState(false)
 
   async function load() {
@@ -41,13 +39,6 @@ export function TokenEditor({ articleId, onClose }: Props) {
     const t = s.tokens[ti]
     setSel({ sentenceIndex: si, tokenIndex: ti })
     setPy(t.py ?? "")
-    setRhetoric("")
-  }
-
-  function selectSentence(si: number) {
-    setSel({ sentenceIndex: si, tokenIndex: null })
-    setPy("")
-    setRhetoric(article!.sentences[si].rhetoric ?? "")
   }
 
   async function save() {
@@ -58,8 +49,6 @@ export function TokenEditor({ articleId, onClose }: Props) {
       if (sel.tokenIndex !== null) {
         body.tokenIndex = sel.tokenIndex
         if (py.trim()) body.pinyin = py.trim()
-      } else {
-        body.rhetoric = rhetoric === "" ? null : rhetoric
       }
       const res = await fetch(`/api/articles/${article.id}/token`, {
         method: "PATCH",

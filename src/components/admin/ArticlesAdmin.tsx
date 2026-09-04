@@ -5,8 +5,7 @@ import { Plus, Search, FileUp, Pencil, Trash2, Wand2, BookText, Users, FolderTre
 import { Button } from "@/components/ui/button"
 import { Input, Textarea, Label } from "@/components/ui/input"
 import { Dialog, Select, Badge } from "@/components/ui/dialog"
-import type { ArticleFull, ArticleMeta, CategoryTree, RhetoricKey, Sentence } from "@/lib/types"
-import { RHETORIC_KEYS } from "@/lib/types"
+import type { ArticleFull, ArticleMeta, CategoryTree, Sentence } from "@/lib/types"
 import { TokenEditor } from "./TokenEditor"
 
 export function ArticlesAdmin({ categories, refreshCategories }: { categories: CategoryTree[]; refreshCategories: () => void }) {
