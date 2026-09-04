@@ -51,6 +51,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const loadingRef = useRef(false)
   const shapeRef = useRef<any>(null)
   const origRef = useRef<{ x: number; y: number } | null>(null)
+  const resizeRef = useRef<(() => void) | null>(null)
+  const roRef = useRef<ResizeObserver | null>(null)
 
   const [tool, setTool] = useState<CanvasTool>("none")
   const [hlColor, setHlColor] = useState(HL_COLORS[0].rgba)
@@ -144,7 +146,20 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }
 
   useEffect(() => {
-    if (tool === "none") return
+    if (tool === "none") {
+      if (roRef.current) {
+        roRef.current.disconnect()
+        roRef.current = null
+      }
+      fabricRef.current?.dispose()
+      fabricRef.current = null
+      setReady(false)
+      return
+    }
+    if (fabricRef.current) {
+      setReady(true)
+      return
+    }
     let disposed = false
     ;(async () => {
       const mod = await import("fabric")
@@ -157,17 +172,20 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         preserveObjectStacking: true
       })
       fabricRef.current = c
+
       const resize = () => {
-        if (!wrapRef.current) return
+        if (!wrapRef.current || !c) return
         c.setWidth(wrapRef.current.clientWidth)
         c.setHeight(wrapRef.current.clientHeight)
         c.calcOffset()
         c.renderAll()
       }
-      resize()
+      resizeRef.current = resize
+
       window.addEventListener("resize", resize)
       const ro = new ResizeObserver(resize)
       ro.observe(wrapRef.current!)
+      roRef.current = ro
       setReady(true)
 
       const pushHistory = () => {
@@ -244,7 +262,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
     return () => {
       disposed = true
+      if (resizeRef.current) window.removeEventListener("resize", resizeRef.current)
+      if (roRef.current) {
+        roRef.current.disconnect()
+        roRef.current = null
+      }
       fabricRef.current?.dispose()
+      fabricRef.current = null
+      resizeRef.current = null
     }
   }, [tool])
 
