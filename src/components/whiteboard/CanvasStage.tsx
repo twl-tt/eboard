@@ -2,7 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
 import {
-  MousePointer2, Pencil, Highlighter, Eraser, Square, Circle, Type, ImagePlus, Undo2, Redo2, Trash2, Hand
+  MousePointer2, Pencil, Highlighter, Eraser, Square, Circle, Type, ImagePlus, Undo2, Redo2, Trash2, Hand, X, ArrowLeft
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -30,18 +30,20 @@ interface Props {
 }
 
 const HL_COLORS = [
-  { key: "purple", rgba: "rgba(168,85,247,0.6)" },
-  { key: "red", rgba: "rgba(239,68,68,0.6)" },
-  { key: "blue", rgba: "rgba(59,130,246,0.6)" }
+  { key: "yellow", rgba: "rgba(250,204,21,0.5)" },
+  { key: "green", rgba: "rgba(74,222,128,0.5)" },
+  { key: "pink", rgba: "rgba(244,114,182,0.5)" },
+  { key: "blue", rgba: "rgba(96,165,250,0.5)" },
+  { key: "orange", rgba: "rgba(249,115,22,0.5)" }
 ]
 
 const PEN_COLORS = [
-  { key: "black", color: "#111827" },
-  { key: "white", color: "#f8fafc" },
-  { key: "red", color: "#ef4444" },
-  { key: "blue", color: "#3b82f6" },
-  { key: "green", color: "#22c55e" },
-  { key: "yellow", color: "#eab308" }
+  { key: "black", color: "#1f2937" },
+  { key: "white", color: "#f9fafb" },
+  { key: "red", color: "#dc2626" },
+  { key: "blue", color: "#2563eb" },
+  { key: "green", color: "#16a34a" },
+  { key: "orange", color: "#ea580c" }
 ]
 
 const TOOLS: { tool: CanvasTool; icon: React.ReactNode; label: string }[] = [
@@ -50,40 +52,46 @@ const TOOLS: { tool: CanvasTool; icon: React.ReactNode; label: string }[] = [
   { tool: "pen", icon: <Pencil className="h-5 w-5" />, label: "畫筆" },
   { tool: "hl", icon: <Highlighter className="h-5 w-5" />, label: "螢光筆" },
   { tool: "eraser", icon: <Eraser className="h-5 w-5" />, label: "橡皮擦" },
-  { tool: "rect", icon: <Square className="h-5 w-5" />, label: "矩形" },
-  { tool: "ellipse", icon: <Circle className="h-5 w-5" />, label: "橢圓" },
+  { tool: "rect", icon: <Square className="h-5 w-5" />, label: "方形" },
+  { tool: "ellipse", icon: <Circle className="h-5 w-5" />, label: "圓形" },
   { tool: "text", icon: <Type className="h-5 w-5" />, label: "文字" }
 ]
 
 export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null, forceActive = false, canvasTopOffset = 0 }, ref) {
-  const canvasWrapRef = useRef<HTMLDivElement>(null)
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
+  const fabricLibRef = useRef<any>(null)
   const historyRef = useRef<string[]>([])
   const historyIndexRef = useRef(-1)
   const isLoadingRef = useRef(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const fabricLibRef = useRef<any>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const toolRef = useRef<CanvasTool>("select")
+  const penColorRef = useRef(PEN_COLORS[0].color)
+  const hlColorRef = useRef(HL_COLORS[0].rgba)
 
-  const [active, setActive] = useState(false)
+  const [isWhiteboard, setIsWhiteboard] = useState(false)
   const [tool, setTool] = useState<CanvasTool>("select")
   const [penColor, setPenColor] = useState(PEN_COLORS[0].color)
   const [hlColor, setHlColor] = useState(HL_COLORS[0].rgba)
   const [initialized, setInitialized] = useState(false)
   const [showColorPicker, setShowColorPicker] = useState(false)
-  const [showHlColors, setShowHlColors] = useState(false)
 
-  const initCanvas = useCallback(async () => {
-    if (fabricRef.current) return
-    if (!canvasElRef.current) return
+  toolRef.current = tool
+  penColorRef.current = penColor
+  hlColorRef.current = hlColor
 
-    const mod = await import("fabric")
-    const fabric: any = (mod as any).fabric ?? (mod as any).default ?? mod
-    ;(window as any).fabric = fabric
-    fabricLibRef.current = fabric
+  const initCanvas = useCallback(() => {
+    if (fabricRef.current || !canvasElRef.current || !containerRef.current) return
+
+    const container = containerRef.current
+    const fabric = fabricLibRef.current
+    if (!fabric) return
+
     const canvas = new fabric.Canvas(canvasElRef.current, {
-      width: canvasWrapRef.current?.clientWidth || 800,
-      height: canvasWrapRef.current?.clientHeight || 600,
+      width: container.clientWidth,
+      height: container.clientHeight,
+      backgroundColor: dark ? "#1f1f1f" : "#ffffff",
       selection: true,
       preserveObjectStacking: true
     })
@@ -104,117 +112,192 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     canvas.on("object:modified", saveHistory)
     canvas.on("object:removed", saveHistory)
 
-    setInitialized(true)
-  }, [onDirty])
-
-  useEffect(() => {
-    if (active && !fabricRef.current) {
-      initCanvas()
-    }
-  }, [active, initCanvas])
-
-  useEffect(() => {
-    if (!initialized || !fabricRef.current) return
-    const canvas = fabricRef.current
-
-    canvas.isDrawingMode = false
-    canvas.selection = tool === "select"
-    canvas.defaultCursor = tool === "pan" ? "grab" : "crosshair"
-
-    canvas.forEachObject((obj: any) => {
-      obj.selectable = tool === "select" || tool === "pan"
-      obj.evented = tool === "select" || tool === "pan" || tool === "eraser"
+    canvas.on("mouse:down", (opt: any) => {
+      if (toolRef.current === "eraser") {
+        const target = canvas.findTarget(opt.e)
+        if (target && target !== canvas.backgroundImage) {
+          canvas.remove(target)
+        }
+      }
     })
 
-    if (tool === "pen") {
+    canvas.on("path:created", (opt: any) => {
+      saveHistory()
+    })
+
+    setInitialized(true)
+  }, [dark, onDirty])
+
+  const setupTool = useCallback(() => {
+    const canvas = fabricRef.current
+    const fabric = fabricLibRef.current
+    if (!canvas || !fabric) return
+
+    canvas.isDrawingMode = false
+    canvas.selection = toolRef.current === "select"
+    canvas.defaultCursor = toolRef.current === "pan" ? "grab" : "default"
+
+    canvas.forEachObject((obj: any) => {
+      if (obj._isDrawingShape || obj._isSticker) return
+      obj.selectable = toolRef.current === "select" || toolRef.current === "pan"
+      obj.evented = toolRef.current === "select" || toolRef.current === "pan" || toolRef.current === "eraser"
+    })
+
+    if (toolRef.current === "pen") {
       canvas.isDrawingMode = true
       canvas.selection = false
-      const brush = new fabricLibRef.current.PencilBrush(canvas)
-      brush.color = penColor
+      const brush = new fabric.PencilBrush(canvas)
+      brush.color = penColorRef.current
       brush.width = 4
       canvas.freeDrawingBrush = brush
     }
 
-    if (tool === "hl") {
+    if (toolRef.current === "hl") {
       canvas.isDrawingMode = true
       canvas.selection = false
-      const brush = new fabricLibRef.current.PencilBrush(canvas)
-      brush.color = hlColor
-      brush.width = 28
-      brush.shadow = new fabricLibRef.current.Shadow({
-        color: hlColor,
-        blur: 15,
-        offsetX: 0,
-        offsetY: 0
-      })
+      const brush = new fabric.PencilBrush(canvas)
+      brush.color = hlColorRef.current
+      brush.width = 30
       canvas.freeDrawingBrush = brush
     }
 
-    if (tool === "eraser") {
-      canvas.defaultCursor = "cell"
+    if (toolRef.current === "eraser") {
+      canvas.defaultCursor = "crosshair"
     }
 
     canvas.renderAll()
-  }, [tool, penColor, hlColor, initialized])
+  }, [])
+
+  useEffect(() => {
+    if (!isWhiteboard) return
+
+    const init = async () => {
+      if (fabricLibRef.current) {
+        if (!fabricRef.current) {
+          initCanvas()
+        }
+        return
+      }
+      const mod = await import("fabric")
+      const f: any = (mod as any).fabric ?? (mod as any).default ?? mod
+      fabricLibRef.current = f
+      ;(window as any).fabric = f
+      initCanvas()
+    }
+
+    init()
+  }, [isWhiteboard, initCanvas])
+
+  useEffect(() => {
+    if (!initialized) return
+    setupTool()
+  }, [tool, initialized, setupTool])
+
+  useEffect(() => {
+    if (!initialized) return
+    setupTool()
+  }, [hlColor, setupTool])
+
+  useEffect(() => {
+    if (!initialized) return
+    setupTool()
+  }, [penColor, setupTool])
+
+  useEffect(() => {
+    if (!initialized || !containerRef.current) return
+
+    const handleResize = () => {
+      if (!fabricRef.current || !containerRef.current) return
+      fabricRef.current.setDimensions({
+        width: containerRef.current.clientWidth,
+        height: containerRef.current.clientHeight
+      })
+    }
+
+    const ro = new ResizeObserver(handleResize)
+    ro.observe(containerRef.current)
+
+    return () => ro.disconnect()
+  }, [initialized])
 
   useEffect(() => {
     if (!initialized) return
     const canvas = fabricRef.current
-    if (!canvas) return
+    const fabric = fabricLibRef.current
+    if (!canvas || !fabric) return
 
-    const handleMouseDown = (e: any) => {
-      if (tool !== "rect" && tool !== "ellipse") return
-      const pointer = canvas.getPointer(e.e)
+    let isDrawing = false
+    let startX = 0, startY = 0
+
+    const handleMouseDown = (opt: any) => {
+      if (toolRef.current !== "rect" && toolRef.current !== "ellipse") return
+      if (opt.target) return
+
+      isDrawing = true
+      const pointer = canvas.getPointer(opt.e)
+      startX = pointer.x
+      startY = pointer.y
+
       const common = {
-        left: pointer.x,
-        top: pointer.y,
+        left: startX,
+        top: startY,
         width: 1,
         height: 1,
         fill: "transparent",
-        stroke: penColor,
+        stroke: penColorRef.current,
         strokeWidth: 3
       }
-      const shape = tool === "rect"
-        ? new fabricLibRef.current.Rect(common)
-        : new fabricLibRef.current.Ellipse({ ...common, rx: 1, ry: 1 })
+
+      const shape = toolRef.current === "rect"
+        ? new fabric.Rect(common)
+        : new fabric.Ellipse({ ...common, rx: 1, ry: 1 })
       ;(shape as any)._isDrawingShape = true
       canvas.add(shape)
     }
 
-    const handleMouseMove = (e: any) => {
-      if (tool !== "rect" && tool !== "ellipse") return
-      const activeShape = canvas.getObjects().find((o: any) => o._isDrawingShape)
-      if (!activeShape) return
-      const pointer = canvas.getPointer(e.e)
-      const left = Math.min(activeShape.left!, pointer.x)
-      const top = Math.min(activeShape.top!, pointer.y)
-      const width = Math.abs(pointer.x - activeShape.left!)
-      const height = Math.abs(pointer.y - activeShape.top!)
+    const handleMouseMove = (opt: any) => {
+      if (!isDrawing) return
+      if (toolRef.current !== "rect" && toolRef.current !== "ellipse") return
 
-      if (tool === "rect") {
-        activeShape.set({ left, top, width, height })
+      const pointer = canvas.getPointer(opt.e)
+      const shapes = canvas.getObjects().filter((o: any) => o._isDrawingShape)
+      const shape = shapes[shapes.length - 1]
+      if (!shape) return
+
+      const left = Math.min(startX, pointer.x)
+      const top = Math.min(startY, pointer.y)
+      const width = Math.abs(pointer.x - startX)
+      const height = Math.abs(pointer.y - startY)
+
+      if (toolRef.current === "rect") {
+        shape.set({ left, top, width, height })
       } else {
-        activeShape.set({ left, top, rx: width / 2, ry: height / 2 })
+        shape.set({ left, top, rx: width / 2, ry: height / 2 })
       }
       canvas.renderAll()
     }
 
-    const handleMouseUp = (e: any) => {
-      if (tool !== "rect" && tool !== "ellipse") return
-      const activeShape = canvas.getObjects().find((o: any) => o._isDrawingShape)
-      if (!activeShape) return
-      ;(activeShape as any)._isDrawingShape = false
-      activeShape.setCoords()
+    const handleMouseUp = () => {
+      if (!isDrawing) return
+      isDrawing = false
+
+      const shapes = canvas.getObjects().filter((o: any) => o._isDrawingShape)
+      if (shapes.length > 0) {
+        const shape = shapes[shapes.length - 1]
+        ;(shape as any)._isDrawingShape = false
+        shape.setCoords()
+      }
     }
 
-    const handleDblClick = (e: any) => {
-      if (tool !== "text") return
-      const pointer = canvas.getPointer(e.e)
-      const text = new fabricLibRef.current.IText("", {
+    const handleDblClick = (opt: any) => {
+      if (toolRef.current !== "text") return
+
+      const pointer = canvas.getPointer(opt.e)
+      const text = new fabric.IText("", {
         left: pointer.x,
         top: pointer.y,
-        fontSize: 24,
-        fill: penColor,
+        fontSize: 28,
+        fill: penColorRef.current,
         fontFamily: "system-ui, sans-serif"
       })
       canvas.add(text)
@@ -233,42 +316,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.off("mouse:up", handleMouseUp)
       canvas.off("mouse:dblclick", handleDblClick)
     }
-  }, [tool, penColor, initialized])
-
-  useEffect(() => {
-    if (!initialized) return
-    const canvas = fabricRef.current
-    if (!canvas) return
-
-    const handleEraser = (e: any) => {
-      if (tool !== "eraser") return
-      const target = canvas.findTarget(e.e)
-      if (target) canvas.remove(target)
-    }
-
-    canvas.on("mouse:down", handleEraser)
-    return () => canvas.off("mouse:down", handleEraser)
-  }, [tool, initialized])
-
-  const handleResize = useCallback(() => {
-    if (!fabricRef.current || !canvasWrapRef.current) return
-    fabricRef.current.setDimensions({
-      width: canvasWrapRef.current.clientWidth,
-      height: canvasWrapRef.current.clientHeight
-    })
-    fabricRef.current.renderAll()
-  }, [])
-
-  useEffect(() => {
-    if (!initialized) return
-    window.addEventListener("resize", handleResize)
-    const ro = new ResizeObserver(handleResize)
-    if (canvasWrapRef.current) ro.observe(canvasWrapRef.current)
-    return () => {
-      window.removeEventListener("resize", handleResize)
-      ro.disconnect()
-    }
-  }, [initialized, handleResize])
+  }, [initialized, dark])
 
   useImperativeHandle(ref, (): CanvasApi => ({
     toJSON: () => {
@@ -292,7 +340,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     isEmpty: () => (fabricRef.current?.getObjects().length ?? 0) === 0,
     clear: () => {
       if (!fabricRef.current) return
-      fabricRef.current.getObjects().forEach((o: any) => fabricRef.current.remove(o))
+      fabricRef.current.getObjects().forEach((o: any) => {
+        if (!o._isDrawingShape) fabricRef.current.remove(o)
+      })
       fabricRef.current.renderAll()
     },
     undo: () => {
@@ -320,185 +370,174 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       return true
     },
     addSticker: (text: string, color = "#a78bfa") => {
-      if (!fabricRef.current) return
-      const { fabric } = window as any
-      if (!fabric) return
-      const count = fabricRef.current.getObjects().length
-      const x = 60 + (count % 8) * 40
-      const y = 60 + (count % 8) * 40
+      if (!fabricRef.current || !fabricLibRef.current) return
+      const fabric = fabricLibRef.current
+      const canvas = fabricRef.current
+      const count = canvas.getObjects().length
+      const x = 80 + (count % 6) * 50
+      const y = 80 + (count % 6) * 50
       const bg = new fabric.Rect({
-        left: 0, top: 0, width: 120, height: 44, rx: 12, ry: 12,
-        fill: color, stroke: "rgba(255,255,255,0.5)", strokeWidth: 2
+        left: 0, top: 0, width: 130, height: 48, rx: 14, ry: 14,
+        fill: color, stroke: "rgba(255,255,255,0.6)", strokeWidth: 2
       })
       const label = new fabric.Text(text, {
-        left: 60, top: 22, originX: "center", originY: "center",
-        fontSize: 16, fontFamily: "system-ui, sans-serif", fontWeight: "bold",
-        fill: "#ffffff"
+        left: 65, top: 24, originX: "center", originY: "center",
+        fontSize: 18, fontFamily: "system-ui", fontWeight: "bold", fill: "#ffffff"
       })
-      const group = new fabric.Group([bg, label], {
-        left: x, top: y,
-        selectable: true, evented: true
-      })
+      const group = new fabric.Group([bg, label], { left: x, top: y, selectable: true })
       ;(group as any)._isSticker = true
-      fabricRef.current.add(group)
-      fabricRef.current.setActiveObject(group)
-      fabricRef.current.renderAll()
+      canvas.add(group)
+      canvas.setActiveObject(group)
+      canvas.renderAll()
     }
   }), [])
 
-  const toggleCanvas = () => {
-    setActive(prev => !prev)
-    setTool("select")
-  }
+  const enterWhiteboard = () => setIsWhiteboard(true)
+  const exitWhiteboard = () => setIsWhiteboard(false)
 
   const uploadImage = async (file: File) => {
+    if (!fabricRef.current || !fabricLibRef.current) return
     const fd = new FormData()
     fd.append("file", file)
     const res = await fetch("/api/upload", { method: "POST", body: fd })
     const data = await res.json()
-    if (!res.ok || !data.url || !fabricRef.current) return
-    const { fabric } = await import("fabric")
+    if (!res.ok || !data.url) return
+    const { fabric } = window as any
     fabric.Image.fromURL(data.url, (img: any) => {
-      const scale = Math.min(400 / img.width, 300 / img.height, 1)
+      const scale = Math.min(500 / img.width, 400 / img.height, 1)
       img.scale(scale)
-      img.set({ left: 50, top: 50 })
+      img.set({ left: 100, top: 100 })
       fabricRef.current.add(img)
       fabricRef.current.setActiveObject(img)
       fabricRef.current.renderAll()
     })
   }
 
-  return (
-    <div className="absolute inset-0 pointer-events-none">
-      <div
-        ref={canvasWrapRef}
-        className={cn(
-          "absolute inset-0 overflow-hidden rounded-3xl transition-opacity duration-200",
-          active ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        style={{ zIndex: 30, background: dark ? "#1a1a1a" : "#ffffff" }}
-      >
-        <canvas ref={canvasElRef} />
-      </div>
-
-      <div className="pointer-events-auto fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-black/10 bg-white/90 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-black/80">
+  if (!isWhiteboard) {
+    return (
+      <div className="pointer-events-auto fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95">
         <button
-          onClick={toggleCanvas}
-          className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-xl transition-all",
-            active ? "bg-red-500 text-white hover:bg-red-600" : "bg-sky-500 text-white hover:bg-sky-600"
-          )}
-          title={active ? "關閉畫板" : "開啟畫板"}
+          onClick={enterWhiteboard}
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 px-5 py-2.5 text-white shadow-lg shadow-indigo-500/40 transition-all hover:scale-105"
         >
-          {active ? <Trash2 className="h-5 w-5" /> : <Pencil className="h-5 w-5" />}
+          <Pencil className="h-5 w-5" />
+          <span className="font-semibold">白板模式</span>
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-[100] bg-white dark:bg-[#1f1f1f]"
+    >
+      <canvas ref={canvasElRef} />
+
+      <div className="pointer-events-auto absolute left-1/2 top-4 z-50 flex -translate-x-1/2 items-center gap-3 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95">
+        <button
+          onClick={exitWhiteboard}
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
+          title="返回"
+        >
+          <ArrowLeft className="h-5 w-5" />
         </button>
 
-        {active && (
-          <>
-            <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
+        <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
 
-            {TOOLS.map((t) => (
-              <button
-                key={t.tool}
-                onClick={() => setTool(t.tool)}
-                className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-105",
-                  tool === t.tool
-                    ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
-                    : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
-                )}
-                title={t.label}
-              >
-                {t.icon}
-              </button>
-            ))}
+        {TOOLS.map((t) => (
+          <button
+            key={t.tool}
+            onClick={() => setTool(t.tool)}
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-110",
+              tool === t.tool
+                ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
+                : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
+            )}
+            title={t.label}
+          >
+            {t.icon}
+          </button>
+        ))}
 
-            {(tool === "pen" || tool === "rect" || tool === "ellipse" || tool === "text") && (
-              <>
-                <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
-                <div className="relative">
+        <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+
+        {(tool === "pen" || tool === "rect" || tool === "ellipse" || tool === "text") && (
+          <div className="relative">
+            <button
+              onClick={() => setShowColorPicker(!showColorPicker)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-slate-300 transition-all hover:scale-110"
+              style={{ backgroundColor: penColor }}
+              title="顏色"
+            />
+            {showColorPicker && (
+              <div className="absolute top-full left-1/2 mt-2 flex -translate-x-1/2 gap-1.5 rounded-xl bg-white p-2 shadow-xl dark:bg-slate-800">
+                {PEN_COLORS.map((c) => (
                   <button
-                    onClick={() => {
-                      setShowColorPicker(!showColorPicker)
-                      setShowHlColors(false)
-                    }}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-transparent hover:border-sky-500"
-                    style={{ backgroundColor: penColor }}
-                    title="顏色"
+                    key={c.key}
+                    onClick={() => { setPenColor(c.color); setShowColorPicker(false) }}
+                    className={cn(
+                      "h-8 w-8 rounded-full border-2 border-white shadow transition-all hover:scale-110",
+                      penColor === c.color ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                    )}
+                    style={{ backgroundColor: c.color }}
                   />
-                  {showColorPicker && (
-                    <div className="absolute bottom-full left-1/2 mb-2 flex -translate-x-1/2 gap-1 rounded-xl bg-white p-2 shadow-xl dark:bg-slate-800">
-                      {PEN_COLORS.map((c) => (
-                        <button
-                          key={c.key}
-                          onClick={() => { setPenColor(c.color); setShowColorPicker(false) }}
-                          className={cn(
-                            "h-7 w-7 rounded-full border-2 border-white shadow",
-                            penColor === c.color ? "ring-2 ring-sky-500 ring-offset-2" : ""
-                          )}
-                          style={{ backgroundColor: c.color }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
+                ))}
+              </div>
             )}
-
-            {tool === "hl" && (
-              <>
-                <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
-                <div className="relative flex gap-1">
-                  {HL_COLORS.map((c) => (
-                    <button
-                      key={c.key}
-                      onClick={() => setHlColor(c.rgba)}
-                      className={cn(
-                        "h-8 w-8 rounded-full border-2 border-white shadow",
-                        hlColor === c.rgba ? "ring-2 ring-sky-500 ring-offset-2" : ""
-                      )}
-                      style={{ backgroundColor: c.rgba }}
-                    />
-                  ))}
-                </div>
-              </>
-            )}
-
-            <div className="mx-1 h-8 w-px bg-black/10 dark:bg-white/10" />
-
-            <button
-              onClick={() => { (ref as any).current?.undo() }}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-              title="復原"
-            >
-              <Undo2 className="h-5 w-5" />
-            </button>
-
-            <button
-              onClick={() => { (ref as any).current?.redo() }}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-              title="重做"
-            >
-              <Redo2 className="h-5 w-5" />
-            </button>
-
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
-              title="插入圖片"
-            >
-              <ImagePlus className="h-5 w-5" />
-            </button>
-
-            <button
-              onClick={() => { (ref as any).current?.clear() }}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-              title="清空"
-            >
-              <Trash2 className="h-5 w-5" />
-            </button>
-          </>
+          </div>
         )}
+
+        {tool === "hl" && (
+          <div className="flex gap-1.5">
+            {HL_COLORS.map((c) => (
+              <button
+                key={c.key}
+                onClick={() => setHlColor(c.rgba)}
+                className={cn(
+                  "h-9 w-9 rounded-full border-2 border-white shadow transition-all hover:scale-110",
+                  hlColor === c.rgba ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                )}
+                style={{ backgroundColor: c.rgba }}
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+
+        <button
+          onClick={() => (ref as any).current?.undo()}
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          title="復原"
+        >
+          <Undo2 className="h-5 w-5" />
+        </button>
+
+        <button
+          onClick={() => (ref as any).current?.redo()}
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          title="重做"
+        >
+          <Redo2 className="h-5 w-5" />
+        </button>
+
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          title="插入圖片"
+        >
+          <ImagePlus className="h-5 w-5" />
+        </button>
+
+        <button
+          onClick={() => (ref as any).current?.clear()}
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+          title="清空"
+        >
+          <Trash2 className="h-5 w-5" />
+        </button>
       </div>
 
       <input
