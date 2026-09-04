@@ -266,12 +266,19 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }
 
   return (
-    <div className={cn("absolute inset-0 z-20", !active && "pointer-events-none")} data-article={articleId}>
-      <div ref={wrapRef} className={cn("absolute inset-0 overflow-hidden rounded-3xl", active && "inset-ring-2 inset-ring-indigo-500/50")}>
+    <div className="absolute inset-0 z-20" data-article={articleId}>
+      <div
+        ref={wrapRef}
+        className={cn(
+          "absolute inset-0 overflow-hidden rounded-3xl",
+          active ? "pointer-events-auto" : "pointer-events-none",
+          active && "inset-ring-2 inset-ring-indigo-500/50"
+        )}
+      >
         <canvas ref={canvasElRef} />
       </div>
 
-      <div className="pointer-events-auto absolute left-3 top-3 flex max-w-[92%] flex-wrap items-center gap-1.5 rounded-2xl border border-white/60 bg-white/85 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/85">
+      <div className="pointer-events-auto absolute left-3 top-3 z-10 flex max-w-[92%] flex-wrap items-center gap-1.5 rounded-2xl border border-white/60 bg-white/85 p-1.5 shadow-xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/85">
         {TOOLS.map((t) => (
           <button
             key={t.tool}
