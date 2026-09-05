@@ -452,7 +452,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             ? (dark ? "#1f1f1f" : "#ffffff")
             : "transparent"
         }}
-      >
+      />
+      {canvasMode !== "hidden" && (
         <div className={toolbarClasses}>
             <button
               onClick={cycleMode}
@@ -566,9 +567,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
               <Trash2 className="h-5 w-5" />
             </button>
           </div>
+      )}
 
         {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full pointer-events-auto" />}
-      </div>
 
       <input
         ref={fileRef}
