@@ -419,14 +419,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const isActive = canvasMode !== "hidden"
 
   const containerClasses = cn(
-    "absolute inset-0 transition-all duration-300",
+    "absolute inset-0 transition-all duration-300 z-40",
     canvasMode === "hidden" && "opacity-0 pointer-events-none",
     canvasMode === "overlay" && "",
     canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none overflow-hidden"
   )
 
   const toolbarClasses = cn(
-    "flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95 mx-auto w-fit",
+    "flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95 mx-auto w-fit pointer-events-auto",
     canvasMode === "overlay" && "fixed top-2 left-1/2 -translate-x-1/2 z-[9999]",
     canvasMode === "fullscreen" && "absolute left-1/2 -translate-x-1/2 top-4 z-[9999]"
   )
@@ -556,7 +556,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             </button>
           </div>
 
-        {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full" />}
+        {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full pointer-events-auto" />}
       </div>
 
       <input
