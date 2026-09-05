@@ -311,6 +311,7 @@ export default function WhiteboardShell() {
 
   return (
     <div
+      ref={shellRef}
       className={cn(
         "relative flex min-h-screen flex-col text-slate-900 transition-colors",
         "bg-gradient-to-br from-sky-50 via-white to-violet-50",
@@ -560,11 +561,14 @@ export default function WhiteboardShell() {
       <main className="relative z-10 flex-1 px-3 pb-32 pt-3">
         {mode === "read" && !article && (
           <div className="flex h-[calc(100vh-180px)] gap-3">
-              <div ref={readingRef} className="flex-1 rounded-3xl bg-slate-800 shadow-2xl overflow-hidden">
+              <div ref={readingRef} className={cn(
+                "flex-1 rounded-3xl shadow-2xl overflow-hidden transition-colors",
+                boardMode === "blackboard" ? "bg-slate-900" : boardMode === "whiteboard" ? "bg-white" : "bg-slate-800"
+              )}>
               <CanvasStage
                 ref={canvasApiRef}
                 articleId=""
-                dark={true}
+                dark={boardMode === "blackboard"}
                 containerRef={readingRef}
               />
             </div>
