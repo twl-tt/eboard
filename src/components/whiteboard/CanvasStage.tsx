@@ -197,11 +197,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
     const handleResize = () => {
       if (!fabricRef.current || !containerRef.current) return
+      const el = containerRef.current
       fabricRef.current.setDimensions({
-        width: containerRef.current.clientWidth,
-        height: containerRef.current.clientHeight
+        width: el.scrollWidth,
+        height: el.scrollHeight
       })
     }
+
+    handleResize()
 
     const ro = new ResizeObserver(handleResize)
     ro.observe(containerRef.current)
