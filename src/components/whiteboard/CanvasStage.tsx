@@ -452,124 +452,124 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             ? (dark ? "#1f1f1f" : "#ffffff")
             : "transparent"
         }}
-      />
+      >
+        {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full" />}
+      </div>
       {canvasMode !== "hidden" && (
         <div className={toolbarClasses}>
+          <button
+            onClick={cycleMode}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white transition-all hover:bg-sky-600 hover:scale-105"
+            title={canvasMode === "overlay" ? "全螢幕" : "返回"}
+          >
+            {canvasMode === "overlay" ? <Maximize2 className="h-5 w-5" /> : <Minimize2 className="h-5 w-5" />}
+          </button>
+
+          <button
+            onClick={() => setCanvasMode("hidden")}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
+            title="隱藏"
+          >
+            <EyeOff className="h-5 w-5" />
+          </button>
+
+          <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+
+          {TOOLS.map((t) => (
             <button
-              onClick={cycleMode}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white transition-all hover:bg-sky-600 hover:scale-105"
-              title={canvasMode === "overlay" ? "全螢幕" : "返回"}
+              key={t.tool}
+              onClick={() => setTool(t.tool)}
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-110",
+                tool === t.tool
+                  ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
+                  : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
+              )}
+              title={t.label}
             >
-              {canvasMode === "overlay" ? <Maximize2 className="h-5 w-5" /> : <Minimize2 className="h-5 w-5" />}
+              {t.icon}
             </button>
+          ))}
 
-            <button
-              onClick={() => setCanvasMode("hidden")}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
-              title="隱藏"
-            >
-              <EyeOff className="h-5 w-5" />
-            </button>
+          <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
 
-            <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
-
-            {TOOLS.map((t) => (
+          {(tool === "pen" || tool === "rect" || tool === "ellipse" || tool === "text") && (
+            <div className="relative">
               <button
-                key={t.tool}
-                onClick={() => setTool(t.tool)}
-                className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:scale-110",
-                  tool === t.tool
-                    ? "bg-gradient-to-br from-sky-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/40"
-                    : "text-slate-600 hover:bg-sky-500/10 dark:text-slate-300 dark:hover:bg-sky-400/15"
-                )}
-                title={t.label}
-              >
-                {t.icon}
-              </button>
-            ))}
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-slate-300 transition-all hover:scale-110"
+                style={{ backgroundColor: penColor }}
+                title="顏色"
+              />
+              {showColorPicker && (
+                <div className="absolute top-full left-1/2 mt-2 flex -translate-x-1/2 gap-1.5 rounded-xl bg-white p-2 shadow-xl dark:bg-slate-800">
+                  {PEN_COLORS.map((c) => (
+                    <button
+                      key={c.key}
+                      onClick={() => { setPenColor(c.color); setShowColorPicker(false) }}
+                      className={cn(
+                        "h-8 w-8 rounded-full border-2 border-white shadow transition-all hover:scale-110",
+                        penColor === c.color ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                      )}
+                      style={{ backgroundColor: c.color }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-            <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
-
-            {(tool === "pen" || tool === "rect" || tool === "ellipse" || tool === "text") && (
-              <div className="relative">
+          {tool === "hl" && (
+            <div className="flex gap-1.5">
+              {HL_COLORS.map((c) => (
                 <button
-                  onClick={() => setShowColorPicker(!showColorPicker)}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-slate-300 transition-all hover:scale-110"
-                  style={{ backgroundColor: penColor }}
-                  title="顏色"
+                  key={c.key}
+                  onClick={() => setHlColor(c.rgba)}
+                  className={cn(
+                    "h-9 w-9 rounded-full border-2 border-white shadow transition-all hover:scale-110",
+                    hlColor === c.rgba ? "ring-2 ring-sky-500 ring-offset-2" : ""
+                  )}
+                  style={{ backgroundColor: c.rgba }}
                 />
-                {showColorPicker && (
-                  <div className="absolute top-full left-1/2 mt-2 flex -translate-x-1/2 gap-1.5 rounded-xl bg-white p-2 shadow-xl dark:bg-slate-800">
-                    {PEN_COLORS.map((c) => (
-                      <button
-                        key={c.key}
-                        onClick={() => { setPenColor(c.color); setShowColorPicker(false) }}
-                        className={cn(
-                          "h-8 w-8 rounded-full border-2 border-white shadow transition-all hover:scale-110",
-                          penColor === c.color ? "ring-2 ring-sky-500 ring-offset-2" : ""
-                        )}
-                        style={{ backgroundColor: c.color }}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+              ))}
+            </div>
+          )}
 
-            {tool === "hl" && (
-              <div className="flex gap-1.5">
-                {HL_COLORS.map((c) => (
-                  <button
-                    key={c.key}
-                    onClick={() => setHlColor(c.rgba)}
-                    className={cn(
-                      "h-9 w-9 rounded-full border-2 border-white shadow transition-all hover:scale-110",
-                      hlColor === c.rgba ? "ring-2 ring-sky-500 ring-offset-2" : ""
-                    )}
-                    style={{ backgroundColor: c.rgba }}
-                  />
-                ))}
-              </div>
-            )}
+          <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
 
-            <div className="h-8 w-px bg-black/10 dark:bg-white/10" />
+          <button
+            onClick={() => (ref as any).current?.undo()}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            title="復原"
+          >
+            <Undo2 className="h-5 w-5" />
+          </button>
 
-            <button
-              onClick={() => (ref as any).current?.undo()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-              title="復原"
-            >
-              <Undo2 className="h-5 w-5" />
-            </button>
+          <button
+            onClick={() => (ref as any).current?.redo()}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            title="重做"
+          >
+            <Redo2 className="h-5 w-5" />
+          </button>
 
-            <button
-              onClick={() => (ref as any).current?.redo()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-              title="重做"
-            >
-              <Redo2 className="h-5 w-5" />
-            </button>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            title="插入圖片"
+          >
+            <ImagePlus className="h-5 w-5" />
+          </button>
 
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-              title="插入圖片"
-            >
-              <ImagePlus className="h-5 w-5" />
-            </button>
-
-            <button
-              onClick={() => (ref as any).current?.clear()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-              title="清空"
-            >
-              <Trash2 className="h-5 w-5" />
-            </button>
-          </div>
+          <button
+            onClick={() => (ref as any).current?.clear()}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+            title="清空"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+        </div>
       )}
-
-        {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full pointer-events-auto" />}
 
       <input
         ref={fileRef}
