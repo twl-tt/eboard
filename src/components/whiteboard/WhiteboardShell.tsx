@@ -641,7 +641,7 @@ export default function WhiteboardShell() {
                 e.preventDefault()
                 setStickerBarOpen(false)
               }}
-              className="relative overflow-hidden rounded-3xl bg-slate-50 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-700/60"
+              className="relative h-full overflow-hidden rounded-3xl bg-slate-50 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-700/60"
             >
               <CanvasStage
                 ref={canvasApiRef}
