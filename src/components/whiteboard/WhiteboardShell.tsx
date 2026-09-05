@@ -585,12 +585,8 @@ export default function WhiteboardShell() {
                 }}
                 onDrop={(e) => {
                   const tagId = e.dataTransfer.getData("application/x-sticker")
-                  if (!tagId || !canvasApiRef.current) return
+                  if (!tagId) return
                   e.preventDefault()
-                  const tag = tags.find((t) => t.id === tagId)
-                  if (!tag) return
-                  const COLORS: Record<string, string> = { violet: "#a78bfa", rose: "#fb7185", amber: "#fbbf24", emerald: "#34d399", sky: "#38bdf8", fuchsia: "#e879f9" }
-                  canvasApiRef.current.addSticker(tag.name, COLORS[tag.color] ?? "#a78bfa")
                   setStickerBarOpen(false)
                 }}
               >
@@ -641,12 +637,8 @@ export default function WhiteboardShell() {
               }}
               onDrop={(e) => {
                 const tagId = e.dataTransfer.getData("application/x-sticker")
-                if (!tagId || !canvasApiRef.current) return
+                if (!tagId) return
                 e.preventDefault()
-                const tag = tags.find((t) => t.id === tagId)
-                if (!tag) return
-                const COLORS: Record<string, string> = { violet: "#a78bfa", rose: "#fb7185", amber: "#fbbf24", emerald: "#34d399", sky: "#38bdf8", fuchsia: "#e879f9" }
-                canvasApiRef.current.addSticker(tag.name, COLORS[tag.color] ?? "#a78bfa")
                 setStickerBarOpen(false)
               }}
               className="relative overflow-hidden rounded-3xl bg-slate-50 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-700/60"
@@ -655,10 +647,6 @@ export default function WhiteboardShell() {
                 ref={canvasApiRef}
                 articleId={article.id}
                 dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
-                followsText={false}
-                scrollContainerRef={null}
-                forceActive={boardMode !== "normal"}
-                canvasTopOffset={0}
               />
             </div>
           </div>
