@@ -419,7 +419,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const isActive = canvasMode !== "hidden"
 
   const containerClasses = cn(
-    "absolute inset-0 transition-all duration-300 z-40",
+    "absolute inset-0 transition-all duration-300 z-40 pointer-events-auto",
     canvasMode === "hidden" && "opacity-0 pointer-events-none",
     canvasMode === "overlay" && "",
     canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none overflow-hidden"
