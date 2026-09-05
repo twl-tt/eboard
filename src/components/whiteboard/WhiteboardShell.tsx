@@ -601,6 +601,14 @@ export default function WhiteboardShell() {
                     setStickerBarOpen(false)
                   }}
                 >
+                  {canvasVisible && (
+                    <CanvasStage
+                      ref={canvasApiRef}
+                      articleId={article.id}
+                      dark={boardMode === "blackboard"}
+                      containerRef={readingRef as React.RefObject<HTMLDivElement>}
+                    />
+                  )}
                   <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-2 border-b border-dashed border-slate-300 pb-4 dark:border-slate-700">
                     <h2 className="text-2xl font-black tracking-tight">{article.title}</h2>
@@ -639,27 +647,6 @@ export default function WhiteboardShell() {
                   />
                 </div>
               </div>
-              <div
-                onDragOver={(e) => {
-                  if (e.dataTransfer.types.includes("application/x-sticker")) {
-                    e.preventDefault()
-                    e.dataTransfer.dropEffect = "copy"
-                  }
-                }}
-                onDrop={(e) => {
-                  const tagId = e.dataTransfer.getData("application/x-sticker")
-                  if (!tagId) return
-                  e.preventDefault()
-                  setStickerBarOpen(false)
-                }}
-                className="relative h-full overflow-hidden rounded-3xl bg-slate-50 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900/60 dark:ring-slate-700/60"
-              >
-                <CanvasStage
-                  ref={canvasApiRef}
-                  articleId={article.id}
-                  dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
-                />
-              </div>
             </div>
           </>
         )}
@@ -674,15 +661,6 @@ export default function WhiteboardShell() {
         )}
         <StickerBar tags={tags} open={stickerBarOpen} onClose={() => setStickerBarOpen(false)} onDragStart={() => {}} onDragEnd={() => {}} />
       </main>
-
-      {canvasVisible && article && (
-        <CanvasStage
-          ref={canvasApiRef}
-          articleId={article.id}
-          dark={boardMode === "blackboard"}
-          onClose={() => setCanvasVisible(false)}
-        />
-      )}
 
       <ClassroomSuite />
     </div>

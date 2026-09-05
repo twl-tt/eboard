@@ -18,10 +18,10 @@ export interface CanvasApi {
 interface Props {
   articleId: string
   dark: boolean
-  onClose?: () => void
+  containerRef: React.RefObject<HTMLDivElement>
 }
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onClose }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, containerRef }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const isDrawingRef = useRef(false)
@@ -46,26 +46,31 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    const container = containerRef.current
+    if (!canvas || !container) return
 
     const init = () => {
-      canvas.width = canvas.offsetWidth
-      canvas.height = canvas.offsetHeight
+      const rect = container.getBoundingClientRect()
+      canvas.width = rect.width
+      canvas.height = rect.height
       const ctx = canvas.getContext("2d")
       if (ctx) {
         ctx.strokeStyle = color
         ctx.lineWidth = tool === "eraser" ? 20 : 3
         ctx.lineCap = "round"
         ctx.lineJoin = "round"
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctxRef.current = ctx
-        ctx.fillStyle = dark ? "#1f1f1f" : "#ffffff"
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
         saveHistory()
       }
     }
 
     init()
-  }, [color, tool, dark, saveHistory])
+
+    const ro = new ResizeObserver(init)
+    ro.observe(container)
+    return () => ro.disconnect()
+  }, [color, tool, containerRef, saveHistory])
 
   useEffect(() => {
     if (ctxRef.current) {
@@ -147,8 +152,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       const ctx = ctxRef.current
       const canvas = canvasRef.current
       if (!ctx || !canvas) return
-      ctx.fillStyle = dark ? "#1f1f1f" : "#ffffff"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
       saveHistory()
     },
     undo: () => {
@@ -163,51 +167,50 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       ctxRef.current?.putImageData(historyRef.current[historyIndexRef.current], 0, 0)
       return true
     }
-  }), [dark, saveHistory])
+  }), [saveHistory])
 
   const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c"]
 
   if (!visible) return null
 
   return (
-    <div className="fixed right-4 top-20 bottom-4 w-[400px] z-50 flex flex-col rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-      <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+    <>
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-auto z-40"
+        style={{ background: "transparent" }}
+      />
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-xl border border-slate-200 bg-white/95 px-2 py-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900/95 z-50">
         <button onClick={() => setVisible(false)} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
-          <X size={18} />
+          <X size={16} />
         </button>
         <button onClick={() => setTool("pen")} className={`p-1.5 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Pencil size={18} />
+          <Pencil size={16} />
         </button>
         <button onClick={() => setTool("eraser")} className={`p-1.5 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Eraser size={18} />
+          <Eraser size={16} />
         </button>
         <button onClick={() => setTool("rect")} className={`p-1.5 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Square size={18} />
+          <Square size={16} />
         </button>
         <button onClick={() => setTool("ellipse")} className={`p-1.5 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Circle size={18} />
+          <Circle size={16} />
         </button>
         <div className="w-px h-5 bg-slate-300" />
         {COLORS.map(c => (
-          <button key={c} onClick={() => setColor(c)} className={`w-6 h-6 rounded-full border-2 ${color === c ? "border-sky-500" : "border-white"}`} style={{ backgroundColor: c }} />
+          <button key={c} onClick={() => setColor(c)} className={`w-5 h-5 rounded-full border-2 ${color === c ? "border-sky-500" : "border-white"}`} style={{ backgroundColor: c }} />
         ))}
         <div className="w-px h-5 bg-slate-300" />
         <button onClick={() => (ref as any)?.current?.undo()} className="p-1.5 rounded hover:bg-slate-200">
-          <Undo2 size={18} />
+          <Undo2 size={16} />
         </button>
         <button onClick={() => (ref as any)?.current?.redo()} className="p-1.5 rounded hover:bg-slate-200">
-          <Redo2 size={18} />
+          <Redo2 size={16} />
         </button>
         <button onClick={() => (ref as any)?.current?.clear()} className="p-1.5 rounded hover:bg-red-100 text-red-500">
-          <Trash2 size={18} />
+          <Trash2 size={16} />
         </button>
       </div>
-      <div className="flex-1 min-h-0">
-        <canvas
-          ref={canvasRef}
-          className="block w-full h-full"
-        />
-      </div>
-    </div>
+    </>
   )
 })
