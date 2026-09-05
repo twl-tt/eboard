@@ -258,7 +258,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         />
       </div>
       
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-4 py-2 shadow-xl dark:border-white/20 dark:bg-slate-900/95">
+      <div className="absolute top-4 left-4 flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-4 py-2 shadow-xl dark:border-white/20 dark:bg-slate-900/95">
         <button
           onClick={() => setTool("pen")}
           className={cn(
