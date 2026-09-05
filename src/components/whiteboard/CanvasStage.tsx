@@ -46,20 +46,30 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   useEffect(() => {
     const canvas = canvasRef.current
-    const container = containerRef.current
-    if (!canvas || !container) return
+    const container = containerRef?.current
+    if (!canvas) return
 
     const init = () => {
-      const rect = container.getBoundingClientRect()
-      canvas.width = rect.width
-      canvas.height = rect.height
+      if (container) {
+        const rect = container.getBoundingClientRect()
+        canvas.width = rect.width
+        canvas.height = rect.height
+      } else {
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+      }
       const ctx = canvas.getContext("2d")
       if (ctx) {
         ctx.strokeStyle = color
         ctx.lineWidth = tool === "eraser" ? 20 : 3
         ctx.lineCap = "round"
         ctx.lineJoin = "round"
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        if (!container) {
+          ctx.fillStyle = "#1f1f1f"
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+        }
         ctxRef.current = ctx
         saveHistory()
       }
@@ -67,9 +77,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
     init()
 
-    const ro = new ResizeObserver(init)
-    ro.observe(container)
-    return () => ro.disconnect()
+    if (container) {
+      const ro = new ResizeObserver(init)
+      ro.observe(container)
+      return () => ro.disconnect()
+    } else {
+      window.addEventListener("resize", init)
+      return () => window.removeEventListener("resize", init)
+    }
   }, [color, tool, containerRef, saveHistory])
 
   useEffect(() => {

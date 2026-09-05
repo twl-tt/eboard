@@ -47,7 +47,7 @@ export default function WhiteboardShell() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
-  const [canvasVisible, setCanvasVisible] = useState(false)
+  const [canvasVisible, setCanvasVisible] = useState(!article)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -68,6 +68,10 @@ export default function WhiteboardShell() {
   }, [])
 
   useEffect(() => () => stopSpeak(), [])
+
+  useEffect(() => {
+    setCanvasVisible(!article)
+  }, [article])
 
   useEffect(() => {
     fetch("/api/tags").then((r) => r.ok ? r.json() : []).then(setTags).catch(() => {})
@@ -554,24 +558,16 @@ export default function WhiteboardShell() {
       </header>
 
       <main className="relative z-10 flex-1 px-3 pb-32 pt-3">
-        {!article && mode === "read" && (
-          <div className="flex h-full items-center justify-center">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/70 bg-white/85 p-8 text-center shadow-2xl shadow-sky-200/50 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/70 dark:shadow-2xl dark:shadow-slate-900/40"
-            >
-              <div aria-hidden className="pointer-events-none absolute inset-0">
-                <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-sky-300/40 blur-3xl dark:bg-sky-500/15" />
-                <div className="absolute -left-20 -bottom-20 h-56 w-56 rounded-full bg-violet-300/40 blur-3xl dark:bg-violet-500/15" />
-              </div>
-              <div className="relative">
-                <p className="text-xs font-bold uppercase tracking-[0.3em] text-sky-600 dark:text-sky-300">eBoard</p>
-                <h2 className="mt-2 text-2xl font-black leading-tight">
-                  請選擇一篇課文開始
-                </h2>
-              </div>
-            </motion.div>
+        {mode === "read" && !article && (
+          <div className="flex h-[calc(100vh-180px)] gap-3">
+              <div ref={readingRef} className="flex-1 rounded-3xl bg-slate-800 shadow-2xl overflow-hidden">
+              <CanvasStage
+                ref={canvasApiRef}
+                articleId=""
+                dark={true}
+                containerRef={readingRef}
+              />
+            </div>
           </div>
         )}
 
