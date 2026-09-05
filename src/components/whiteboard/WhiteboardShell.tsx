@@ -47,10 +47,8 @@ export default function WhiteboardShell() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
-  const [textCanvasActive, setTextCanvasActive] = useState(false)
 
   const canvasApiRef = useRef<CanvasApi>(null)
-  const textCanvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
   const shellRef = useRef<HTMLDivElement>(null)
 
@@ -488,16 +486,6 @@ export default function WhiteboardShell() {
 
           <Button
             size="sm"
-            variant={textCanvasActive ? "default" : "ghost"}
-            onClick={() => setTextCanvasActive(v => !v)}
-            title={textCanvasActive ? "關閉文字區域畫板" : "在文字上作畫"}
-            className={cn(textCanvasActive && "bg-indigo-500/20 text-indigo-700 hover:bg-indigo-500/30 dark:bg-indigo-500/20 dark:text-indigo-300")}
-          >
-            <Pencil className="h-4 w-4" /> 文字區
-          </Button>
-
-          <Button
-            size="sm"
             variant={boardMode === "whiteboard" ? "default" : "ghost"}
             onClick={() => (boardMode === "whiteboard" ? exitBoardMode() : enterBoardMode("whiteboard"))}
             title="純白板模式（隱藏文字）"
@@ -580,19 +568,6 @@ export default function WhiteboardShell() {
         {mode === "read" && article && (
           <div className="grid h-[calc(100vh-180px)] grid-cols-1 gap-3 lg:grid-cols-[1fr_460px]">
             <div className="relative h-full">
-              {textCanvasActive && (
-                <div className="pointer-events-auto absolute inset-0 z-40 rounded-3xl overflow-hidden h-full">
-                  <CanvasStage
-                    ref={textCanvasApiRef}
-                    articleId={article.id}
-                    dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
-                    followsText={false}
-                    scrollContainerRef={null}
-                    forceActive={false}
-                    canvasTopOffset={0}
-                  />
-                </div>
-              )}
               <div
                 ref={readingRef}
                 className={cn(
@@ -600,8 +575,7 @@ export default function WhiteboardShell() {
                   "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80",
                   "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10",
                   boardMode === "blackboard" && "bg-slate-900 ring-slate-700",
-                  boardMode === "whiteboard" && "bg-white ring-slate-200",
-                  textCanvasActive && "pointer-events-none"
+                  boardMode === "whiteboard" && "bg-white ring-slate-200"
                 )}
                 onDragOver={(e) => {
                   if (e.dataTransfer.types.includes("application/x-sticker")) {
