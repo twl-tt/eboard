@@ -83,32 +83,45 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const getPos = (e: PointerEvent) => {
+    const getPos = (e: PointerEvent | TouchEvent) => {
       const rect = canvas.getBoundingClientRect()
-      return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+      if ("touches" in e && e.touches.length > 0) {
+        return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }
+      }
+      if ("clientX" in e) {
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+      }
+      return { x: 0, y: 0 }
     }
 
-    const onDown = (e: PointerEvent) => {
+    const onDown = (e: PointerEvent | TouchEvent) => {
+      e.preventDefault()
       isDrawingRef.current = true
       const pos = getPos(e)
       startPosRef.current = pos
-      canvas.setPointerCapture(e.pointerId)
+      if ("setPointerCapture" in canvas) {
+        try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
+      }
       ctxRef.current?.beginPath()
       ctxRef.current?.moveTo(pos.x, pos.y)
     }
 
-    const onMove = (e: PointerEvent) => {
+    const onMove = (e: PointerEvent | TouchEvent) => {
       if (!isDrawingRef.current || !ctxRef.current) return
+      e.preventDefault()
       const pos = getPos(e)
       ctxRef.current.lineTo(pos.x, pos.y)
       ctxRef.current.stroke()
     }
 
-    const onUp = (e: PointerEvent) => {
+    const onUp = (e: PointerEvent | TouchEvent) => {
       if (!isDrawingRef.current) return
+      e.preventDefault()
       isDrawingRef.current = false
       const pos = getPos(e)
-      canvas.releasePointerCapture(e.pointerId)
+      if ("releasePointerCapture" in canvas) {
+        try { canvas.releasePointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
+      }
 
       if (tool === "rect") {
         ctxRef.current?.strokeRect(
@@ -134,12 +147,18 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     canvas.addEventListener("pointermove", onMove)
     canvas.addEventListener("pointerup", onUp)
     canvas.addEventListener("pointerleave", onUp)
+    canvas.addEventListener("touchstart", onDown, { passive: false })
+    canvas.addEventListener("touchmove", onMove, { passive: false })
+    canvas.addEventListener("touchend", onUp)
 
     return () => {
       canvas.removeEventListener("pointerdown", onDown)
       canvas.removeEventListener("pointermove", onMove)
       canvas.removeEventListener("pointerup", onUp)
       canvas.removeEventListener("pointerleave", onUp)
+      canvas.removeEventListener("touchstart", onDown)
+      canvas.removeEventListener("touchmove", onMove)
+      canvas.removeEventListener("touchend", onUp)
     }
   }, [tool, saveHistory])
 
