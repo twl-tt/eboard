@@ -28,6 +28,8 @@ interface Props {
   scrollContainerRef?: React.RefObject<HTMLDivElement> | null
   forceActive?: boolean
   canvasTopOffset?: number
+  drawMode?: boolean
+  onDrawModeChange?: (mode: boolean) => void
 }
 
 const HL_COLORS = [
@@ -58,7 +60,7 @@ const TOOLS: { tool: CanvasTool; icon: React.ReactNode; label: string }[] = [
   { tool: "text", icon: <Type className="h-5 w-5" />, label: "文字" }
 ]
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null, forceActive = false, canvasTopOffset = 0 }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, onDirty, followsText = false, scrollContainerRef = null, forceActive = false, canvasTopOffset = 0, drawMode = false, onDrawModeChange }, ref) {
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
   const fabricLibRef = useRef<any>(null)
@@ -393,9 +395,18 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }), [])
 
   const cycleMode = () => {
-    if (canvasMode === "hidden") setCanvasMode("overlay")
-    else if (canvasMode === "overlay") setCanvasMode("fullscreen")
-    else setCanvasMode("hidden")
+    if (canvasMode === "hidden") {
+      setCanvasMode("overlay")
+      onDrawModeChange?.(true)
+    }
+    else if (canvasMode === "overlay") {
+      setCanvasMode("fullscreen")
+      onDrawModeChange?.(true)
+    }
+    else {
+      setCanvasMode("hidden")
+      onDrawModeChange?.(false)
+    }
   }
 
   const uploadImage = async (file: File) => {
@@ -419,9 +430,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const isActive = canvasMode !== "hidden"
 
   const containerClasses = cn(
-    "absolute inset-0 transition-all duration-300 z-40 pointer-events-auto",
+    "absolute inset-0 transition-all duration-300 z-40",
     canvasMode === "hidden" && "opacity-0 pointer-events-none",
-    canvasMode === "overlay" && "",
+    canvasMode === "overlay" && drawMode ? "pointer-events-auto" : "pointer-events-none",
     canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none overflow-hidden"
   )
 

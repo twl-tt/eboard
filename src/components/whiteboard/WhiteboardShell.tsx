@@ -48,6 +48,7 @@ export default function WhiteboardShell() {
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
   const [textCanvasActive, setTextCanvasActive] = useState(false)
+  const [drawMode, setDrawMode] = useState(false)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const textCanvasApiRef = useRef<CanvasApi>(null)
@@ -85,6 +86,7 @@ export default function WhiteboardShell() {
     const EDGE = 6
     function onDown(e: PointerEvent) {
       if (!el) return
+      if (drawMode) return
       if (e.button !== 0 && e.pointerType === "mouse") return
       const target = e.target as HTMLElement
       if (target.closest("[data-tk]") || target.closest("button") || target.closest("a") || target.closest("input") || target.closest("textarea") || target.closest("canvas")) return
@@ -93,17 +95,23 @@ export default function WhiteboardShell() {
       startX = e.clientX
       startY = e.clientY
       startScroll = el.scrollTop
+      el.setPointerCapture(e.pointerId)
     }
     function onMove(e: PointerEvent) {
-      if (!isDown || !el) return
+      if (!el) return
+      if (!isDown || drawMode) return
       const dx = e.clientX - startX
       const dy = e.clientY - startY
       if (!moved && Math.abs(dx) < EDGE && Math.abs(dy) < EDGE) return
       moved = true
       el.scrollTop = startScroll - dy
+      e.preventDefault()
     }
-    function onUp() {
+    function onUp(e: PointerEvent) {
+      if (!el) return
+      if (!isDown) return
       isDown = false
+      try { el.releasePointerCapture(e.pointerId) } catch {}
     }
     el.addEventListener("pointerdown", onDown)
     el.addEventListener("pointermove", onMove)
@@ -115,7 +123,7 @@ export default function WhiteboardShell() {
       el.removeEventListener("pointerup", onUp)
       el.removeEventListener("pointercancel", onUp)
     }
-  }, [articleId])
+  }, [articleId, drawMode])
 
   useEffect(() => {
     if (!articleId) {
@@ -657,6 +665,8 @@ export default function WhiteboardShell() {
                   scrollContainerRef={null}
                   forceActive={false}
                   canvasTopOffset={0}
+                  drawMode={drawMode}
+                  onDrawModeChange={setDrawMode}
                 />
               )}
               <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
