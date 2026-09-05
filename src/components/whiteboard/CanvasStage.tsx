@@ -418,14 +418,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const containerClasses = cn(
     "absolute inset-0 transition-all duration-300",
     canvasMode === "hidden" && "opacity-0 pointer-events-none",
-    canvasMode === "overlay" && "overflow-hidden rounded-3xl",
+    canvasMode === "overlay" && "",
     canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none overflow-hidden"
   )
 
   const toolbarClasses = cn(
     "flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95 mx-auto w-fit",
-    canvasMode === "overlay" && "fixed top-2 left-1/2 -translate-x-1/2 z-[60]",
-    canvasMode === "fullscreen" && "absolute left-1/2 -translate-x-1/2 top-4"
+    canvasMode === "overlay" && "fixed top-2 left-1/2 -translate-x-1/2 z-[9999]",
+    canvasMode === "fullscreen" && "absolute left-1/2 -translate-x-1/2 top-4 z-[9999]"
   )
 
   return (
