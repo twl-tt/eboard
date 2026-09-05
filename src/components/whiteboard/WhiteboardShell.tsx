@@ -47,6 +47,7 @@ export default function WhiteboardShell() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
+  const [canvasVisible, setCanvasVisible] = useState(false)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -486,6 +487,15 @@ export default function WhiteboardShell() {
 
           <Button
             size="sm"
+            variant={canvasVisible ? "default" : "ghost"}
+            onClick={() => setCanvasVisible(v => !v)}
+            title="畫板"
+          >
+            <Pencil className="h-4 w-4" /> 畫板
+          </Button>
+
+          <Button
+            size="sm"
             variant={boardMode === "whiteboard" ? "default" : "ghost"}
             onClick={() => (boardMode === "whiteboard" ? exitBoardMode() : enterBoardMode("whiteboard"))}
             title="純白板模式（隱藏文字）"
@@ -664,6 +674,15 @@ export default function WhiteboardShell() {
         )}
         <StickerBar tags={tags} open={stickerBarOpen} onClose={() => setStickerBarOpen(false)} onDragStart={() => {}} onDragEnd={() => {}} />
       </main>
+
+      {canvasVisible && article && (
+        <CanvasStage
+          ref={canvasApiRef}
+          articleId={article.id}
+          dark={boardMode === "blackboard"}
+          onClose={() => setCanvasVisible(false)}
+        />
+      )}
 
       <ClassroomSuite />
     </div>
