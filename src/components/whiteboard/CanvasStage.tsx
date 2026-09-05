@@ -49,8 +49,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     if (!canvas) return
 
     const init = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
       const ctx = canvas.getContext("2d")
       if (ctx) {
         ctx.strokeStyle = color
@@ -170,41 +170,43 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   if (!visible) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col">
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-      />
-      <div className="relative z-10 flex items-center gap-2 self-stretch bg-white/95 border-b border-slate-200 px-4 py-2 shadow-md dark:bg-slate-900/95 dark:border-slate-700">
-        <button onClick={() => setVisible(false)} className="p-2 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
-          <X size={20} />
+    <div className="fixed right-4 top-20 bottom-4 w-[400px] z-50 flex flex-col rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+        <button onClick={() => setVisible(false)} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
+          <X size={18} />
         </button>
-        <button onClick={() => setTool("pen")} className={`p-2 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Pencil size={20} />
+        <button onClick={() => setTool("pen")} className={`p-1.5 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
+          <Pencil size={18} />
         </button>
-        <button onClick={() => setTool("eraser")} className={`p-2 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Eraser size={20} />
+        <button onClick={() => setTool("eraser")} className={`p-1.5 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
+          <Eraser size={18} />
         </button>
-        <button onClick={() => setTool("rect")} className={`p-2 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Square size={20} />
+        <button onClick={() => setTool("rect")} className={`p-1.5 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
+          <Square size={18} />
         </button>
-        <button onClick={() => setTool("ellipse")} className={`p-2 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Circle size={20} />
+        <button onClick={() => setTool("ellipse")} className={`p-1.5 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
+          <Circle size={18} />
         </button>
-        <div className="w-px h-6 bg-slate-300" />
+        <div className="w-px h-5 bg-slate-300" />
         {COLORS.map(c => (
-          <button key={c} onClick={() => setColor(c)} className={`w-7 h-7 rounded-full border-2 ${color === c ? "border-sky-500" : "border-white"}`} style={{ backgroundColor: c }} />
+          <button key={c} onClick={() => setColor(c)} className={`w-6 h-6 rounded-full border-2 ${color === c ? "border-sky-500" : "border-white"}`} style={{ backgroundColor: c }} />
         ))}
-        <div className="w-px h-6 bg-slate-300" />
-        <button onClick={() => (ref as any)?.current?.undo()} className="p-2 rounded hover:bg-slate-200">
-          <Undo2 size={20} />
+        <div className="w-px h-5 bg-slate-300" />
+        <button onClick={() => (ref as any)?.current?.undo()} className="p-1.5 rounded hover:bg-slate-200">
+          <Undo2 size={18} />
         </button>
-        <button onClick={() => (ref as any)?.current?.redo()} className="p-2 rounded hover:bg-slate-200">
-          <Redo2 size={20} />
+        <button onClick={() => (ref as any)?.current?.redo()} className="p-1.5 rounded hover:bg-slate-200">
+          <Redo2 size={18} />
         </button>
-        <button onClick={() => (ref as any)?.current?.clear()} className="p-2 rounded hover:bg-red-100 text-red-500">
-          <Trash2 size={20} />
+        <button onClick={() => (ref as any)?.current?.clear()} className="p-1.5 rounded hover:bg-red-100 text-red-500">
+          <Trash2 size={18} />
         </button>
+      </div>
+      <div className="flex-1 min-h-0">
+        <canvas
+          ref={canvasRef}
+          className="block w-full h-full"
+        />
       </div>
     </div>
   )
