@@ -651,17 +651,6 @@ export default function WhiteboardShell() {
                 setStickerBarOpen(false)
               }}
             >
-              {textCanvasActive && (
-                <CanvasStage
-                  ref={textCanvasApiRef}
-                  articleId={article.id}
-                  dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
-                  followsText={false}
-                  scrollContainerRef={null}
-                  forceActive={false}
-                  canvasTopOffset={0}
-                />
-              )}
               <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
               <div className="mb-6 flex flex-wrap items-end justify-between gap-2 border-b border-dashed border-slate-300 pb-4 dark:border-slate-700">
                 <h2 className="text-2xl font-black tracking-tight">{article.title}</h2>
@@ -728,6 +717,20 @@ export default function WhiteboardShell() {
                 canvasTopOffset={0}
               />
             </div>
+          </div>
+        )}
+
+        {mode === "read" && article && textCanvasActive && (
+          <div className="fixed inset-0 z-50">
+            <CanvasStage
+              ref={textCanvasApiRef}
+              articleId={article.id}
+              dark={boardMode === "blackboard" || (boardMode === "normal" && dark)}
+              followsText={false}
+              scrollContainerRef={null}
+              forceActive={true}
+              canvasTopOffset={0}
+            />
           </div>
         )}
 
