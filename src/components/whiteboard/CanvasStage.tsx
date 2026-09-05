@@ -395,18 +395,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }), [])
 
   const cycleMode = () => {
-    if (canvasMode === "hidden") {
-      setCanvasMode("overlay")
-      onDrawModeChange?.(true)
-    }
-    else if (canvasMode === "overlay") {
-      setCanvasMode("fullscreen")
-      onDrawModeChange?.(true)
-    }
-    else {
-      setCanvasMode("hidden")
-      onDrawModeChange?.(false)
-    }
+    if (canvasMode === "hidden") setCanvasMode("overlay")
+    else if (canvasMode === "overlay") setCanvasMode("fullscreen")
+    else setCanvasMode("hidden")
   }
 
   const uploadImage = async (file: File) => {
@@ -432,7 +423,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const containerClasses = cn(
     "absolute inset-0 transition-all duration-300 z-40",
     canvasMode === "hidden" && "opacity-0 pointer-events-none",
-    canvasMode === "overlay" && drawMode ? "pointer-events-auto" : "pointer-events-none",
+    canvasMode === "overlay" && "pointer-events-auto",
     canvasMode === "fullscreen" && "fixed inset-0 z-[100] rounded-none overflow-hidden"
   )
 
