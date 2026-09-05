@@ -86,7 +86,7 @@ export default function WhiteboardShell() {
     function onDown(e: PointerEvent) {
       if (e.button !== 0 && e.pointerType === "mouse") return
       const target = e.target as HTMLElement
-      if (target.closest("[data-tk]") || target.closest("button") || target.closest("a") || target.closest("input") || target.closest("textarea")) return
+      if (target.closest("[data-tk]") || target.closest("button") || target.closest("a") || target.closest("input") || target.closest("textarea") || target.closest("canvas")) return
       isDown = true
       moved = false
       startX = e.clientX
