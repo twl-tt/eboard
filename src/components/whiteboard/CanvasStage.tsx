@@ -423,7 +423,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   )
 
   const toolbarClasses = cn(
-    "sticky top-0 z-50 flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95 mx-auto w-fit mt-3",
+    "flex items-center gap-2 rounded-2xl border border-black/10 bg-white/95 px-3 py-2 shadow-xl backdrop-blur-lg dark:border-white/20 dark:bg-slate-900/95 mx-auto w-fit",
+    canvasMode === "overlay" && "fixed top-2 left-1/2 -translate-x-1/2 z-[60]",
     canvasMode === "fullscreen" && "absolute left-1/2 -translate-x-1/2 top-4"
   )
 
@@ -438,8 +439,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             : "transparent"
         }}
       >
-        <div className="sticky top-0 z-50 flex justify-center">
-          <div className={toolbarClasses}>
+        <div className={toolbarClasses}>
             <button
               onClick={cycleMode}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white transition-all hover:bg-sky-600 hover:scale-105"
@@ -552,7 +552,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
               <Trash2 className="h-5 w-5" />
             </button>
           </div>
-        </div>
 
         {isActive && <canvas ref={canvasElRef} className="absolute inset-0 w-full h-full" />}
       </div>
