@@ -581,7 +581,7 @@ export default function WhiteboardShell() {
           <div className="grid h-[calc(100vh-180px)] grid-cols-1 gap-3 lg:grid-cols-[1fr_460px]">
             <div className="relative h-full">
               {textCanvasActive && (
-                <div className="pointer-events-auto absolute inset-0 z-40 rounded-3xl overflow-hidden">
+                <div className="pointer-events-auto absolute inset-0 z-40 rounded-3xl overflow-hidden h-full">
                   <CanvasStage
                     ref={textCanvasApiRef}
                     articleId={article.id}
