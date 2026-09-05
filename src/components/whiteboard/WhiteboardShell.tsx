@@ -48,11 +48,15 @@ export default function WhiteboardShell() {
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
   const [textCanvasActive, setTextCanvasActive] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const SENTENCES_PER_PAGE = 10
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const textCanvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
   const shellRef = useRef<HTMLDivElement>(null)
+
+  const totalPages = article ? Math.ceil(article.sentences.length / SENTENCES_PER_PAGE) : 1
 
   useEffect(() => {
     warmVoices()
@@ -582,7 +586,7 @@ export default function WhiteboardShell() {
             <div
               ref={readingRef}
               className={cn(
-                "relative overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
+                "relative overflow-hidden rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
                 "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80",
                 "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10",
                 boardMode === "blackboard" && "bg-slate-900 ring-slate-700",
@@ -624,7 +628,7 @@ export default function WhiteboardShell() {
                     <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-sky-700 dark:text-sky-300">{article.grade}</span>
                   )}
                   <span className="rounded-full bg-indigo-500/10 px-2.5 py-1 text-indigo-700 dark:text-indigo-300">{article.categoryName}</span>
-                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">{validSentences.length} 句</span>
+                  <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-emerald-700 dark:text-emerald-300">{validSentences.length} 句 / {totalPages} 頁</span>
                   {highlights.length > 0 && (
                     <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-700 dark:text-amber-300">🖍 {highlights.length} 處螢光筆</span>
                   )}
@@ -634,7 +638,7 @@ export default function WhiteboardShell() {
                 拖選文字上螢光筆 / 點擊反白可刪除
               </div>
               <ReadingPane
-                sentences={article.sentences}
+                sentences={article.sentences.slice((currentPage - 1) * SENTENCES_PER_PAGE, currentPage * SENTENCES_PER_PAGE)}
                 phonetic={phonetic}
                 fontSizeRem={fontSizeRem}
                 focusMode={focusMode}
@@ -652,6 +656,23 @@ export default function WhiteboardShell() {
                 }}
                 showExplanation={showExplanation}
               />
+              <div className="mt-4 flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-lg px-4 py-2 text-sm font-medium bg-slate-200 dark:bg-slate-700 disabled:opacity-50 hover:bg-slate-300 dark:hover:bg-slate-600"
+                >
+                  ← 上一頁
+                </button>
+                <span className="text-sm text-slate-500">{currentPage} / {totalPages}</span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="rounded-lg px-4 py-2 text-sm font-medium bg-slate-200 dark:bg-slate-700 disabled:opacity-50 hover:bg-slate-300 dark:hover:bg-slate-600"
+                >
+                  下一頁 →
+                </button>
+              </div>
             </div>
             <div
               onDragOver={(e) => {
