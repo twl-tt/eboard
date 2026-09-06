@@ -178,18 +178,14 @@ export default function WhiteboardShell() {
     if (!article || !readingRef.current || exporting) return
     setExporting(true)
     try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf")
+      const [{ default: html2canvas }] = await Promise.all([
+        import("html2canvas")
       ])
-      const el = readingRef.current
-      const canvas = await html2canvas(el, { scale: 2, backgroundColor: dark ? "#0a0f1e" : "#ffffff", logging: false, useCORS: true })
-      const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" })
-      const pw = pdf.internal.pageSize.getWidth()
-      const ph = pdf.internal.pageSize.getHeight()
-      const ratio = Math.min(pw / canvas.width, ph / canvas.height)
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, canvas.width * ratio, canvas.height * ratio)
-      pdf.save(`${article.title}-白板筆記.pdf`)
+      const canvas = await html2canvas(readingRef.current, { scale: 2, backgroundColor: "#ffffff", useCORS: true })
+      const link = document.createElement("a")
+      link.download = `${article.title}-白板筆記.png`
+      link.href = canvas.toDataURL("image/png")
+      link.click()
     } catch (e) {
       console.error("exportPdf error:", e)
     } finally {
