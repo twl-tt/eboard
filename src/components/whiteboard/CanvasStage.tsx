@@ -29,7 +29,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const historyRef = useRef<ImageData[]>([])
   const historyIndexRef = useRef(-1)
   const toolRef = useRef<CanvasTool>("pen")
-  const colorRef = useRef("#1f2937")
+  const colorRef = useRef("#dc2626")
 
   const [tool, setTool] = useState<CanvasTool>("pen")
   const [color, setColor] = useState("#dc2626")
@@ -54,65 +54,42 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     const container = containerRef?.current
     if (!canvas) return
 
-    const init = () => {
-      const canvas = canvasRef.current
-      const container = containerRef?.current
-      if (!canvas) return
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })
+    if (!ctx) return
 
-      let w = 0, h = 0
-      if (container) {
-        const rect = container.getBoundingClientRect()
-        w = rect.width
-        h = rect.height
-      } else {
-        w = window.innerWidth
-        h = window.innerHeight
-      }
+    let w = 0, h = 0
+    if (container) {
+      const rect = container.getBoundingClientRect()
+      w = rect.width
+      h = rect.height
+    } else {
+      w = window.innerWidth
+      h = window.innerHeight
+    }
 
-      const ctx = canvas.getContext("2d", { willReadFrequently: true })
-      if (!ctx) return
-
-      const sameSize = canvas.width === w && canvas.height === h
-      let imageData: ImageData | null = null
-      if (sameSize) {
-        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      }
+    if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w
       canvas.height = h
-      if (imageData) ctx.putImageData(imageData, 0, 0)
-
-      ctx.strokeStyle = colorRef.current
-      ctx.lineWidth = toolRef.current === "eraser" ? 20 : 3
-      ctx.lineCap = "round"
-      ctx.lineJoin = "round"
-      ctxRef.current = ctx
     }
 
-    init()
+    ctx.strokeStyle = colorRef.current
+    ctx.lineWidth = toolRef.current === "eraser" ? 20 : 3
+    ctx.lineCap = "round"
+    ctx.lineJoin = "round"
+    ctxRef.current = ctx
 
-    if (container) {
-      const ro = new ResizeObserver(init)
-      ro.observe(container)
-      return () => ro.disconnect()
-    } else {
-      window.addEventListener("resize", init)
-      return () => window.removeEventListener("resize", init)
+    if (boardColor && !container) {
+      ctx.fillStyle = boardColor
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
     }
-  }, [boardColor])
+
+    saveHistory()
+  }, [containerRef, saveHistory, boardColor])
 
   useEffect(() => {
     if (ctxRef.current) {
-      if (tool === "highlighter") {
-        ctxRef.current.globalAlpha = 0.4
-        ctxRef.current.strokeStyle = color
-        ctxRef.current.lineWidth = 15
-      } else {
-        ctxRef.current.globalAlpha = 1
-        ctxRef.current.strokeStyle = tool === "eraser" ? "#ffffff" : color
-        ctxRef.current.lineWidth = tool === "eraser" ? 20 : 3
-      }
-      ctxRef.current.lineCap = "round"
-      ctxRef.current.lineJoin = "round"
+      ctxRef.current.strokeStyle = colorRef.current
+      ctxRef.current.lineWidth = toolRef.current === "eraser" ? 20 : 3
     }
   }, [color, tool])
 
@@ -190,14 +167,15 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         try { canvas.releasePointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
       }
 
-      if (tool === "rect") {
+      const currentTool = toolRef.current
+      if (currentTool === "rect") {
         ctxRef.current?.strokeRect(
           startPosRef.current.x,
           startPosRef.current.y,
           pos.x - startPosRef.current.x,
           pos.y - startPosRef.current.y
         )
-      } else if (tool === "ellipse") {
+      } else if (currentTool === "ellipse") {
         const cx = (startPosRef.current.x + pos.x) / 2
         const cy = (startPosRef.current.y + pos.y) / 2
         const rx = Math.abs(pos.x - startPosRef.current.x) / 2
@@ -205,7 +183,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctxRef.current?.beginPath()
         ctxRef.current?.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
         ctxRef.current?.stroke()
-      } else if (tool === "line") {
+      } else if (currentTool === "line") {
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(startPosRef.current.x, startPosRef.current.y)
         ctxRef.current?.lineTo(pos.x, pos.y)
@@ -234,7 +212,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.removeEventListener("touchmove", onMove)
       canvas.removeEventListener("touchend", onUp)
     }
-  }, [tool, saveHistory])
+  }, [saveHistory])
 
   useImperativeHandle(ref, () => ({
     toJSON: () => canvasRef.current?.toDataURL() ?? null,
