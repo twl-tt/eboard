@@ -49,9 +49,6 @@ export default function WhiteboardShell() {
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
   const [canvasVisible, setCanvasVisible] = useState(!article)
-  const [canvasTabs, setCanvasTabs] = useState<{ id: string; name: string; data: string | null }[]>([{ id: "1", name: "白板 1", data: null }])
-  const [activeTab, setActiveTab] = useState(0)
-  const prevTabRef = useRef(activeTab)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -253,16 +250,6 @@ export default function WhiteboardShell() {
     }
     return () => { document.documentElement.style.overflow = "" }
   }, [isFullscreen])
-
-  useEffect(() => {
-    if (boardMode !== "blackboard") return
-    const tabData = canvasTabs[activeTab]?.data
-    if (tabData) {
-      canvasApiRef.current?.load(tabData)
-    } else {
-      canvasApiRef.current?.clear()
-    }
-  }, [activeTab, boardMode])
 
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
     setBoardMode(mode)
@@ -546,35 +533,6 @@ export default function WhiteboardShell() {
               className="h-8 w-8 cursor-pointer rounded border-0 p-0"
               title="選擇黑板顏色"
             />
-          )}
-          {boardMode === "blackboard" && (
-            <div className="flex items-center gap-1 ml-1">
-              {canvasTabs.map((tab, i) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(i)}
-                  className={cn(
-                    "px-2 py-1 text-xs rounded-md transition-colors",
-                    activeTab === i
-                      ? "bg-sky-500 text-white"
-                      : "bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600"
-                  )}
-                >
-                  {tab.name}
-                </button>
-              ))}
-              <button
-                onClick={() => {
-                  const newTab = { id: Date.now().toString(), name: `白板 ${canvasTabs.length + 1}`, data: null }
-                  setCanvasTabs([...canvasTabs, newTab])
-                  setActiveTab(canvasTabs.length)
-                }}
-                className="px-2 py-1 text-xs rounded-md bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600"
-                title="新增白板"
-              >
-                +
-              </button>
-            </div>
           )}
 
           <Button
