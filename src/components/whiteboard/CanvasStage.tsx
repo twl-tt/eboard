@@ -257,6 +257,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }), [saveHistory])
 
   const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c", "#eab308"]
+  const HIGHLIGHTER_COLORS = ["#fde047", "#86efac", "#93c5fd"]
 
   if (!visible) return null
 
@@ -320,14 +321,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         <button onClick={() => setTool("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
           <Minus size={14} />
         </button>
-        <button onClick={() => setTool("highlighter")} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆">
+        <button onClick={() => setTool("highlighter")} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆" onMouseDown={() => { if (tool !== "highlighter") { setTool("highlighter"); setColor("#fde047") } }}>
           <Highlighter size={14} />
         </button>
         <button onClick={() => setTool("text")} className={`p-1 rounded ${tool === "text" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="文字">
           <Type size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
-        {COLORS.map(c => (
+        {(tool === "highlighter" ? HIGHLIGHTER_COLORS : COLORS).map(c => (
           <button key={c} onClick={() => setColor(c)} className={`w-4 h-4 rounded-full border-2 ${color === c ? "border-sky-500" : "border-slate-200"}`} style={{ backgroundColor: c }} />
         ))}
         <div className="w-px h-4 bg-slate-300 mx-0.5" />

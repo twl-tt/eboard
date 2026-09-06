@@ -541,9 +541,6 @@ export default function WhiteboardShell() {
                       )}
                     </div>
                   </div>
-                  <div className="mb-4 inline-block rounded-full bg-slate-900/5 px-3 py-1 text-[10px] text-slate-500 dark:bg-white/5 dark:text-slate-400">
-                    拖選文字上螢光筆 / 點擊反白可刪除
-                  </div>
                   <ReadingPane
                     sentences={article.sentences}
                     phonetic={phonetic}
