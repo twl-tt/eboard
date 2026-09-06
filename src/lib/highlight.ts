@@ -10,9 +10,9 @@ export interface Highlight {
 }
 
 export const HIGHLIGHT_BG: Record<HighlightColor, string> = {
-  yellow: "rgba(253,224,71,0.35)",
-  green: "rgba(134,239,172,0.35)",
-  blue: "rgba(59,130,246,0.35)"
+  yellow: "rgba(254,240,138,0.5)",
+  green: "rgba(187,247,208,0.5)",
+  blue: "rgba(147,197,253,0.5)"
 }
 
 export const HIGHLIGHT_LABEL: Record<HighlightColor, string> = {

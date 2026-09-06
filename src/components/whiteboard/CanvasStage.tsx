@@ -257,7 +257,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   }), [saveHistory])
 
   const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c", "#eab308"]
-  const HIGHLIGHTER_COLORS = ["#fde047", "#86efac", "#93c5fd"]
+  const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
 
   if (!visible) return null
 
