@@ -553,12 +553,12 @@ export default function WhiteboardShell() {
                   ref={readingRef}
                   className={cn(
                     "relative h-full overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
-                    "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80",
-                    "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10",
-                    boardMode === "blackboard" && "ring-slate-700",
-                    boardMode === "whiteboard" && "bg-white ring-slate-200"
+                    boardMode === "blackboard"
+                      ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
+                      : boardMode === "whiteboard"
+                      ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
+                      : "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80 dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10"
                   )}
-                  style={boardMode === "blackboard" ? { backgroundColor: boardColor } : undefined}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
                       e.preventDefault()
