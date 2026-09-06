@@ -120,16 +120,20 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       if ("setPointerCapture" in canvas) {
         try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
       }
-      ctxRef.current?.beginPath()
-      ctxRef.current?.moveTo(pos.x, pos.y)
+      if (tool === "pen" || tool === "eraser") {
+        ctxRef.current?.beginPath()
+        ctxRef.current?.moveTo(pos.x, pos.y)
+      }
     }
 
     const onMove = (e: PointerEvent | TouchEvent) => {
       if (!isDrawingRef.current || !ctxRef.current) return
       e.preventDefault()
       const pos = getPos(e)
-      ctxRef.current.lineTo(pos.x, pos.y)
-      ctxRef.current.stroke()
+      if (tool === "pen" || tool === "eraser") {
+        ctxRef.current.lineTo(pos.x, pos.y)
+        ctxRef.current.stroke()
+      }
     }
 
     const onUp = (e: PointerEvent | TouchEvent) => {
