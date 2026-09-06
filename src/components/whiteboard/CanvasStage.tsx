@@ -261,7 +261,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   return (
     <>
-      <div className="absolute inset-0 pointer-events-auto z-40">
+      <div className="absolute inset-0 z-40">
         <canvas ref={canvasElRef} />
       </div>
       <div className="absolute top-0 left-2 flex items-center gap-0.5 rounded-lg border border-slate-200/50 bg-white/90 px-2 py-1 shadow-md dark:border-slate-700/50 dark:bg-slate-900/90 z-50 overflow-x-auto max-w-[calc(100vw-16px)]">
