@@ -17,11 +17,11 @@ export interface CanvasApi {
 
 interface Props {
   articleId: string
-  dark: boolean
+  boardColor: string | null
   containerRef: React.RefObject<HTMLDivElement>
 }
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, dark, containerRef }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const isDrawingRef = useRef(false)
@@ -66,10 +66,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctx.lineCap = "round"
         ctx.lineJoin = "round"
         if (!container) {
-          ctx.fillStyle = dark ? "#1f1f1f" : "#ffffff"
+          ctx.fillStyle = boardColor || "#ffffff"
           ctx.fillRect(0, 0, canvas.width, canvas.height)
-        } else if (dark) {
-          ctx.fillStyle = "#1f1f1f"
+        } else if (boardColor) {
+          ctx.fillStyle = boardColor
           ctx.fillRect(0, 0, canvas.width, canvas.height)
         } else {
           ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -89,7 +89,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       window.addEventListener("resize", init)
       return () => window.removeEventListener("resize", init)
     }
-  }, [color, tool, dark, containerRef, saveHistory])
+  }, [color, tool, boardColor, containerRef, saveHistory])
 
   useEffect(() => {
     if (ctxRef.current) {

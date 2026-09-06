@@ -44,6 +44,7 @@ export default function WhiteboardShell() {
   const [showExplanation, setShowExplanation] = useState(false)
   const [canvasFollowsText, setCanvasFollowsText] = useState(false)
   const [boardMode, setBoardMode] = useState<"normal" | "whiteboard" | "blackboard">("normal")
+  const [boardColor, setBoardColor] = useState("#1f2937")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
@@ -252,6 +253,7 @@ export default function WhiteboardShell() {
 
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
     setBoardMode(mode)
+    setCanvasVisible(true)
     setTimeout(() => {
       canvasApiRef.current?.toJSON()
       if (typeof window !== "undefined") {
@@ -511,26 +513,27 @@ export default function WhiteboardShell() {
 
           <Button
             size="sm"
-            variant={boardMode === "whiteboard" ? "default" : "ghost"}
-            onClick={() => (boardMode === "whiteboard" ? exitBoardMode() : enterBoardMode("whiteboard"))}
-            title="純白板模式（隱藏文字）"
-            className={cn(boardMode === "whiteboard" && "bg-sky-500/20 text-sky-700 hover:bg-sky-500/30 dark:bg-sky-500/20 dark:text-sky-300")}
-          >
-            <Brush className="h-4 w-4" /> 白板
-          </Button>
-          <Button
-            size="sm"
             variant={boardMode === "blackboard" ? "default" : "ghost"}
             onClick={() => (boardMode === "blackboard" ? exitBoardMode() : enterBoardMode("blackboard"))}
-            title="純黑板模式（隱藏文字）"
+            title="黑板模式"
             className={cn(
               boardMode === "blackboard"
-                ? "bg-slate-900 text-white hover:bg-slate-800"
+                ? "text-white hover:bg-slate-800"
                 : "text-slate-700 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-700"
             )}
+            style={boardMode === "blackboard" ? { backgroundColor: boardColor } : undefined}
           >
             <Square className="h-4 w-4" /> 黑板
           </Button>
+          {boardMode === "blackboard" && (
+            <input
+              type="color"
+              value={boardColor}
+              onChange={(e) => setBoardColor(e.target.value)}
+              className="h-8 w-8 cursor-pointer rounded border-0 p-0"
+              title="選擇黑板顏色"
+            />
+          )}
 
           <Button
             size="icon"
@@ -573,12 +576,14 @@ export default function WhiteboardShell() {
           <div className="flex h-[calc(100vh-180px)] gap-3">
               <div ref={readingRef} className={cn(
                 "relative flex-1 rounded-3xl shadow-2xl overflow-hidden transition-colors",
-                boardMode === "blackboard" ? "bg-slate-900" : boardMode === "whiteboard" ? "bg-white" : "bg-slate-800"
-              )}>
+                boardMode === "whiteboard" && "bg-white"
+              )}
+              style={boardMode === "blackboard" ? { backgroundColor: boardColor } : boardMode === "normal" ? { backgroundColor: "#1f2937" } : undefined}
+              >
               <CanvasStage
                 ref={canvasApiRef}
                 articleId=""
-                dark={boardMode === "blackboard"}
+                boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : boardMode === "normal" ? "#1f2937" : null}
                 containerRef={readingRef}
               />
             </div>
@@ -595,9 +600,10 @@ export default function WhiteboardShell() {
                     "relative h-full overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
                     "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80",
                     "dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10",
-                    boardMode === "blackboard" && "bg-slate-900 ring-slate-700",
+                    boardMode === "blackboard" && "ring-slate-700",
                     boardMode === "whiteboard" && "bg-white ring-slate-200"
                   )}
+                  style={boardMode === "blackboard" ? { backgroundColor: boardColor } : undefined}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
                       e.preventDefault()
@@ -615,7 +621,7 @@ export default function WhiteboardShell() {
                     <CanvasStage
                       ref={canvasApiRef}
                       articleId={article.id}
-                      dark={boardMode === "blackboard"}
+                      boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : null}
                       containerRef={readingRef as React.RefObject<HTMLDivElement>}
                     />
                   )}
