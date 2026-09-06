@@ -1,9 +1,9 @@
 "use client"
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
-import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus, Highlighter, Type } from "lucide-react"
+import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus, Highlighter, Type, Hand } from "lucide-react"
 
-export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text"
+export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text" | "pan"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -35,9 +35,64 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const [color, setColor] = useState("#dc2626")
   const [visible, setVisible] = useState(true)
   const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const isPanningRef = useRef(false)
+  const panStartRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
+
+  useEffect(() => {
+    if (tool !== "pan" && (panOffset.x !== 0 || panOffset.y !== 0)) {
+      const canvas = canvasRef.current
+      const ctx = ctxRef.current
+      if (!canvas || !ctx) return
+      if (historyRef.current.length === 0) return
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = canvas.width
+      tempCanvas.height = canvas.height
+      const tempCtx = tempCanvas.getContext('2d')
+      if (tempCtx) {
+        const imageData = historyRef.current[historyIndexRef.current]
+        if (imageData) {
+          tempCtx.putImageData(imageData, 0, 0)
+        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(tempCanvas, panOffset.x, panOffset.y)
+        saveHistory()
+        setPanOffset({ x: 0, y: 0 })
+      }
+    }
+  }, [tool])
+
+  const redrawWithPan = useCallback(() => {
+    const canvas = canvasRef.current
+    const ctx = ctxRef.current
+    if (!canvas || !ctx) return
+    if (historyRef.current.length === 0) return
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    const currentIndex = historyIndexRef.current
+    const imageData = historyRef.current[currentIndex]
+    if (imageData) {
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = canvas.width
+      tempCanvas.height = canvas.height
+      const tempCtx = tempCanvas.getContext('2d')
+      if (tempCtx) {
+        tempCtx.putImageData(imageData, 0, 0)
+        ctx.save()
+        ctx.translate(panOffset.x, panOffset.y)
+        ctx.drawImage(tempCanvas, 0, 0)
+        ctx.restore()
+      }
+    }
+  }, [panOffset])
+
+  useEffect(() => {
+    if (tool === "pan") {
+      redrawWithPan()
+    }
+  }, [tool, panOffset, redrawWithPan])
 
   const saveHistory = useCallback(() => {
     const canvas = canvasRef.current
@@ -48,7 +103,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     historyRef.current.push(imageData)
     if (historyRef.current.length > 30) historyRef.current.shift()
     historyIndexRef.current = historyRef.current.length - 1
-  }, [])
+    if (panOffset.x !== 0 || panOffset.y !== 0) {
+      setPanOffset({ x: 0, y: 0 })
+    }
+  }, [panOffset])
 
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current
@@ -118,6 +176,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         setTextInput({ x: pos.x, y: pos.y, value: "" })
         return
       }
+      if (currentTool === "pan") {
+        isPanningRef.current = true
+        panStartRef.current = { x: pos.x - panOffset.x, y: pos.y - panOffset.y }
+        if ("setPointerCapture" in canvas) {
+          try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
+        }
+        return
+      }
       isDrawingRef.current = true
       startPosRef.current = pos
       if ("setPointerCapture" in canvas) {
@@ -143,6 +209,13 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     }
 
     const onMove = (e: PointerEvent | TouchEvent) => {
+      if (isPanningRef.current) {
+        const pos = getPos(e)
+        const newX = pos.x - panStartRef.current.x
+        const newY = pos.y - panStartRef.current.y
+        setPanOffset({ x: newX, y: newY })
+        return
+      }
       if (!isDrawingRef.current || !ctxRef.current) return
       e.preventDefault()
       const pos = getPos(e)
@@ -165,6 +238,13 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     }
 
     const onUp = (e: PointerEvent | TouchEvent) => {
+      if (isPanningRef.current) {
+        isPanningRef.current = false
+        if ("releasePointerCapture" in canvas) {
+          try { canvas.releasePointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
+        }
+        return
+      }
       if (!isDrawingRef.current) return
       e.preventDefault()
       isDrawingRef.current = false
@@ -326,6 +406,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         </button>
         <button onClick={() => setTool("text")} className={`p-1 rounded ${tool === "text" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="文字">
           <Type size={14} />
+        </button>
+        <button onClick={() => setTool("pan")} className={`p-1 rounded ${tool === "pan" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="移動">
+          <Hand size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
         {(tool === "highlighter" ? HIGHLIGHTER_COLORS : COLORS).map(c => (
