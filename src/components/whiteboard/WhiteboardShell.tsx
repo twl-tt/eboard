@@ -239,15 +239,6 @@ export default function WhiteboardShell() {
   }, [])
 
   useEffect(() => {
-    if (isFullscreen) {
-      document.documentElement.style.overflow = "hidden"
-    } else {
-      document.documentElement.style.overflow = ""
-    }
-    return () => { document.documentElement.style.overflow = "" }
-  }, [isFullscreen])
-
-  useEffect(() => {
     if (boardMode === "blackboard" && blackboardData) {
       canvasApiRef.current?.load(blackboardData)
     }
@@ -334,8 +325,7 @@ export default function WhiteboardShell() {
       className={cn(
         "relative flex min-h-screen flex-col text-slate-900 transition-colors",
         "bg-gradient-to-br from-sky-50 via-white to-violet-50",
-        "dark:bg-gradient-to-br dark:from-[#0a0f1e] dark:via-slate-950 dark:to-indigo-950 dark:text-slate-100",
-        isFullscreen && "overflow-hidden"
+        "dark:bg-gradient-to-br dark:from-[#0a0f1e] dark:via-slate-950 dark:to-indigo-950 dark:text-slate-100"
       )}
     >
       <div aria-hidden className="pointer-events-none absolute inset-0">
