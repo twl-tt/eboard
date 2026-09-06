@@ -45,6 +45,7 @@ export default function WhiteboardShell() {
   const [boardMode, setBoardMode] = useState<"normal" | "whiteboard" | "blackboard">("normal")
   const [boardColor, setBoardColor] = useState("#1f2937")
   const [blackboardData, setBlackboardData] = useState<string | null>(null)
+  const blackboardDataRef = useRef<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
@@ -238,9 +239,11 @@ export default function WhiteboardShell() {
     return () => document.removeEventListener("fullscreenchange", onChange)
   }, [])
 
+  useEffect(() => { blackboardDataRef.current = blackboardData }, [blackboardData])
+
   useEffect(() => {
-    if (boardMode === "blackboard" && blackboardData) {
-      canvasApiRef.current?.load(blackboardData)
+    if (boardMode === "blackboard" && blackboardDataRef.current) {
+      canvasApiRef.current?.load(blackboardDataRef.current)
     }
   }, [boardMode])
 
@@ -248,24 +251,17 @@ export default function WhiteboardShell() {
     if (boardMode === "blackboard") {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setBlackboardData(data)
+      blackboardDataRef.current = data
     }
     setBoardMode(mode)
     setCanvasVisible(true)
-    setTimeout(() => {
-      if (mode === "blackboard" && blackboardData) {
-        canvasApiRef.current?.load(blackboardData)
-      }
-      canvasApiRef.current?.toJSON()
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("board-mode", { detail: mode }))
-      }
-    }, 50)
   }
 
   function exitBoardMode() {
     if (boardMode === "blackboard") {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setBlackboardData(data)
+      blackboardDataRef.current = data
     }
     setBoardMode("normal")
   }
