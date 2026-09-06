@@ -133,8 +133,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(pos.x, pos.y)
         if (tool === "highlighter") {
-          ctxRef.current!.globalAlpha = 0.4
-          ctxRef.current!.lineWidth = 15
+          ctxRef.current!.globalAlpha = 0.3
+          ctxRef.current!.lineWidth = 20
         } else if (tool === "eraser") {
           ctxRef.current!.globalAlpha = 1
           ctxRef.current!.strokeStyle = "#ffffff"
@@ -153,8 +153,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       const pos = getPos(e)
       if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
         if (tool === "highlighter") {
-          ctxRef.current.globalAlpha = 0.4
-          ctxRef.current.lineWidth = 15
+          ctxRef.current.globalAlpha = 0.3
+          ctxRef.current.lineWidth = 20
         } else if (tool === "eraser") {
           ctxRef.current.globalAlpha = 1
           ctxRef.current.strokeStyle = "#ffffff"
@@ -201,6 +201,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       }
 
       saveHistory()
+      ctxRef.current!.globalAlpha = 1
     }
 
     canvas.addEventListener("pointerdown", onDown)
