@@ -1,16 +1,19 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import { X, Pencil, Eraser, Square, Circle, Trash2, Minus, Highlighter, Type, Move, Undo2, Redo2, ArrowLeft } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 
 type CanvasTool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text"
 
 const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c", "#eab308"]
 const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
 
-export default function BlackboardPage() {
+function BlackboardContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const articleId = searchParams.get("article")
+
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
   const fabricModuleRef = useRef<any>(null)
@@ -241,7 +244,7 @@ export default function BlackboardPage() {
       <canvas ref={canvasElRef} className="absolute inset-0" />
 
       <div className="absolute top-0 left-2 flex items-center gap-0.5 rounded-lg border border-slate-700/50 bg-slate-900/90 px-2 py-1 shadow-md z-50">
-        <button onClick={() => router.push("/whiteboard")} className="p-1 rounded hover:bg-slate-700 text-white" title="返回">
+        <button onClick={() => router.push(articleId ? `/whiteboard?article=${articleId}` : "/whiteboard")} className="p-1 rounded hover:bg-slate-700 text-white" title="返回">
           <ArrowLeft size={14} />
         </button>
         <div className="w-px h-4 bg-slate-600 mx-0.5" />
@@ -298,5 +301,13 @@ export default function BlackboardPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function BlackboardPage() {
+  return (
+    <Suspense fallback={<div className="fixed inset-0 bg-slate-900 flex items-center justify-center"><span className="text-white">載入中...</span></div>}>
+      <BlackboardContent />
+    </Suspense>
   )
 }

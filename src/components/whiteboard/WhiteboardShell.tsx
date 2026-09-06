@@ -453,7 +453,7 @@ export default function WhiteboardShell() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => window.open("/blackboard", "_blank")}
+            onClick={() => window.open(article ? `/blackboard?article=${article.id}` : "/blackboard", "_blank")}
             title="新視窗開啟黑板"
             className="text-slate-700 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-700"
           >
