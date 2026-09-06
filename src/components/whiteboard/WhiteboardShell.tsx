@@ -252,7 +252,7 @@ export default function WhiteboardShell() {
     setBoardMode(mode)
     setCanvasVisible(true)
     setTimeout(() => {
-      if (boardMode === "blackboard" && blackboardData) {
+      if (mode === "blackboard" && blackboardData) {
         canvasApiRef.current?.load(blackboardData)
       }
       canvasApiRef.current?.toJSON()

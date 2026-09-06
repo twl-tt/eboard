@@ -32,7 +32,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const colorRef = useRef("#1f2937")
 
   const [tool, setTool] = useState<CanvasTool>("pen")
-  const [color, setColor] = useState("#1f2937")
+  const [color, setColor] = useState("#dc2626")
   const [visible, setVisible] = useState(true)
 
   useEffect(() => { toolRef.current = tool }, [tool])
