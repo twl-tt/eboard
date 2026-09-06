@@ -38,6 +38,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const historyIndexRef = useRef(-1)
   const toolRef = useRef<CanvasTool>(currentTool || "pen")
   const colorRef = useRef("#dc2626")
+  const isErasingRef = useRef(false)
+  const eraseRadiusRef = useRef(20)
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
@@ -130,9 +132,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             canvas.freeDrawingBrush.width = 3
             break
           case "eraser":
-            canvas.isDrawingMode = true
-            canvas.freeDrawingBrush.color = boardColor || "#1f2937"
-            canvas.freeDrawingBrush.width = 20
+            canvas.isDrawingMode = false
+            eraseRadiusRef.current = 20
             break
           case "highlighter":
             canvas.isDrawingMode = true
@@ -158,6 +159,16 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
           text.enterEditing()
           setTool("select")
           saveHistory()
+          return
+        }
+        if (toolRef.current === "eraser") {
+          isErasingRef.current = true
+          const pointer = canvas.getPointer(options.e)
+          const ctx = canvas.getContext()
+          ctx.globalCompositeOperation = "destination-out"
+          ctx.beginPath()
+          ctx.arc(pointer.x, pointer.y, eraseRadiusRef.current, 0, Math.PI * 2)
+          ctx.fill()
           return
         }
         if (toolRef.current === "rect" || toolRef.current === "ellipse" || toolRef.current === "line") {
@@ -194,6 +205,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       })
 
       canvas.on("mouse:move", (options: any) => {
+        if (isErasingRef.current) {
+          const pointer = canvas.getPointer(options.e)
+          const ctx = canvas.getContext()
+          ctx.beginPath()
+          ctx.arc(pointer.x, pointer.y, eraseRadiusRef.current, 0, Math.PI * 2)
+          ctx.fill()
+          return
+        }
         if (!isDrawing || !currentShape) return
         const pointer = canvas.getPointer(options.e)
         if (toolRef.current === "rect") {
@@ -217,6 +236,13 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       })
 
       canvas.on("mouse:up", () => {
+        if (isErasingRef.current) {
+          isErasingRef.current = false
+          const ctx = canvas.getContext()
+          ctx.globalCompositeOperation = "source-over"
+          saveHistory()
+          return
+        }
         if (isDrawing) {
           isDrawing = false
           currentShape = null
@@ -251,10 +277,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   useEffect(() => {
     if (!fabricRef.current) return
     const canvas = fabricRef.current
-    if (canvas.freeDrawingBrush) {
-      canvas.freeDrawingBrush.color = tool === "eraser" ? (boardColor || "#1f2937") : color
+    if (canvas.freeDrawingBrush && tool !== "eraser") {
+      canvas.freeDrawingBrush.color = tool === "highlighter" ? color + "33" : color
     }
-  }, [color, tool, boardColor])
+  }, [color, tool])
 
   useImperativeHandle(ref, () => ({
     toJSON: () => fabricRef.current ? JSON.stringify(fabricRef.current.toJSON()) : null,
