@@ -54,13 +54,16 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas = new fabric.Canvas(canvasElRef.current, {
         width: rect.width,
         height: rect.height,
-        backgroundColor: boardColor || "#1f2937",
+        backgroundColor: boardColor || null,
         selection: true
       })
       fabricRef.current = canvas
 
       if (boardColor) {
         canvas.setBackgroundColor(boardColor, canvas.renderAll.bind(canvas))
+      } else {
+        canvas.setBackgroundColor(null, canvas.renderAll.bind(canvas))
+        canvas.backgroundColor = null
       }
 
       const saveHistory = () => {
