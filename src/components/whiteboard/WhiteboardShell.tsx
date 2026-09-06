@@ -505,9 +505,10 @@ export default function WhiteboardShell() {
                       : boardMode === "whiteboard"
                       ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
                       : canvasVisible
-                      ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700 dark:bg-slate-900"
+                      ? "shadow-2xl shadow-slate-900 ring-slate-700"
                       : "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80 dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10"
                   )}
+                  style={canvasVisible && boardMode !== "blackboard" && boardMode !== "whiteboard" ? { backgroundColor: "#1f2937" } : undefined}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
                       e.preventDefault()
