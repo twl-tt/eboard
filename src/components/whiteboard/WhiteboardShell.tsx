@@ -48,7 +48,7 @@ export default function WhiteboardShell() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
-  const [canvasVisible, setCanvasVisible] = useState(!article)
+  const [canvasVisible, setCanvasVisible] = useState(true)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -69,10 +69,6 @@ export default function WhiteboardShell() {
   }, [])
 
   useEffect(() => () => stopSpeak(), [])
-
-  useEffect(() => {
-    setCanvasVisible(!article)
-  }, [article])
 
   useEffect(() => {
     fetch("/api/tags").then((r) => r.ok ? r.json() : []).then(setTags).catch(() => {})
