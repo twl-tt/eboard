@@ -98,7 +98,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctxRef.current.lineWidth = 15
       } else {
         ctxRef.current.globalAlpha = 1
-        ctxRef.current.strokeStyle = color
+        ctxRef.current.strokeStyle = tool === "eraser" ? "#ffffff" : color
         ctxRef.current.lineWidth = tool === "eraser" ? 20 : 3
       }
       ctxRef.current.lineCap = "round"
