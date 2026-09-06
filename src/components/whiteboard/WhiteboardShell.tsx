@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
-  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Lock, Unlock, Maximize2, Minimize2, Brush, Sticker, Pencil
+  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Pencil
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -51,6 +51,7 @@ export default function WhiteboardShell() {
   const [canvasVisible, setCanvasVisible] = useState(!article)
   const [canvasTabs, setCanvasTabs] = useState<{ id: string; name: string; data: string | null }[]>([{ id: "1", name: "白板 1", data: null }])
   const [activeTab, setActiveTab] = useState(0)
+  const prevTabRef = useRef(activeTab)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -255,24 +256,19 @@ export default function WhiteboardShell() {
 
   useEffect(() => {
     if (boardMode !== "blackboard") return
-    const prevTab = activeTab
-    const saveCurrentTab = () => {
+    const prevTab = prevTabRef.current
+    if (prevTab !== activeTab) {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setCanvasTabs(prev => prev.map((tab, i) => i === prevTab ? { ...tab, data } : tab))
-    }
-    const loadNewTab = (index: number) => {
-      const newData = canvasTabs[index]?.data
+      const newData = canvasTabs[activeTab]?.data
       if (newData) {
-        setTimeout(() => canvasApiRef.current?.load?.(newData), 50)
+        canvasApiRef.current?.load(newData)
       } else {
-        setTimeout(() => canvasApiRef.current?.clear?.(), 50)
+        canvasApiRef.current?.clear()
       }
+      prevTabRef.current = activeTab
     }
-    return () => {
-      saveCurrentTab()
-      loadNewTab(activeTab)
-    }
-  }, [activeTab, boardMode])
+  }, [activeTab, boardMode, canvasTabs])
 
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
     setBoardMode(mode)
@@ -594,16 +590,6 @@ export default function WhiteboardShell() {
             title={isFullscreen ? "退出全螢幕" : "進入全螢幕"}
           >
             {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
-          </Button>
-
-          <Button
-            size="sm"
-            variant={canvasFollowsText ? "default" : "ghost"}
-            onClick={() => setCanvasFollowsText((v) => !v)}
-            title={canvasFollowsText ? "畫板跟隨文字 — 點擊切換為固定" : "畫板固定在畫面 — 點擊切換為跟隨文字"}
-            className={cn(canvasFollowsText && "bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300")}
-          >
-            {canvasFollowsText ? <><Lock className="h-4 w-4" /> 跟隨</> : <><Unlock className="h-4 w-4" /> 固定</>}
           </Button>
 
           <span className="mx-1 hidden h-6 w-px bg-slate-300/70 sm:block dark:bg-slate-700/70" />
