@@ -78,7 +78,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     ctx.lineJoin = "round"
     ctxRef.current = ctx
 
-    if (boardColor && !container) {
+    if (boardColor) {
       ctx.fillStyle = boardColor
       ctx.fillRect(0, 0, canvas.width, canvas.height)
     }
