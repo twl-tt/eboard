@@ -1,9 +1,9 @@
 "use client"
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
-import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus, Highlighter, Type, Hand } from "lucide-react"
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
+import { X, Pencil, Eraser, Square, Circle, Trash2, Minus, Highlighter, Type, Move, Undo2, Redo2 } from "lucide-react"
 
-export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text" | "pan"
+export type CanvasTool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -22,319 +22,237 @@ interface Props {
 }
 
 export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef }, ref) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
-  const isDrawingRef = useRef(false)
-  const startPosRef = useRef({ x: 0, y: 0 })
-  const historyRef = useRef<ImageData[]>([])
-  const historyIndexRef = useRef(-1)
-  const toolRef = useRef<CanvasTool>("pen")
-  const colorRef = useRef("#dc2626")
-
-  const [tool, setTool] = useState<CanvasTool>("pen")
+  const canvasElRef = useRef<HTMLCanvasElement>(null)
+  const fabricRef = useRef<any>(null)
+  const [tool, setTool] = useState<CanvasTool>("select")
   const [color, setColor] = useState("#dc2626")
   const [visible, setVisible] = useState(true)
-  const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null)
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
-  const isPanningRef = useRef(false)
-  const panStartRef = useRef({ x: 0, y: 0 })
+  const isDownRef = useRef(false)
+  const startPointRef = useRef<any>(null)
+  const historyRef = useRef<string[]>([])
+  const historyIndexRef = useRef(-1)
+  const toolRef = useRef<CanvasTool>("select")
+  const colorRef = useRef("#dc2626")
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
 
   useEffect(() => {
-    if (tool !== "pan" && (panOffset.x !== 0 || panOffset.y !== 0)) {
-      const canvas = canvasRef.current
-      const ctx = ctxRef.current
-      if (!canvas || !ctx) return
-      if (historyRef.current.length === 0) return
-      const tempCanvas = document.createElement('canvas')
-      tempCanvas.width = canvas.width
-      tempCanvas.height = canvas.height
-      const tempCtx = tempCanvas.getContext('2d')
-      if (tempCtx) {
-        const imageData = historyRef.current[historyIndexRef.current]
-        if (imageData) {
-          tempCtx.putImageData(imageData, 0, 0)
-        }
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(tempCanvas, panOffset.x, panOffset.y)
-        saveHistory()
-        setPanOffset({ x: 0, y: 0 })
-      }
-    }
-  }, [tool])
+    if (!canvasElRef.current || !containerRef.current) return
 
-  const redrawWithPan = useCallback(() => {
-    const canvas = canvasRef.current
-    const ctx = ctxRef.current
-    if (!canvas || !ctx) return
-    if (historyRef.current.length === 0) return
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    const currentIndex = historyIndexRef.current
-    const imageData = historyRef.current[currentIndex]
-    if (imageData) {
-      const tempCanvas = document.createElement('canvas')
-      tempCanvas.width = canvas.width
-      tempCanvas.height = canvas.height
-      const tempCtx = tempCanvas.getContext('2d')
-      if (tempCtx) {
-        tempCtx.putImageData(imageData, 0, 0)
-        ctx.save()
-        ctx.translate(panOffset.x, panOffset.y)
-        ctx.drawImage(tempCanvas, 0, 0)
-        ctx.restore()
-      }
-    }
-  }, [panOffset])
+    let canvas: any
+    let isDrawing = false
+    let startPoint: any = null
+    let currentShape: any = null
 
-  useEffect(() => {
-    if (tool === "pan") {
-      redrawWithPan()
-    }
-  }, [tool, panOffset, redrawWithPan])
+    const init = async () => {
+      const { fabric } = await import("fabric")
 
-  const saveHistory = useCallback(() => {
-    const canvas = canvasRef.current
-    const ctx = ctxRef.current
-    if (!canvas || !ctx) return
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1)
-    historyRef.current.push(imageData)
-    if (historyRef.current.length > 30) historyRef.current.shift()
-    historyIndexRef.current = historyRef.current.length - 1
-    if (panOffset.x !== 0 || panOffset.y !== 0) {
-      setPanOffset({ x: 0, y: 0 })
-    }
-  }, [panOffset])
-
-  const initCanvas = useCallback(() => {
-    const canvas = canvasRef.current
-    const container = containerRef?.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext("2d", { willReadFrequently: true })
-    if (!ctx) return
-
-    let w = 0, h = 0
-    if (container) {
+      const container = containerRef.current!
       const rect = container.getBoundingClientRect()
-      w = rect.width
-      h = rect.height
-    } else {
-      w = window.innerWidth
-      h = window.innerHeight
-    }
 
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w
-      canvas.height = h
+      canvas = new fabric.Canvas(canvasElRef.current, {
+        width: rect.width,
+        height: rect.height,
+        backgroundColor: boardColor || "#1f2937",
+        selection: true
+      })
+      fabricRef.current = canvas
+
       if (boardColor) {
-        ctx.fillStyle = boardColor
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        canvas.setBackgroundColor(boardColor, canvas.renderAll.bind(canvas))
       }
-    }
 
-    ctx.strokeStyle = colorRef.current
-    ctx.lineWidth = toolRef.current === "eraser" ? 20 : 3
-    ctx.lineCap = "round"
-    ctx.lineJoin = "round"
-    ctxRef.current = ctx
-  }, [containerRef, boardColor])
-
-  useEffect(() => {
-    initCanvas()
-  }, [initCanvas, boardColor])
-
-  useEffect(() => {
-    if (ctxRef.current) {
-      ctxRef.current.strokeStyle = colorRef.current
-      ctxRef.current.lineWidth = toolRef.current === "eraser" ? 20 : 3
-    }
-  }, [color, tool])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const getPos = (e: PointerEvent | TouchEvent) => {
-      const rect = canvas.getBoundingClientRect()
-      if ("touches" in e && e.touches.length > 0) {
-        return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }
+      const saveHistory = () => {
+        const json = JSON.stringify(canvas.toJSON())
+        historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1)
+        historyRef.current.push(json)
+        if (historyRef.current.length > 30) historyRef.current.shift()
+        historyIndexRef.current = historyRef.current.length - 1
       }
-      if ("clientX" in e) {
-        return { x: e.clientX - rect.left, y: e.clientY - rect.top }
-      }
-      return { x: 0, y: 0 }
-    }
 
-    const onDown = (e: PointerEvent | TouchEvent) => {
-      e.preventDefault()
-      const pos = getPos(e)
-      const currentTool = toolRef.current
-      if (currentTool === "text") {
-        setTextInput({ x: pos.x, y: pos.y, value: "" })
-        return
-      }
-      if (currentTool === "pan") {
-        isPanningRef.current = true
-        panStartRef.current = { x: pos.x - panOffset.x, y: pos.y - panOffset.y }
-        if ("setPointerCapture" in canvas) {
-          try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
-        }
-        return
-      }
-      isDrawingRef.current = true
-      startPosRef.current = pos
-      if ("setPointerCapture" in canvas) {
-        try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
-      }
-      if (currentTool === "pen" || currentTool === "eraser" || currentTool === "highlighter") {
-        ctxRef.current?.beginPath()
-        ctxRef.current?.moveTo(pos.x, pos.y)
-        if (currentTool === "highlighter") {
-          ctxRef.current!.globalAlpha = 0.1
-          ctxRef.current!.lineWidth = 25
-        } else if (currentTool === "eraser") {
-          ctxRef.current!.globalAlpha = 1
-          ctxRef.current!.globalCompositeOperation = "destination-out"
-          ctxRef.current!.lineWidth = 20
-        } else {
-          ctxRef.current!.globalAlpha = 1
-          ctxRef.current!.globalCompositeOperation = "source-over"
-          ctxRef.current!.strokeStyle = colorRef.current
-          ctxRef.current!.lineWidth = 3
+      const setToolMode = (t: CanvasTool) => {
+        canvas.isDrawingMode = false
+        canvas.selection = false
+        canvas.forEachObject((obj: any) => { obj.selectable = false; obj.evented = false })
+
+        switch (t) {
+          case "select":
+            canvas.selection = true
+            canvas.forEachObject((obj: any) => { obj.selectable = true; obj.evented = true })
+            break
+          case "pen":
+            canvas.isDrawingMode = true
+            canvas.freeDrawingBrush.color = colorRef.current
+            canvas.freeDrawingBrush.width = 3
+            break
+          case "eraser":
+            canvas.isDrawingMode = true
+            canvas.freeDrawingBrush.color = boardColor || "#1f2937"
+            canvas.freeDrawingBrush.width = 20
+            break
+          case "highlighter":
+            canvas.isDrawingMode = true
+            canvas.freeDrawingBrush.color = colorRef.current + "33"
+            canvas.freeDrawingBrush.width = 25
+            break
         }
       }
-    }
 
-    const onMove = (e: PointerEvent | TouchEvent) => {
-      if (isPanningRef.current) {
-        const pos = getPos(e)
-        const newX = pos.x - panStartRef.current.x
-        const newY = pos.y - panStartRef.current.y
-        setPanOffset({ x: newX, y: newY })
-        return
-      }
-      if (!isDrawingRef.current || !ctxRef.current) return
-      e.preventDefault()
-      const pos = getPos(e)
-      const currentTool = toolRef.current
-      if (currentTool === "pen" || currentTool === "eraser" || currentTool === "highlighter") {
-        if (currentTool === "highlighter") {
-          ctxRef.current.globalAlpha = 0.1
-          ctxRef.current.lineWidth = 25
-        } else if (currentTool === "eraser") {
-          ctxRef.current.globalCompositeOperation = "destination-out"
-          ctxRef.current.lineWidth = 20
-        } else {
-          ctxRef.current.globalCompositeOperation = "source-over"
-          ctxRef.current.strokeStyle = colorRef.current
-          ctxRef.current.lineWidth = 3
+      canvas.on("mouse:down", (options: any) => {
+        if (toolRef.current === "select") return
+        if (toolRef.current === "text") {
+          const pointer = canvas.getPointer(options.e)
+          const text = new fabric.IText("", {
+            left: pointer.x,
+            top: pointer.y,
+            fontFamily: "sans-serif",
+            fontSize: 24,
+            fill: colorRef.current
+          })
+          canvas.add(text)
+          canvas.setActiveObject(text)
+          text.enterEditing()
+          setTool("select")
+          saveHistory()
+          return
         }
-        ctxRef.current.lineTo(pos.x, pos.y)
-        ctxRef.current.stroke()
-      }
-    }
-
-    const onUp = (e: PointerEvent | TouchEvent) => {
-      if (isPanningRef.current) {
-        isPanningRef.current = false
-        if ("releasePointerCapture" in canvas) {
-          try { canvas.releasePointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
+        if (toolRef.current === "rect" || toolRef.current === "ellipse" || toolRef.current === "line") {
+          isDrawing = true
+          startPoint = canvas.getPointer(options.e)
+          if (toolRef.current === "rect") {
+            currentShape = new fabric.Rect({
+              left: startPoint.x,
+              top: startPoint.y,
+              width: 0,
+              height: 0,
+              fill: "transparent",
+              stroke: colorRef.current,
+              strokeWidth: 3
+            })
+          } else if (toolRef.current === "ellipse") {
+            currentShape = new fabric.Ellipse({
+              left: startPoint.x,
+              top: startPoint.y,
+              rx: 0,
+              ry: 0,
+              fill: "transparent",
+              stroke: colorRef.current,
+              strokeWidth: 3
+            })
+          } else if (toolRef.current === "line") {
+            currentShape = new fabric.Line([startPoint.x, startPoint.y, startPoint.x, startPoint.y], {
+              stroke: colorRef.current,
+              strokeWidth: 3
+            })
+          }
+          canvas.add(currentShape)
         }
-        return
-      }
-      if (!isDrawingRef.current) return
-      e.preventDefault()
-      isDrawingRef.current = false
-      const pos = getPos(e)
-      if ("releasePointerCapture" in canvas) {
-        try { canvas.releasePointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
-      }
+      })
 
-      const currentTool = toolRef.current
-      if (currentTool === "rect") {
-        ctxRef.current?.strokeRect(
-          startPosRef.current.x,
-          startPosRef.current.y,
-          pos.x - startPosRef.current.x,
-          pos.y - startPosRef.current.y
-        )
-      } else if (currentTool === "ellipse") {
-        const cx = (startPosRef.current.x + pos.x) / 2
-        const cy = (startPosRef.current.y + pos.y) / 2
-        const rx = Math.abs(pos.x - startPosRef.current.x) / 2
-        const ry = Math.abs(pos.y - startPosRef.current.y) / 2
-        ctxRef.current?.beginPath()
-        ctxRef.current?.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
-        ctxRef.current?.stroke()
-      } else if (currentTool === "line") {
-        ctxRef.current?.beginPath()
-        ctxRef.current?.moveTo(startPosRef.current.x, startPosRef.current.y)
-        ctxRef.current?.lineTo(pos.x, pos.y)
-        ctxRef.current?.stroke()
-      }
+      canvas.on("mouse:move", (options: any) => {
+        if (!isDrawing || !currentShape) return
+        const pointer = canvas.getPointer(options.e)
+        if (toolRef.current === "rect") {
+          currentShape.set({
+            width: Math.abs(pointer.x - startPoint.x),
+            height: Math.abs(pointer.y - startPoint.y),
+            left: Math.min(startPoint.x, pointer.x),
+            top: Math.min(startPoint.y, pointer.y)
+          })
+        } else if (toolRef.current === "ellipse") {
+          currentShape.set({
+            rx: Math.abs(pointer.x - startPoint.x) / 2,
+            ry: Math.abs(pointer.y - startPoint.y) / 2,
+            left: Math.min(startPoint.x, pointer.x),
+            top: Math.min(startPoint.y, pointer.y)
+          })
+        } else if (toolRef.current === "line") {
+          currentShape.set({ x2: pointer.x, y2: pointer.y })
+        }
+        canvas.renderAll()
+      })
 
+      canvas.on("mouse:up", () => {
+        if (isDrawing) {
+          isDrawing = false
+          currentShape = null
+          saveHistory()
+        }
+      })
+
+      canvas.on("path:created", () => saveHistory())
+      canvas.on("object:modified", () => saveHistory())
+      canvas.on("text:changed", () => saveHistory())
+
+      canvas.setToolMode = setToolMode
+      setToolMode("select")
       saveHistory()
-      ctxRef.current!.globalAlpha = 1
-      ctxRef.current!.globalCompositeOperation = "source-over"
     }
 
-    canvas.addEventListener("pointerdown", onDown)
-    canvas.addEventListener("pointermove", onMove)
-    canvas.addEventListener("pointerup", onUp)
-    canvas.addEventListener("pointerleave", onUp)
-    canvas.addEventListener("touchstart", onDown, { passive: false })
-    canvas.addEventListener("touchmove", onMove, { passive: false })
-    canvas.addEventListener("touchend", onUp)
+    init()
 
     return () => {
-      canvas.removeEventListener("pointerdown", onDown)
-      canvas.removeEventListener("pointermove", onMove)
-      canvas.removeEventListener("pointerup", onUp)
-      canvas.removeEventListener("pointerleave", onUp)
-      canvas.removeEventListener("touchstart", onDown)
-      canvas.removeEventListener("touchmove", onMove)
-      canvas.removeEventListener("touchend", onUp)
+      if (fabricRef.current) {
+        fabricRef.current.dispose()
+        fabricRef.current = null
+      }
     }
-  }, [saveHistory])
+  }, [boardColor, containerRef])
+
+  useEffect(() => {
+    if (!fabricRef.current) return
+    fabricRef.current.setToolMode(tool)
+  }, [tool])
+
+  useEffect(() => {
+    if (!fabricRef.current) return
+    const canvas = fabricRef.current
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = tool === "eraser" ? (boardColor || "#1f2937") : color
+    }
+  }, [color, tool, boardColor])
 
   useImperativeHandle(ref, () => ({
-    toJSON: () => canvasRef.current?.toDataURL() ?? null,
+    toJSON: () => fabricRef.current ? JSON.stringify(fabricRef.current.toJSON()) : null,
     load: (data: string | null) => {
-      if (!canvasRef.current || !ctxRef.current) return
-      if (data) {
-        const img = new Image()
-        img.onload = () => {
-          ctxRef.current?.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height)
-          ctxRef.current?.drawImage(img, 0, 0)
-        }
-        img.src = data
+      if (!data || !fabricRef.current) return
+      fabricRef.current.loadFromJSON(JSON.parse(data)).then(() => {
+        fabricRef.current.renderAll()
+      })
+    },
+    toDataURL: () => fabricRef.current ? fabricRef.current.toDataURL() : null,
+    isEmpty: () => !fabricRef.current || fabricRef.current.getObjects().length === 0,
+    clear: () => {
+      if (!fabricRef.current) return
+      fabricRef.current.clear()
+      if (boardColor) {
+        fabricRef.current.setBackgroundColor(boardColor, fabricRef.current.renderAll.bind(fabricRef.current))
       }
     },
-    toDataURL: () => canvasRef.current?.toDataURL() ?? null,
-    isEmpty: () => historyIndexRef.current <= 0,
-    clear: () => {
-      const ctx = ctxRef.current
-      const canvas = canvasRef.current
-      if (!ctx || !canvas) return
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      saveHistory()
-    },
     undo: () => {
-      if (historyIndexRef.current <= 0) return false
+      if (historyIndexRef.current <= 0 || !fabricRef.current) return false
       historyIndexRef.current--
-      ctxRef.current?.putImageData(historyRef.current[historyIndexRef.current], 0, 0)
+      const json = historyRef.current[historyIndexRef.current]
+      if (json) {
+        fabricRef.current.loadFromJSON(JSON.parse(json)).then(() => {
+          fabricRef.current.renderAll()
+        })
+      }
       return true
     },
     redo: () => {
-      if (historyIndexRef.current >= historyRef.current.length - 1) return false
+      if (historyIndexRef.current >= historyRef.current.length - 1 || !fabricRef.current) return false
       historyIndexRef.current++
-      ctxRef.current?.putImageData(historyRef.current[historyIndexRef.current], 0, 0)
+      const json = historyRef.current[historyIndexRef.current]
+      if (json) {
+        fabricRef.current.loadFromJSON(JSON.parse(json)).then(() => {
+          fabricRef.current.renderAll()
+        })
+      }
       return true
     }
-  }), [saveHistory])
+  }))
 
   const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c", "#eab308"]
   const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
@@ -343,72 +261,37 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   return (
     <>
-      <div className="absolute inset-0 pointer-events-auto z-40" style={{ background: "transparent" }}>
-        <canvas ref={canvasRef} className="w-full h-full" />
+      <div className="absolute inset-0 pointer-events-auto z-40">
+        <canvas ref={canvasElRef} />
       </div>
-      {textInput && (
-        <div
-          className="absolute z-50"
-          style={{ left: textInput.x, top: textInput.y }}
-        >
-          <input
-            autoFocus
-            type="text"
-            value={textInput.value}
-            onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && textInput.value) {
-                ctxRef.current!.fillStyle = colorRef.current
-                ctxRef.current!.font = "32px sans-serif"
-                ctxRef.current!.fillText(textInput.value, textInput.x, textInput.y)
-                saveHistory()
-                setTextInput(null)
-              } else if (e.key === "Escape") {
-                setTextInput(null)
-              }
-            }}
-            onBlur={() => {
-              if (textInput.value) {
-                ctxRef.current!.fillStyle = colorRef.current
-                ctxRef.current!.font = "32px sans-serif"
-                ctxRef.current!.fillText(textInput.value, textInput.x, textInput.y)
-                saveHistory()
-              }
-              setTextInput(null)
-            }}
-            className="px-1 py-0.5 border border-sky-500 rounded bg-white/90 text-black dark:text-white dark:bg-slate-900/90 outline-none"
-            style={{ color: colorRef.current }}
-          />
-        </div>
-      )}
       <div className="absolute top-0 left-2 flex items-center gap-0.5 rounded-lg border border-slate-200/50 bg-white/90 px-2 py-1 shadow-md dark:border-slate-700/50 dark:bg-slate-900/90 z-50 overflow-x-auto max-w-[calc(100vw-16px)]">
         <button onClick={() => setVisible(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
           <X size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
-        <button onClick={() => setTool("pen")} className={`p-1 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+        <button onClick={() => setTool("select")} className={`p-1 rounded ${tool === "select" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="選擇">
+          <Move size={14} />
+        </button>
+        <button onClick={() => setTool("pen")} className={`p-1 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="畫筆">
           <Pencil size={14} />
         </button>
-        <button onClick={() => setTool("eraser")} className={`p-1 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+        <button onClick={() => setTool("eraser")} className={`p-1 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="橡皮擦">
           <Eraser size={14} />
         </button>
-        <button onClick={() => setTool("rect")} className={`p-1 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+        <button onClick={() => setTool("rect")} className={`p-1 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="矩形">
           <Square size={14} />
         </button>
-        <button onClick={() => setTool("ellipse")} className={`p-1 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+        <button onClick={() => setTool("ellipse")} className={`p-1 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="橢圓">
           <Circle size={14} />
         </button>
-        <button onClick={() => setTool("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+        <button onClick={() => setTool("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="直線">
           <Minus size={14} />
         </button>
-        <button onClick={() => setTool("highlighter")} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆" onMouseDown={() => { if (tool !== "highlighter") { setTool("highlighter"); setColor("#fde047") } }}>
+        <button onClick={() => { setTool("highlighter"); if (!HIGHLIGHTER_COLORS.includes(color)) setColor("#fef08a") }} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆">
           <Highlighter size={14} />
         </button>
         <button onClick={() => setTool("text")} className={`p-1 rounded ${tool === "text" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="文字">
           <Type size={14} />
-        </button>
-        <button onClick={() => setTool("pan")} className={`p-1 rounded ${tool === "pan" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="移動">
-          <Hand size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
         {(tool === "highlighter" ? HIGHLIGHTER_COLORS : COLORS).map(c => (
