@@ -202,7 +202,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.on("text:changed", () => saveHistory())
 
       canvas.setToolMode = setToolMode
-      setToolMode("select")
+      setToolMode("pen")
       saveHistory()
     }
 
