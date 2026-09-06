@@ -139,20 +139,21 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       if ("setPointerCapture" in canvas) {
         try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
       }
-      if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
+      const currentTool = toolRef.current
+      if (currentTool === "pen" || currentTool === "eraser" || currentTool === "highlighter") {
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(pos.x, pos.y)
-        if (tool === "highlighter") {
+        if (currentTool === "highlighter") {
           ctxRef.current!.globalAlpha = 0.1
           ctxRef.current!.lineWidth = 25
-        } else if (tool === "eraser") {
+        } else if (currentTool === "eraser") {
           ctxRef.current!.globalAlpha = 1
           ctxRef.current!.globalCompositeOperation = "destination-out"
           ctxRef.current!.lineWidth = 20
         } else {
           ctxRef.current!.globalAlpha = 1
           ctxRef.current!.globalCompositeOperation = "source-over"
-          ctxRef.current!.strokeStyle = color
+          ctxRef.current!.strokeStyle = colorRef.current
           ctxRef.current!.lineWidth = 3
         }
       }
@@ -162,16 +163,17 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       if (!isDrawingRef.current || !ctxRef.current) return
       e.preventDefault()
       const pos = getPos(e)
-      if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
-        if (tool === "highlighter") {
+      const currentTool = toolRef.current
+      if (currentTool === "pen" || currentTool === "eraser" || currentTool === "highlighter") {
+        if (currentTool === "highlighter") {
           ctxRef.current.globalAlpha = 0.1
           ctxRef.current.lineWidth = 25
-        } else if (tool === "eraser") {
+        } else if (currentTool === "eraser") {
           ctxRef.current.globalCompositeOperation = "destination-out"
           ctxRef.current.lineWidth = 20
         } else {
           ctxRef.current.globalCompositeOperation = "source-over"
-          ctxRef.current.strokeStyle = color
+          ctxRef.current.strokeStyle = colorRef.current
           ctxRef.current.lineWidth = 3
         }
         ctxRef.current.lineTo(pos.x, pos.y)
