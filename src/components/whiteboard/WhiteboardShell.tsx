@@ -494,7 +494,7 @@ export default function WhiteboardShell() {
 
         {mode === "read" && article && (
           <>
-            <div className="grid h-[calc(100vh-180px)] grid-cols-1 gap-3 lg:grid-cols-[1fr_460px]">
+            <div className="grid h-[calc(100vh-180px)] grid-cols-1">
                 <div className="relative h-full">
                 <div
                   ref={readingRef}
