@@ -254,7 +254,7 @@ export default function WhiteboardShell() {
   }, [isFullscreen])
 
   useEffect(() => {
-    if (boardMode !== "blackboard" || !article) return
+    if (boardMode !== "blackboard") return
     const prevTab = activeTab
     const saveCurrentTab = () => {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
@@ -272,7 +272,7 @@ export default function WhiteboardShell() {
       saveCurrentTab()
       loadNewTab(activeTab)
     }
-  }, [activeTab, boardMode, article])
+  }, [activeTab, boardMode])
 
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
     setBoardMode(mode)
@@ -557,7 +557,7 @@ export default function WhiteboardShell() {
               title="選擇黑板顏色"
             />
           )}
-          {boardMode === "blackboard" && !article && (
+          {boardMode === "blackboard" && (
             <div className="flex items-center gap-1 ml-1">
               {canvasTabs.map((tab, i) => (
                 <button
