@@ -87,7 +87,7 @@ export function ReadingPane({
     <div
       ref={containerRef}
       className="font-han select-text pr-[25%]"
-      style={{ fontSize: `${fontSizeRem}rem`, lineHeight: 1.9 }}
+      style={{ fontSize: `${fontSizeRem}rem`, lineHeight: 1.9, wordBreak: "break-all" }}
     >
       {sentences.map((s) =>
         s.text.trim() === "" ? (
@@ -95,12 +95,12 @@ export function ReadingPane({
         ) : (
           <span
             key={s.id}
-            className="inline-block rounded-xl border-2 border-transparent transition-all"
+            className="inline rounded-xl border-2 border-transparent transition-all"
           >
             <span
               onClick={() => onSentenceClick(s)}
               className={cn(
-                "group relative mr-1 inline-block cursor-pointer rounded-xl px-1 transition-all hover:-translate-y-[2px]",
+                "group relative mr-1 inline cursor-pointer rounded-xl px-1 transition-all hover:-translate-y-[2px]",
                 "hover:bg-sky-400/15 hover:shadow-sm",
                 focusMode && focusId && focusId !== s.id && "opacity-25 blur-[1px]",
                 focusMode && focusId === s.id && "bg-amber-400/20 ring-2 ring-amber-400",
