@@ -69,10 +69,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         h = window.innerHeight
       }
 
-      const ctx = canvas.getContext("2d")
+      const ctx = canvas.getContext("2d", { willReadFrequently: true })
       if (!ctx) return
 
-      const imageData = canvas.width === w && canvas.height === h ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null
+      const sameSize = canvas.width === w && canvas.height === h
+      let imageData: ImageData | null = null
+      if (sameSize) {
+        imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      }
       canvas.width = w
       canvas.height = h
       if (imageData) ctx.putImageData(imageData, 0, 0)
