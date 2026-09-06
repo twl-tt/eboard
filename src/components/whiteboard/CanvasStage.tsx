@@ -70,6 +70,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     if (canvas.width !== w || canvas.height !== h) {
       canvas.width = w
       canvas.height = h
+      if (boardColor) {
+        ctx.fillStyle = boardColor
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
     }
 
     ctx.strokeStyle = colorRef.current
@@ -77,11 +81,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     ctx.lineCap = "round"
     ctx.lineJoin = "round"
     ctxRef.current = ctx
-  }, [containerRef])
+  }, [containerRef, boardColor])
 
   useEffect(() => {
     initCanvas()
-  }, [initCanvas])
+  }, [initCanvas, boardColor])
 
   useEffect(() => {
     if (ctxRef.current) {
