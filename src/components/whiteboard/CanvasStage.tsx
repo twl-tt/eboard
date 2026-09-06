@@ -133,11 +133,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(pos.x, pos.y)
         if (tool === "highlighter") {
-          ctxRef.current!.globalAlpha = 0.15
-          ctxRef.current!.lineWidth = 20
+          ctxRef.current!.globalAlpha = 0.1
+          ctxRef.current!.lineWidth = 25
         } else if (tool === "eraser") {
           ctxRef.current!.globalAlpha = 1
-          ctxRef.current!.strokeStyle = "#ffffff"
+          ctxRef.current!.globalCompositeOperation = "destination-out"
           ctxRef.current!.lineWidth = 20
         } else {
           ctxRef.current!.globalAlpha = 1
@@ -153,14 +153,15 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       const pos = getPos(e)
       if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
         if (tool === "highlighter") {
-          ctxRef.current.globalAlpha = 0.15
-          ctxRef.current.lineWidth = 20
+          ctxRef.current.globalAlpha = 0.1
+          ctxRef.current.lineWidth = 25
         } else if (tool === "eraser") {
           ctxRef.current.globalAlpha = 1
-          ctxRef.current.strokeStyle = "#ffffff"
+          ctxRef.current.globalCompositeOperation = "destination-out"
           ctxRef.current.lineWidth = 20
         } else {
           ctxRef.current.globalAlpha = 1
+          ctxRef.current.globalCompositeOperation = "source-over"
           ctxRef.current.strokeStyle = color
           ctxRef.current.lineWidth = 3
         }
@@ -202,6 +203,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
       saveHistory()
       ctxRef.current!.globalAlpha = 1
+      ctxRef.current!.globalCompositeOperation = "source-over"
     }
 
     canvas.addEventListener("pointerdown", onDown)
@@ -257,7 +259,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     }
   }), [saveHistory])
 
-  const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c"]
+  const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c", "#eab308"]
 
   if (!visible) return null
 
