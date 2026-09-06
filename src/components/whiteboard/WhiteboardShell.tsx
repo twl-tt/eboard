@@ -46,6 +46,8 @@ export default function WhiteboardShell() {
   const [boardColor, setBoardColor] = useState("#1f2937")
   const [blackboardData, setBlackboardData] = useState<string | null>(null)
   const blackboardDataRef = useRef<string | null>(null)
+  const [whiteboardData, setWhiteboardData] = useState<string | null>(null)
+  const whiteboardDataRef = useRef<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
@@ -240,10 +242,13 @@ export default function WhiteboardShell() {
   }, [])
 
   useEffect(() => { blackboardDataRef.current = blackboardData }, [blackboardData])
+  useEffect(() => { whiteboardDataRef.current = whiteboardData }, [whiteboardData])
 
   useEffect(() => {
     if (boardMode === "blackboard" && blackboardDataRef.current) {
       canvasApiRef.current?.load(blackboardDataRef.current)
+    } else if (boardMode === "whiteboard" && whiteboardDataRef.current) {
+      canvasApiRef.current?.load(whiteboardDataRef.current)
     }
   }, [boardMode])
 
@@ -252,6 +257,10 @@ export default function WhiteboardShell() {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setBlackboardData(data)
       blackboardDataRef.current = data
+    } else if (boardMode === "whiteboard") {
+      const data = canvasApiRef.current?.toDataURL?.() ?? null
+      setWhiteboardData(data)
+      whiteboardDataRef.current = data
     }
     setBoardMode(mode)
     setCanvasVisible(true)
@@ -262,6 +271,10 @@ export default function WhiteboardShell() {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setBlackboardData(data)
       blackboardDataRef.current = data
+    } else if (boardMode === "whiteboard") {
+      const data = canvasApiRef.current?.toDataURL?.() ?? null
+      setWhiteboardData(data)
+      whiteboardDataRef.current = data
     }
     setBoardMode("normal")
   }
