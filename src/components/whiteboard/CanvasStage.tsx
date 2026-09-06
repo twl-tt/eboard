@@ -1,9 +1,9 @@
 "use client"
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
-import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2 } from "lucide-react"
+import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus } from "lucide-react"
 
-export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse"
+export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -160,6 +160,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctxRef.current?.beginPath()
         ctxRef.current?.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2)
         ctxRef.current?.stroke()
+      } else if (tool === "line") {
+        ctxRef.current?.beginPath()
+        ctxRef.current?.moveTo(startPosRef.current.x, startPosRef.current.y)
+        ctxRef.current?.lineTo(pos.x, pos.y)
+        ctxRef.current?.stroke()
       }
 
       saveHistory()
@@ -245,6 +250,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         </button>
         <button onClick={() => setTool("ellipse")} className={`p-1 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
           <Circle size={14} />
+        </button>
+        <button onClick={() => setTool("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+          <Minus size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
         {COLORS.map(c => (
