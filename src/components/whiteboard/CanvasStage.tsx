@@ -68,7 +68,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         if (!container) {
           ctx.fillStyle = boardColor || "#ffffff"
           ctx.fillRect(0, 0, canvas.width, canvas.height)
-        } else if (boardColor && !articleId) {
+        } else if (boardColor) {
           ctx.fillStyle = boardColor
           ctx.fillRect(0, 0, canvas.width, canvas.height)
         } else {

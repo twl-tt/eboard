@@ -256,19 +256,13 @@ export default function WhiteboardShell() {
 
   useEffect(() => {
     if (boardMode !== "blackboard") return
-    const prevTab = prevTabRef.current
-    if (prevTab !== activeTab) {
-      const data = canvasApiRef.current?.toDataURL?.() ?? null
-      setCanvasTabs(prev => prev.map((tab, i) => i === prevTab ? { ...tab, data } : tab))
-      const newData = canvasTabs[activeTab]?.data
-      if (newData) {
-        canvasApiRef.current?.load(newData)
-      } else {
-        canvasApiRef.current?.clear()
-      }
-      prevTabRef.current = activeTab
+    const tabData = canvasTabs[activeTab]?.data
+    if (tabData) {
+      canvasApiRef.current?.load(tabData)
+    } else {
+      canvasApiRef.current?.clear()
     }
-  }, [activeTab, boardMode, canvasTabs])
+  }, [activeTab, boardMode])
 
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
     setBoardMode(mode)
@@ -636,6 +630,7 @@ export default function WhiteboardShell() {
                     boardMode === "blackboard" && "ring-slate-700",
                     boardMode === "whiteboard" && "bg-white ring-slate-200"
                   )}
+                  style={boardMode === "blackboard" ? { backgroundColor: boardColor } : undefined}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
                       e.preventDefault()
