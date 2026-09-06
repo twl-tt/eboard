@@ -28,10 +28,15 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const startPosRef = useRef({ x: 0, y: 0 })
   const historyRef = useRef<ImageData[]>([])
   const historyIndexRef = useRef(-1)
+  const toolRef = useRef<CanvasTool>("pen")
+  const colorRef = useRef("#1f2937")
 
   const [tool, setTool] = useState<CanvasTool>("pen")
   const [color, setColor] = useState("#1f2937")
   const [visible, setVisible] = useState(true)
+
+  useEffect(() => { toolRef.current = tool }, [tool])
+  useEffect(() => { colorRef.current = color }, [color])
 
   const saveHistory = useCallback(() => {
     const canvas = canvasRef.current
@@ -72,8 +77,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.height = h
       if (imageData) ctx.putImageData(imageData, 0, 0)
 
-      ctx.strokeStyle = color
-      ctx.lineWidth = tool === "eraser" ? 20 : 3
+      ctx.strokeStyle = colorRef.current
+      ctx.lineWidth = toolRef.current === "eraser" ? 20 : 3
       ctx.lineCap = "round"
       ctx.lineJoin = "round"
       ctxRef.current = ctx
@@ -89,7 +94,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       window.addEventListener("resize", init)
       return () => window.removeEventListener("resize", init)
     }
-  }, [color, boardColor, containerRef])
+  }, [boardColor])
 
   useEffect(() => {
     if (ctxRef.current) {
