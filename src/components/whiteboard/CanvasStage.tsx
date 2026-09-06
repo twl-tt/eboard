@@ -141,6 +141,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
           ctxRef.current!.lineWidth = 20
         } else {
           ctxRef.current!.globalAlpha = 1
+          ctxRef.current!.globalCompositeOperation = "source-over"
           ctxRef.current!.strokeStyle = color
           ctxRef.current!.lineWidth = 3
         }
@@ -156,11 +157,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
           ctxRef.current.globalAlpha = 0.1
           ctxRef.current.lineWidth = 25
         } else if (tool === "eraser") {
-          ctxRef.current.globalAlpha = 1
           ctxRef.current.globalCompositeOperation = "destination-out"
           ctxRef.current.lineWidth = 20
         } else {
-          ctxRef.current.globalAlpha = 1
           ctxRef.current.globalCompositeOperation = "source-over"
           ctxRef.current.strokeStyle = color
           ctxRef.current.lineWidth = 3
