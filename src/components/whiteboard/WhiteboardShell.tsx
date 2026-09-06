@@ -46,6 +46,8 @@ export default function WhiteboardShell() {
   const blackboardDataRef = useRef<string | null>(null)
   const [whiteboardData, setWhiteboardData] = useState<string | null>(null)
   const whiteboardDataRef = useRef<string | null>(null)
+  const [normalData, setNormalData] = useState<string | null>(null)
+  const normalDataRef = useRef<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
@@ -182,12 +184,15 @@ export default function WhiteboardShell() {
 
   useEffect(() => { blackboardDataRef.current = blackboardData }, [blackboardData])
   useEffect(() => { whiteboardDataRef.current = whiteboardData }, [whiteboardData])
+  useEffect(() => { normalDataRef.current = normalData }, [normalData])
 
   useEffect(() => {
     if (boardMode === "blackboard" && blackboardDataRef.current) {
       canvasApiRef.current?.load(blackboardDataRef.current)
     } else if (boardMode === "whiteboard" && whiteboardDataRef.current) {
       canvasApiRef.current?.load(whiteboardDataRef.current)
+    } else if (boardMode === "normal" && normalDataRef.current) {
+      canvasApiRef.current?.load(normalDataRef.current)
     }
   }, [boardMode])
 
@@ -200,6 +205,10 @@ export default function WhiteboardShell() {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setWhiteboardData(data)
       whiteboardDataRef.current = data
+    } else if (boardMode === "normal") {
+      const data = canvasApiRef.current?.toDataURL?.() ?? null
+      setNormalData(data)
+      normalDataRef.current = data
     }
     if (mode === "blackboard" && blackboardDataRef.current) {
       canvasApiRef.current?.load(blackboardDataRef.current)
@@ -225,6 +234,10 @@ export default function WhiteboardShell() {
       if (blackboardDataRef.current) {
         canvasApiRef.current?.load(blackboardDataRef.current)
       }
+    } else if (boardMode === "normal") {
+      const data = canvasApiRef.current?.toDataURL?.() ?? null
+      setNormalData(data)
+      normalDataRef.current = data
     }
     setBoardMode("normal")
   }
