@@ -226,7 +226,7 @@ export default function WhiteboardShell() {
 
   function toggleFullscreen() {
     if (!document.fullscreenElement) {
-      shellRef.current?.requestFullscreen?.()
+      document.documentElement.requestFullscreen?.()
     } else {
       document.exitFullscreen?.()
     }
