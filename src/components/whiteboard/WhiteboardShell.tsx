@@ -164,7 +164,7 @@ export default function WhiteboardShell() {
       await fetch(`/api/articles/${article.id}/canvas`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: JSON.parse(canvasApiRef.current.toJSON() ?? "null") })
+        body: JSON.stringify({ state: canvasApiRef.current.toJSON() })
       })
     } finally {
       setSavingCanvas(false)
