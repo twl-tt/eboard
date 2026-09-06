@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut,
@@ -25,6 +26,7 @@ import { StickerBar } from "./StickerBar"
 const HIGHLIGHT_COLORS: HighlightColor[] = ["yellow", "green", "blue"]
 
 export default function WhiteboardShell() {
+  const router = useRouter()
   const [articleId, setArticleId] = useState<string | null>(null)
   const [article, setArticle] = useState<ArticleFull | null>(null)
   const [loadingArticle, setLoadingArticle] = useState(false)
@@ -450,17 +452,12 @@ export default function WhiteboardShell() {
 
           <Button
             size="sm"
-            variant={boardMode === "blackboard" ? "default" : "ghost"}
-            onClick={() => (boardMode === "blackboard" ? exitBoardMode() : enterBoardMode("blackboard"))}
-            title="黑板模式"
-            className={cn(
-              boardMode === "blackboard"
-                ? "text-white hover:bg-slate-800"
-                : "text-slate-700 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-700"
-            )}
-            style={boardMode === "blackboard" ? { backgroundColor: boardColor } : undefined}
+            variant="ghost"
+            onClick={() => window.open("/blackboard", "_blank")}
+            title="新視窗開啟黑板"
+            className="text-slate-700 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-700"
           >
-            <Square className="h-4 w-4" /> 黑板
+            <Square className="h-4 w-4" /> 新黑板
           </Button>
           {boardMode === "blackboard" && (
             <input
