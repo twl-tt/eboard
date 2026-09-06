@@ -132,6 +132,18 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(pos.x, pos.y)
+        if (tool === "highlighter") {
+          ctxRef.current!.globalAlpha = 0.4
+          ctxRef.current!.lineWidth = 15
+        } else if (tool === "eraser") {
+          ctxRef.current!.globalAlpha = 1
+          ctxRef.current!.strokeStyle = "#ffffff"
+          ctxRef.current!.lineWidth = 20
+        } else {
+          ctxRef.current!.globalAlpha = 1
+          ctxRef.current!.strokeStyle = color
+          ctxRef.current!.lineWidth = 3
+        }
       }
     }
 
@@ -140,6 +152,18 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       e.preventDefault()
       const pos = getPos(e)
       if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
+        if (tool === "highlighter") {
+          ctxRef.current.globalAlpha = 0.4
+          ctxRef.current.lineWidth = 15
+        } else if (tool === "eraser") {
+          ctxRef.current.globalAlpha = 1
+          ctxRef.current.strokeStyle = "#ffffff"
+          ctxRef.current.lineWidth = 20
+        } else {
+          ctxRef.current.globalAlpha = 1
+          ctxRef.current.strokeStyle = color
+          ctxRef.current.lineWidth = 3
+        }
         ctxRef.current.lineTo(pos.x, pos.y)
         ctxRef.current.stroke()
       }
