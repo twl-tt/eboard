@@ -164,11 +164,12 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         if (toolRef.current === "eraser") {
           isErasingRef.current = true
           const pointer = canvas.getPointer(options.e)
-          const ctx = canvas.getContext()
-          ctx.globalCompositeOperation = "destination-out"
-          ctx.beginPath()
-          ctx.arc(pointer.x, pointer.y, eraseRadiusRef.current, 0, Math.PI * 2)
-          ctx.fill()
+          const objects = canvas.getObjects()
+          for (const obj of objects) {
+            if (obj.containsPoint(pointer)) {
+              canvas.remove(obj)
+            }
+          }
           return
         }
         if (toolRef.current === "rect" || toolRef.current === "ellipse" || toolRef.current === "line") {
@@ -207,10 +208,12 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.on("mouse:move", (options: any) => {
         if (isErasingRef.current) {
           const pointer = canvas.getPointer(options.e)
-          const ctx = canvas.getContext()
-          ctx.beginPath()
-          ctx.arc(pointer.x, pointer.y, eraseRadiusRef.current, 0, Math.PI * 2)
-          ctx.fill()
+          const objects = canvas.getObjects()
+          for (const obj of objects) {
+            if (obj.containsPoint(pointer)) {
+              canvas.remove(obj)
+            }
+          }
           return
         }
         if (!isDrawing || !currentShape) return
@@ -238,8 +241,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.on("mouse:up", () => {
         if (isErasingRef.current) {
           isErasingRef.current = false
-          const ctx = canvas.getContext()
-          ctx.globalCompositeOperation = "source-over"
           saveHistory()
           return
         }
