@@ -161,11 +161,14 @@ export default function WhiteboardShell() {
     if (!article || !canvasApiRef.current) return
     setSavingCanvas(true)
     try {
+      const data = canvasApiRef.current.toJSON()
       await fetch(`/api/articles/${article.id}/canvas`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: canvasApiRef.current.toJSON() })
+        body: JSON.stringify({ state: data })
       })
+    } catch (e) {
+      console.error("saveCanvas error:", e)
     } finally {
       setSavingCanvas(false)
     }
@@ -179,38 +182,16 @@ export default function WhiteboardShell() {
         import("html2canvas"),
         import("jspdf")
       ])
-      const baseCanvas = await html2canvas(readingRef.current, {
-        scale: 2,
-        backgroundColor: dark ? "#0a0f1e" : "#ffffff",
-        logging: false
-      })
-      const tmp = document.createElement("canvas")
-      tmp.width = baseCanvas.width
-      tmp.height = baseCanvas.height
-      const ctx = tmp.getContext("2d")!
-      ctx.drawImage(baseCanvas, 0, 0)
-      if (canvasApiRef.current && !canvasApiRef.current.isEmpty()) {
-        const overlay = canvasApiRef.current.toDataURL()
-        if (overlay) {
-          await new Promise<void>((resolve) => {
-            const img = new Image()
-            img.onload = () => {
-              ctx.drawImage(img, 0, 0, tmp.width, tmp.height)
-              resolve()
-            }
-            img.onerror = () => resolve()
-            img.src = overlay
-          })
-        }
-      }
+      const el = readingRef.current
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: dark ? "#0a0f1e" : "#ffffff", logging: false, useCORS: true })
       const pdf = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" })
       const pw = pdf.internal.pageSize.getWidth()
       const ph = pdf.internal.pageSize.getHeight()
-      const ratio = Math.min(pw / tmp.width, ph / tmp.height)
-      const w = tmp.width * ratio
-      const h = tmp.height * ratio
-      pdf.addImage(tmp.toDataURL("image/png"), "PNG", (pw - w) / 2, (ph - h) / 2, w, h)
+      const ratio = Math.min(pw / canvas.width, ph / canvas.height)
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, canvas.width * ratio, canvas.height * ratio)
       pdf.save(`${article.title}-白板筆記.pdf`)
+    } catch (e) {
+      console.error("exportPdf error:", e)
     } finally {
       setExporting(false)
     }
