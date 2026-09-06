@@ -92,8 +92,15 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   useEffect(() => {
     if (ctxRef.current) {
-      ctxRef.current.strokeStyle = tool === "highlighter" ? color + "80" : color
-      ctxRef.current.lineWidth = tool === "eraser" ? 20 : tool === "highlighter" ? 15 : 3
+      if (tool === "highlighter") {
+        ctxRef.current.globalAlpha = 0.4
+        ctxRef.current.strokeStyle = color
+        ctxRef.current.lineWidth = 15
+      } else {
+        ctxRef.current.globalAlpha = 1
+        ctxRef.current.strokeStyle = color
+        ctxRef.current.lineWidth = tool === "eraser" ? 20 : 3
+      }
       ctxRef.current.lineCap = "round"
       ctxRef.current.lineJoin = "round"
     }
