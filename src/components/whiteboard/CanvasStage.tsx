@@ -222,10 +222,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
           ctxRef.current?.drawImage(img, 0, 0)
         }
         img.src = data
-      } else if (boardColor) {
-        ctxRef.current.fillStyle = boardColor
-        ctxRef.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
-        saveHistory()
       }
     },
     toDataURL: () => canvasRef.current?.toDataURL() ?? null,
