@@ -49,6 +49,8 @@ export default function WhiteboardShell() {
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
   const [canvasVisible, setCanvasVisible] = useState(!article)
+  const [canvasTabs, setCanvasTabs] = useState<{ id: string; name: string; data: string | null }[]>([{ id: "1", name: "白板 1", data: null }])
+  const [activeTab, setActiveTab] = useState(0)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -534,6 +536,35 @@ export default function WhiteboardShell() {
               title="選擇黑板顏色"
             />
           )}
+          {boardMode === "blackboard" && (
+            <div className="flex items-center gap-1 ml-1">
+              {canvasTabs.map((tab, i) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(i)}
+                  className={cn(
+                    "px-2 py-1 text-xs rounded-md transition-colors",
+                    activeTab === i
+                      ? "bg-sky-500 text-white"
+                      : "bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600"
+                  )}
+                >
+                  {tab.name}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  const newTab = { id: Date.now().toString(), name: `白板 ${canvasTabs.length + 1}`, data: null }
+                  setCanvasTabs([...canvasTabs, newTab])
+                  setActiveTab(canvasTabs.length)
+                }}
+                className="px-2 py-1 text-xs rounded-md bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600"
+                title="新增白板"
+              >
+                +
+              </button>
+            </div>
+          )}
 
           <Button
             size="icon"
@@ -574,12 +605,7 @@ export default function WhiteboardShell() {
       <main className="relative z-10 flex-1 px-3 pb-32 pt-3">
         {mode === "read" && !article && (
           <div className="flex h-[calc(100vh-180px)] gap-3">
-              <div ref={readingRef} className={cn(
-                "relative flex-1 rounded-3xl shadow-2xl overflow-hidden transition-colors",
-                boardMode === "whiteboard" && "bg-white"
-              )}
-              style={boardMode === "blackboard" ? { backgroundColor: boardColor } : boardMode === "normal" ? { backgroundColor: "#1f2937" } : undefined}
-              >
+              <div ref={readingRef} className="relative flex-1 rounded-3xl shadow-2xl overflow-hidden">
               <CanvasStage
                 ref={canvasApiRef}
                 articleId=""
@@ -603,7 +629,6 @@ export default function WhiteboardShell() {
                     boardMode === "blackboard" && "ring-slate-700",
                     boardMode === "whiteboard" && "bg-white ring-slate-200"
                   )}
-                  style={boardMode === "blackboard" ? { backgroundColor: boardColor } : undefined}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
                       e.preventDefault()
