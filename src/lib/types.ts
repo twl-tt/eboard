@@ -23,6 +23,7 @@ export interface CategoryTree {
 export interface ArticleMeta {
   id: string
   title: string
+  translation: string | null
   categoryId: string
   categoryName: string
   grade: string

@@ -22,6 +22,7 @@ export function ArticlesAdmin({ categories, refreshCategories }: { categories: C
   const [title, setTitle] = useState("")
   const [categoryId, setCategoryId] = useState("")
   const [content, setContent] = useState("")
+  const [translation, setTranslation] = useState("")
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const bulkFileRef = useRef<HTMLInputElement>(null)
@@ -87,6 +88,7 @@ export function ArticlesAdmin({ categories, refreshCategories }: { categories: C
                     setTitle(full.title)
                     setCategoryId(full.categoryId)
                     setContent(full.rawContent)
+                    setTranslation(full.translation ?? "")
                     setShowForm(true)
                   }}>
                     <Pencil className="h-4 w-4" />
@@ -124,7 +126,11 @@ export function ArticlesAdmin({ categories, refreshCategories }: { categories: C
           </div>
           <div>
             <Label>課文內容（系統會自動切句、生成拼音）</Label>
-            <Textarea className="min-h-[280px]" value={content} onChange={(e) => setContent(e.target.value)} />
+            <Textarea className="min-h-[200px]" value={content} onChange={(e) => setContent(e.target.value)} />
+          </div>
+          <div>
+            <Label>譯文（可選）</Label>
+            <Textarea className="min-h-[120px]" value={translation} onChange={(e) => setTranslation(e.target.value)} placeholder="白話文翻譯…" />
           </div>
           <Button disabled={saving} onClick={save}>{saving ? "解析中…（AI 拼音）" : editId ? "儲存變更" : "建立課文"}</Button>
         </div>
@@ -174,7 +180,7 @@ export function ArticlesAdmin({ categories, refreshCategories }: { categories: C
   )
 
   function resetForm() {
-    setEditId(null); setTitle(""); setCategoryId(categories[0]?.id ?? ""); setContent("")
+    setEditId(null); setTitle(""); setCategoryId(categories[0]?.id ?? ""); setContent(""); setTranslation("")
   }
 
   async function save() {

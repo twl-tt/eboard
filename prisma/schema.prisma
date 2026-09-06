@@ -35,6 +35,7 @@ model Article {
   id          String    @id @default(uuid())
   title       String
   rawContent  String    @db.Text
+  translation String?   @db.Text
   categoryId  String
   category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   sentences   Json

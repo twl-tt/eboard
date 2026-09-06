@@ -26,6 +26,7 @@ export async function GET(req: Request) {
       articles.map((a) => ({
         id: a.id,
         title: a.title,
+        translation: a.translation,
         categoryId: a.categoryId,
         categoryName: a.category.name,
         grade: a.category.grade,
@@ -40,7 +41,8 @@ export async function GET(req: Request) {
 const createSchema = z.object({
   title: z.string().min(1).max(200),
   categoryId: z.string().uuid(),
-  rawContent: z.string().min(1)
+  rawContent: z.string().min(1),
+  translation: z.string().optional()
 })
 
 export async function POST(req: Request) {
@@ -52,6 +54,7 @@ export async function POST(req: Request) {
         title: body.title,
         categoryId: body.categoryId,
         rawContent: body.rawContent,
+        translation: body.translation ?? null,
         sentences: sentences as unknown as Prisma.InputJsonValue
       },
       include: { category: true }

@@ -11,6 +11,7 @@ const patchSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   categoryId: z.string().uuid().optional(),
   rawContent: z.string().min(1).optional(),
+  translation: z.string().optional(),
   reparse: z.boolean().optional()
 })
 
@@ -20,6 +21,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     return NextResponse.json({
       id: article.id,
       title: article.title,
+      translation: article.translation,
       rawContent: article.rawContent,
       categoryId: article.categoryId,
       categoryName: article.category.name,
@@ -42,6 +44,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const data: Prisma.ArticleUpdateInput = {}
     if (body.title !== undefined) data.title = body.title
     if (body.categoryId !== undefined) data.category = { connect: { id: body.categoryId } }
+    if (body.translation !== undefined) data.translation = body.translation
 
     if (body.rawContent !== undefined && body.reparse !== false) {
       const newSentences = await buildSentences(body.rawContent)
