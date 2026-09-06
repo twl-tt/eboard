@@ -1,9 +1,9 @@
 "use client"
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
-import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus, Spline } from "lucide-react"
+import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus, Highlighter } from "lucide-react"
 
-export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line" | "curve"
+export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -26,7 +26,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const isDrawingRef = useRef(false)
   const startPosRef = useRef({ x: 0, y: 0 })
-  const controlPosRef = useRef({ x: 0, y: 0 })
   const historyRef = useRef<ImageData[]>([])
   const historyIndexRef = useRef(-1)
 
@@ -93,8 +92,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   useEffect(() => {
     if (ctxRef.current) {
-      ctxRef.current.strokeStyle = color
-      ctxRef.current.lineWidth = tool === "eraser" ? 20 : 3
+      ctxRef.current.strokeStyle = tool === "highlighter" ? color + "80" : color
+      ctxRef.current.lineWidth = tool === "eraser" ? 20 : tool === "highlighter" ? 15 : 3
+      ctxRef.current.lineCap = "round"
+      ctxRef.current.lineJoin = "round"
     }
   }, [color, tool])
 
@@ -118,15 +119,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       isDrawingRef.current = true
       const pos = getPos(e)
       startPosRef.current = pos
-      controlPosRef.current = pos
       if ("setPointerCapture" in canvas) {
         try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
       }
-      if (tool === "pen" || tool === "eraser") {
-        ctxRef.current?.beginPath()
-        ctxRef.current?.moveTo(pos.x, pos.y)
-      }
-      if (tool === "curve") {
+      if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(pos.x, pos.y)
       }
@@ -136,18 +132,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       if (!isDrawingRef.current || !ctxRef.current) return
       e.preventDefault()
       const pos = getPos(e)
-      if (tool === "pen" || tool === "eraser") {
+      if (tool === "pen" || tool === "eraser" || tool === "highlighter") {
         ctxRef.current.lineTo(pos.x, pos.y)
         ctxRef.current.stroke()
-      } else if (tool === "curve") {
-        controlPosRef.current = pos
-        const ctx = ctxRef.current
-        const start = startPosRef.current
-        const ctrl = controlPosRef.current
-        ctx.beginPath()
-        ctx.moveTo(start.x, start.y)
-        ctx.quadraticCurveTo(ctrl.x, ctrl.y, (start.x + ctrl.x) / 2, (start.y + ctrl.y) / 2)
-        ctx.stroke()
       }
     }
 
@@ -179,15 +166,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(startPosRef.current.x, startPosRef.current.y)
         ctxRef.current?.lineTo(pos.x, pos.y)
-        ctxRef.current?.stroke()
-      } else if (tool === "curve") {
-        const start = startPosRef.current
-        const ctrl = controlPosRef.current
-        const endX = (start.x + ctrl.x) / 2
-        const endY = (start.y + ctrl.y) / 2
-        ctxRef.current?.beginPath()
-        ctxRef.current?.moveTo(start.x, start.y)
-        ctxRef.current?.quadraticCurveTo(ctrl.x, ctrl.y, endX, endY)
         ctxRef.current?.stroke()
       }
 
@@ -278,8 +256,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         <button onClick={() => setTool("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
           <Minus size={14} />
         </button>
-        <button onClick={() => setTool("curve")} className={`p-1 rounded ${tool === "curve" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="曲線">
-          <Spline size={14} />
+        <button onClick={() => setTool("highlighter")} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆">
+          <Highlighter size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
         {COLORS.map(c => (
