@@ -150,7 +150,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             left: pointer.x,
             top: pointer.y,
             fontFamily: "sans-serif",
-            fontSize: 24,
+            fontSize: 48,
             fill: colorRef.current
           })
           canvas.add(text)
