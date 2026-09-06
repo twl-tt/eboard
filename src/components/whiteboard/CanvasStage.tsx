@@ -243,7 +243,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         className="absolute inset-0 w-full h-full pointer-events-auto z-40"
         style={{ background: "transparent" }}
       />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-lg border border-slate-200/50 bg-white/90 px-2 py-1 shadow-md dark:border-slate-700/50 dark:bg-slate-900/90 z-50">
+      <div className="absolute top-0 left-2 flex items-center gap-0.5 rounded-lg border border-slate-200/50 bg-white/90 px-2 py-1 shadow-md dark:border-slate-700/50 dark:bg-slate-900/90 z-50 overflow-x-auto max-w-[calc(100vw-16px)]">
         <button onClick={() => setVisible(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
           <X size={14} />
         </button>
