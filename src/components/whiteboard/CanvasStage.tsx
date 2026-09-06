@@ -64,10 +64,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctx.lineWidth = tool === "eraser" ? 20 : 3
         ctx.lineCap = "round"
         ctx.lineJoin = "round"
-        if (!container && boardColor) {
-          ctx.fillStyle = boardColor
-          ctx.fillRect(0, 0, canvas.width, canvas.height)
-        }
         ctxRef.current = ctx
       }
     }
@@ -82,7 +78,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       window.addEventListener("resize", init)
       return () => window.removeEventListener("resize", init)
     }
-  }, [color, tool, boardColor, containerRef, saveHistory])
+  }, [color, tool, boardColor, containerRef])
 
   useEffect(() => {
     if (ctxRef.current) {
