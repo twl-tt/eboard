@@ -64,17 +64,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         ctx.lineWidth = tool === "eraser" ? 20 : 3
         ctx.lineCap = "round"
         ctx.lineJoin = "round"
-        if (!container) {
-          ctx.fillStyle = boardColor || "#ffffff"
-          ctx.fillRect(0, 0, canvas.width, canvas.height)
-        } else if (boardColor) {
+        if (!container && boardColor) {
           ctx.fillStyle = boardColor
           ctx.fillRect(0, 0, canvas.width, canvas.height)
-        } else {
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
         }
         ctxRef.current = ctx
-        saveHistory()
       }
     }
 
