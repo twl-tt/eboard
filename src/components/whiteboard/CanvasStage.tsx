@@ -7,7 +7,7 @@ export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse"
 
 export interface CanvasApi {
   toJSON: () => string | null
-  load: (json: unknown) => void
+  load: (data: string | null) => void
   toDataURL: () => string | null
   isEmpty: () => boolean
   clear: () => void
@@ -183,7 +183,15 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   useImperativeHandle(ref, () => ({
     toJSON: () => canvasRef.current?.toDataURL() ?? null,
-    load: () => {},
+    load: (data: string | null) => {
+      if (!data || !canvasRef.current || !ctxRef.current) return
+      const img = new Image()
+      img.onload = () => {
+        ctxRef.current?.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height)
+        ctxRef.current?.drawImage(img, 0, 0)
+      }
+      img.src = data
+    },
     toDataURL: () => canvasRef.current?.toDataURL() ?? null,
     isEmpty: () => historyIndexRef.current <= 0,
     clear: () => {

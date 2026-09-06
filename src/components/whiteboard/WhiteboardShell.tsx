@@ -253,6 +253,27 @@ export default function WhiteboardShell() {
     return () => { document.documentElement.style.overflow = "" }
   }, [isFullscreen])
 
+  useEffect(() => {
+    if (boardMode !== "blackboard") return
+    const prevTab = activeTab
+    const saveCurrentTab = () => {
+      const data = canvasApiRef.current?.toDataURL?.() ?? null
+      setCanvasTabs(prev => prev.map((tab, i) => i === prevTab ? { ...tab, data } : tab))
+    }
+    const loadNewTab = (index: number) => {
+      const newData = canvasTabs[index]?.data
+      if (newData) {
+        setTimeout(() => canvasApiRef.current?.load?.(newData), 50)
+      } else {
+        setTimeout(() => canvasApiRef.current?.clear?.(), 50)
+      }
+    }
+    return () => {
+      saveCurrentTab()
+      loadNewTab(activeTab)
+    }
+  }, [activeTab, boardMode])
+
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
     setBoardMode(mode)
     setCanvasVisible(true)
