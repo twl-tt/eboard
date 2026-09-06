@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
-  Play, Square, Moon, Sun, ZoomIn, ZoomOut, Save, FileDown,
-  BookOpen, Loader2, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Pencil
+  Play, Square, Moon, Sun, ZoomIn, ZoomOut,
+  BookOpen, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Pencil
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -37,8 +37,6 @@ export default function WhiteboardShell() {
   const [speakingId, setSpeakingId] = useState("")
   const [speaking, setSpeaking] = useState(false)
   const [mode, setMode] = useState<"read">("read")
-  const [savingCanvas, setSavingCanvas] = useState(false)
-  const [exporting, setExporting] = useState(false)
   const [highlights, setHighlights] = useState<Highlight[]>([])
   const [highlightColor, setHighlightColor] = useState<HighlightColor>("purple")
   const [showExplanation, setShowExplanation] = useState(false)
@@ -155,42 +153,6 @@ export default function WhiteboardShell() {
         setSpeakingId("")
       }
     })
-  }
-
-  async function saveCanvas() {
-    if (!article || !canvasApiRef.current) return
-    setSavingCanvas(true)
-    try {
-      const data = canvasApiRef.current.toJSON()
-      await fetch(`/api/articles/${article.id}/canvas`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ state: data })
-      })
-    } catch (e) {
-      console.error("saveCanvas error:", e)
-    } finally {
-      setSavingCanvas(false)
-    }
-  }
-
-  async function exportPdf() {
-    if (!article || !readingRef.current || exporting) return
-    setExporting(true)
-    try {
-      const [{ default: html2canvas }] = await Promise.all([
-        import("html2canvas")
-      ])
-      const canvas = await html2canvas(readingRef.current, { scale: 2, backgroundColor: "#ffffff", useCORS: true })
-      const link = document.createElement("a")
-      link.download = `${article.title}-白板筆記.png`
-      link.href = canvas.toDataURL("image/png")
-      link.click()
-    } catch (e) {
-      console.error("exportPdf error:", e)
-    } finally {
-      setExporting(false)
-    }
   }
 
   function toggleTheme() {
@@ -507,12 +469,6 @@ export default function WhiteboardShell() {
 
           <span className="mx-1 hidden h-6 w-px bg-slate-300/70 sm:block dark:bg-slate-700/70" />
 
-          <Button size="sm" variant="secondary" onClick={saveCanvas} disabled={!article || savingCanvas} title="儲存白板圖層">
-            {savingCanvas ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} 儲存畫板
-          </Button>
-          <Button size="sm" variant="outline" onClick={exportPdf} disabled={!article || exporting} title="匯出 PDF 筆記">
-            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />} 匯出 PDF
-          </Button>
           <a
             href="/admin"
             className="ml-1 rounded-full bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-600 transition-colors hover:bg-violet-500/20 dark:text-violet-300"
