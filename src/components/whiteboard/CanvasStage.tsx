@@ -50,22 +50,33 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     if (!canvas) return
 
     const init = () => {
+      const canvas = canvasRef.current
+      const container = containerRef?.current
+      if (!canvas) return
+
+      let w = 0, h = 0
       if (container) {
         const rect = container.getBoundingClientRect()
-        canvas.width = rect.width
-        canvas.height = rect.height
+        w = rect.width
+        h = rect.height
       } else {
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
+        w = window.innerWidth
+        h = window.innerHeight
       }
+
       const ctx = canvas.getContext("2d")
-      if (ctx) {
-        ctx.strokeStyle = color
-        ctx.lineWidth = tool === "eraser" ? 20 : 3
-        ctx.lineCap = "round"
-        ctx.lineJoin = "round"
-        ctxRef.current = ctx
-      }
+      if (!ctx) return
+
+      const imageData = canvas.width === w && canvas.height === h ? ctx.getImageData(0, 0, canvas.width, canvas.height) : null
+      canvas.width = w
+      canvas.height = h
+      if (imageData) ctx.putImageData(imageData, 0, 0)
+
+      ctx.strokeStyle = color
+      ctx.lineWidth = tool === "eraser" ? 20 : 3
+      ctx.lineCap = "round"
+      ctx.lineJoin = "round"
+      ctxRef.current = ctx
     }
 
     init()
@@ -78,7 +89,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       window.addEventListener("resize", init)
       return () => window.removeEventListener("resize", init)
     }
-  }, [color, tool, boardColor, containerRef])
+  }, [color, boardColor, containerRef])
 
   useEffect(() => {
     if (ctxRef.current) {
