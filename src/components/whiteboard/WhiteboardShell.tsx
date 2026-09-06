@@ -262,6 +262,11 @@ export default function WhiteboardShell() {
       setWhiteboardData(data)
       whiteboardDataRef.current = data
     }
+    if (mode === "blackboard" && blackboardDataRef.current) {
+      canvasApiRef.current?.load(blackboardDataRef.current)
+    } else if (mode === "whiteboard" && whiteboardDataRef.current) {
+      canvasApiRef.current?.load(whiteboardDataRef.current)
+    }
     setBoardMode(mode)
     setCanvasVisible(true)
   }
@@ -271,10 +276,16 @@ export default function WhiteboardShell() {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setBlackboardData(data)
       blackboardDataRef.current = data
+      if (whiteboardDataRef.current) {
+        canvasApiRef.current?.load(whiteboardDataRef.current)
+      }
     } else if (boardMode === "whiteboard") {
       const data = canvasApiRef.current?.toDataURL?.() ?? null
       setWhiteboardData(data)
       whiteboardDataRef.current = data
+      if (blackboardDataRef.current) {
+        canvasApiRef.current?.load(blackboardDataRef.current)
+      }
     }
     setBoardMode("normal")
   }
