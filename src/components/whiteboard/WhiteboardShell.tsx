@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
-  Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
+  Play, Square, Moon, Sun, ZoomIn, ZoomOut, Save, FileDown,
   BookOpen, Loader2, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Pencil
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
@@ -449,19 +449,6 @@ export default function WhiteboardShell() {
           </span>
           <Button size="icon" variant="ghost" title="放大字體" onClick={() => setFontSizeRem((v) => Math.min(3.4, +(v + 0.2).toFixed(1)))}>
             <ZoomIn className="h-5 w-5" />
-          </Button>
-
-          <Button
-            size="sm"
-            variant={focusMode ? "amber" : "ghost"}
-            onClick={() => {
-              setFocusMode((v) => !v)
-              setFocusId(null)
-            }}
-            title="聚焦模式"
-            className={cn(focusMode && "shadow-md shadow-amber-500/40")}
-          >
-            <Crosshair className="h-4 w-4" /> 聚焦
           </Button>
 
           <Button size="icon" variant="ghost" onClick={toggleTheme} title="深淺色切換">
