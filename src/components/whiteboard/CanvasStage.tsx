@@ -32,7 +32,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const [tool, setTool] = useState<CanvasTool>("pen")
   const [color, setColor] = useState("#1f2937")
   const [visible, setVisible] = useState(true)
-  const [toolbarPos, setToolbarPos] = useState<"bottom" | "right" | "top">("bottom")
 
   const saveHistory = useCallback(() => {
     const canvas = canvasRef.current
@@ -219,9 +218,6 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   if (!visible) return null
 
-  const isHorizontal = toolbarPos !== "right"
-  const dividerClass = isHorizontal ? "w-px h-5 bg-slate-300" : "h-px w-5 bg-slate-300"
-
   return (
     <>
       <canvas
@@ -229,42 +225,36 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         className="absolute inset-0 w-full h-full pointer-events-auto z-40"
         style={{ background: "transparent" }}
       />
-      <div className={`fixed top-20 left-1/2 -translate-x-1/2 flex-row items-center gap-1 rounded-xl border border-slate-200 bg-white/95 px-2 py-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900/95 z-50`}>
-        <button onClick={() => setVisible(false)} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
-          <X size={16} />
+      <div className="fixed top-20 left-1/2 -translate-x-1/2 flex items-center gap-0.5 rounded-lg border border-slate-200/50 bg-white/90 px-2 py-1 shadow-md dark:border-slate-700/50 dark:bg-slate-900/90 z-50">
+        <button onClick={() => setVisible(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
+          <X size={14} />
         </button>
-        <div className={dividerClass} />
-        <button onClick={() => setTool("pen")} className={`p-1.5 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Pencil size={16} />
+        <div className="w-px h-4 bg-slate-300 mx-0.5" />
+        <button onClick={() => setTool("pen")} className={`p-1 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+          <Pencil size={14} />
         </button>
-        <button onClick={() => setTool("eraser")} className={`p-1.5 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Eraser size={16} />
+        <button onClick={() => setTool("eraser")} className={`p-1 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+          <Eraser size={14} />
         </button>
-        <button onClick={() => setTool("rect")} className={`p-1.5 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Square size={16} />
+        <button onClick={() => setTool("rect")} className={`p-1 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+          <Square size={14} />
         </button>
-        <button onClick={() => setTool("ellipse")} className={`p-1.5 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
-          <Circle size={16} />
+        <button onClick={() => setTool("ellipse")} className={`p-1 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`}>
+          <Circle size={14} />
         </button>
-        <div className={dividerClass} />
+        <div className="w-px h-4 bg-slate-300 mx-0.5" />
         {COLORS.map(c => (
-          <button key={c} onClick={() => setColor(c)} className={`w-5 h-5 rounded-full border-2 ${color === c ? "border-sky-500" : "border-white"}`} style={{ backgroundColor: c }} />
+          <button key={c} onClick={() => setColor(c)} className={`w-4 h-4 rounded-full border-2 ${color === c ? "border-sky-500" : "border-slate-200"}`} style={{ backgroundColor: c }} />
         ))}
-        <div className={dividerClass} />
-        <button onClick={() => (ref as any)?.current?.undo()} className="p-1.5 rounded hover:bg-slate-200">
-          <Undo2 size={16} />
+        <div className="w-px h-4 bg-slate-300 mx-0.5" />
+        <button onClick={() => (ref as any)?.current?.undo()} className="p-1 rounded hover:bg-slate-100">
+          <Undo2 size={14} />
         </button>
-        <button onClick={() => (ref as any)?.current?.redo()} className="p-1.5 rounded hover:bg-slate-200">
-          <Redo2 size={16} />
+        <button onClick={() => (ref as any)?.current?.redo()} className="p-1 rounded hover:bg-slate-100">
+          <Redo2 size={14} />
         </button>
-        <button onClick={() => (ref as any)?.current?.clear()} className="p-1.5 rounded hover:bg-red-100 text-red-500">
-          <Trash2 size={16} />
-        </button>
-        <div className={dividerClass} />
-        <button onClick={() => setToolbarPos(p => p === "bottom" ? "right" : p === "right" ? "top" : "bottom")} className="p-1.5 rounded hover:bg-slate-200 text-slate-500" title="移動工具列">
-          {toolbarPos === "bottom" && <span className="text-xs">↔</span>}
-          {toolbarPos === "right" && <span className="text-xs">↕</span>}
-          {toolbarPos === "top" && <span className="text-xs">↔</span>}
+        <button onClick={() => (ref as any)?.current?.clear()} className="p-1 rounded hover:bg-red-50 text-red-400">
+          <Trash2 size={14} />
         </button>
       </div>
     </>
