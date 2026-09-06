@@ -529,6 +529,13 @@ export default function WhiteboardShell() {
                     const tagId = e.dataTransfer.getData("application/x-sticker")
                     if (!tagId) return
                     e.preventDefault()
+                    const tag = tags.find(t => t.id === tagId)
+                    if (tag && readingRef.current && canvasApiRef.current) {
+                      const rect = readingRef.current.getBoundingClientRect()
+                      const x = e.clientX - rect.left
+                      const y = e.clientY - rect.top
+                      canvasApiRef.current.addText(tag.name, x, y, tag.color === "amber" ? "#f59e0b" : tag.color === "emerald" ? "#10b981" : tag.color === "sky" ? "#0ea5e9" : tag.color === "rose" ? "#f43f5e" : "#8b5cf6")
+                    }
                     setStickerBarOpen(false)
                   }}
                 >

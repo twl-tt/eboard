@@ -13,6 +13,7 @@ export interface CanvasApi {
   clear: () => void
   undo: () => boolean
   redo: () => boolean
+  addText: (text: string, x: number, y: number, color?: string) => void
 }
 
 interface Props {
@@ -337,6 +338,21 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         })
       }
       return true
+    },
+    addText: (text: string, x: number, y: number, color?: string) => {
+      if (!fabricRef.current) return
+      const fabricModule = fabricModuleRef.current
+      if (!fabricModule) return
+      const txt = new fabricModule.IText(text, {
+        left: x,
+        top: y,
+        fontFamily: "sans-serif",
+        fontSize: 32,
+        fill: color ?? "#dc2626"
+      })
+      fabricRef.current.add(txt)
+      fabricRef.current.setActiveObject(txt)
+      fabricRef.current.renderAll()
     }
   }))
 
