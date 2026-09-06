@@ -19,24 +19,35 @@ interface Props {
   articleId: string
   boardColor: string | null
   containerRef: React.RefObject<HTMLDivElement>
+  currentTool?: CanvasTool
+  onToolChange?: (tool: CanvasTool) => void
 }
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef, currentTool, onToolChange }, ref) {
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
   const fabricModuleRef = useRef<any>(null)
-  const [tool, setTool] = useState<CanvasTool>("select")
+  const [tool, setTool] = useState<CanvasTool>(currentTool || "pen")
   const [color, setColor] = useState("#dc2626")
   const [visible, setVisible] = useState(true)
   const isDownRef = useRef(false)
   const startPointRef = useRef<any>(null)
   const historyRef = useRef<string[]>([])
   const historyIndexRef = useRef(-1)
-  const toolRef = useRef<CanvasTool>("select")
+  const toolRef = useRef<CanvasTool>(currentTool || "pen")
   const colorRef = useRef("#dc2626")
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
+  useEffect(() => {
+    if (currentTool && currentTool !== tool) {
+      setTool(currentTool)
+      toolRef.current = currentTool
+      if (fabricRef.current) {
+        fabricRef.current.setToolMode(currentTool)
+      }
+    }
+  }, [currentTool])
 
   useEffect(() => {
     if (!canvasElRef.current || !containerRef.current) return
@@ -280,6 +291,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   if (!visible) return null
 
+  const handleToolChange = (newTool: CanvasTool) => {
+    setTool(newTool)
+    onToolChange?.(newTool)
+  }
+
   return (
     <>
       <div className="absolute inset-0 z-40">
@@ -290,28 +306,28 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
           <X size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
-        <button onClick={() => setTool("select")} className={`p-1 rounded ${tool === "select" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="選擇">
+        <button onClick={() => handleToolChange("select")} className={`p-1 rounded ${tool === "select" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="選擇">
           <Move size={14} />
         </button>
-        <button onClick={() => setTool("pen")} className={`p-1 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="畫筆">
+        <button onClick={() => handleToolChange("pen")} className={`p-1 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="畫筆">
           <Pencil size={14} />
         </button>
-        <button onClick={() => setTool("eraser")} className={`p-1 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="橡皮擦">
+        <button onClick={() => handleToolChange("eraser")} className={`p-1 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="橡皮擦">
           <Eraser size={14} />
         </button>
-        <button onClick={() => setTool("rect")} className={`p-1 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="矩形">
+        <button onClick={() => handleToolChange("rect")} className={`p-1 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="矩形">
           <Square size={14} />
         </button>
-        <button onClick={() => setTool("ellipse")} className={`p-1 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="橢圓">
+        <button onClick={() => handleToolChange("ellipse")} className={`p-1 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="橢圓">
           <Circle size={14} />
         </button>
-        <button onClick={() => setTool("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="直線">
+        <button onClick={() => handleToolChange("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="直線">
           <Minus size={14} />
         </button>
-        <button onClick={() => { setTool("highlighter"); if (!HIGHLIGHTER_COLORS.includes(color)) setColor("#fef08a") }} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆">
+        <button onClick={() => { handleToolChange("highlighter"); if (!HIGHLIGHTER_COLORS.includes(color)) setColor("#fef08a") }} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆">
           <Highlighter size={14} />
         </button>
-        <button onClick={() => setTool("text")} className={`p-1 rounded ${tool === "text" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="文字">
+        <button onClick={() => handleToolChange("text")} className={`p-1 rounded ${tool === "text" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="文字">
           <Type size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />

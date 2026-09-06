@@ -14,7 +14,7 @@ import { HIGHLIGHT_BG, HIGHLIGHT_LABEL, type Highlight, type HighlightColor } fr
 import { Button } from "@/components/ui/button"
 import { ArticlePicker } from "./ArticlePicker"
 import { ReadingPane } from "./ReadingPane"
-import { CanvasStage, type CanvasApi } from "./CanvasStage"
+import { CanvasStage, type CanvasApi, type CanvasTool } from "./CanvasStage"
 import { ClassroomSuite } from "./ClassroomSuite"
 import { ReorderMode } from "./ReorderMode"
 import { DictLookup } from "./DictLookup"
@@ -52,6 +52,7 @@ export default function WhiteboardShell() {
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
   const [canvasVisible, setCanvasVisible] = useState(true)
+  const [canvasTool, setCanvasTool] = useState<CanvasTool>("pen")
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -500,6 +501,8 @@ export default function WhiteboardShell() {
                 articleId=""
                 boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : boardMode === "normal" ? "#1f2937" : null}
                 containerRef={readingRef}
+                currentTool={canvasTool}
+                onToolChange={setCanvasTool}
               />
             </div>
           </div>
@@ -538,6 +541,8 @@ export default function WhiteboardShell() {
                       articleId={article.id}
                       boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : null}
                       containerRef={readingRef as React.RefObject<HTMLDivElement>}
+                      currentTool={canvasTool}
+                      onToolChange={setCanvasTool}
                     />
                   )}
                   <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
