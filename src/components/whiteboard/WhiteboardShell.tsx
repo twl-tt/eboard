@@ -42,9 +42,9 @@ export default function WhiteboardShell() {
   const [highlights, setHighlights] = useState<Highlight[]>([])
   const [highlightColor, setHighlightColor] = useState<HighlightColor>("purple")
   const [showExplanation, setShowExplanation] = useState(false)
-  const [canvasFollowsText, setCanvasFollowsText] = useState(false)
   const [boardMode, setBoardMode] = useState<"normal" | "whiteboard" | "blackboard">("normal")
   const [boardColor, setBoardColor] = useState("#1f2937")
+  const [blackboardData, setBlackboardData] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
@@ -247,18 +247,35 @@ export default function WhiteboardShell() {
     return () => { document.documentElement.style.overflow = "" }
   }, [isFullscreen])
 
+  useEffect(() => {
+    if (boardMode === "blackboard" && blackboardData) {
+      canvasApiRef.current?.load(blackboardData)
+    }
+  }, [boardMode])
+
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
+    if (boardMode === "blackboard") {
+      const data = canvasApiRef.current?.toDataURL?.() ?? null
+      setBlackboardData(data)
+    }
     setBoardMode(mode)
     setCanvasVisible(true)
     setTimeout(() => {
+      if (boardMode === "blackboard" && blackboardData) {
+        canvasApiRef.current?.load(blackboardData)
+      }
       canvasApiRef.current?.toJSON()
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("board-mode", { detail: mode }))
       }
-    }, 0)
+    }, 50)
   }
 
   function exitBoardMode() {
+    if (boardMode === "blackboard") {
+      const data = canvasApiRef.current?.toDataURL?.() ?? null
+      setBlackboardData(data)
+    }
     setBoardMode("normal")
   }
 
