@@ -79,12 +79,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     ctxRef.current = ctx
 
     if (boardColor) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       ctx.fillStyle = boardColor
       ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.putImageData(imageData, 0, 0)
     }
 
     saveHistory()
-  }, [containerRef, saveHistory, boardColor])
+  }, [containerRef, saveHistory])
 
   useEffect(() => {
     if (ctxRef.current) {
