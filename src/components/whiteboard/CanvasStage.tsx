@@ -93,7 +93,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     }
 
     saveHistory()
-  }, [containerRef, saveHistory])
+  }, [containerRef, saveHistory, boardColor])
 
   useEffect(() => {
     if (ctxRef.current) {
