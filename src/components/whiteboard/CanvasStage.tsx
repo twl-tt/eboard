@@ -24,6 +24,7 @@ interface Props {
 export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef }, ref) {
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
+  const fabricModuleRef = useRef<any>(null)
   const [tool, setTool] = useState<CanvasTool>("select")
   const [color, setColor] = useState("#dc2626")
   const [visible, setVisible] = useState(true)
@@ -47,6 +48,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
     const init = async () => {
       const { fabric } = await import("fabric")
+      fabricModuleRef.current = fabric
 
       const container = containerRef.current!
       const rect = container.getBoundingClientRect()
@@ -220,9 +222,25 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     toJSON: () => fabricRef.current ? JSON.stringify(fabricRef.current.toJSON()) : null,
     load: (data: string | null) => {
       if (!data || !fabricRef.current) return
-      fabricRef.current.loadFromJSON(JSON.parse(data)).then(() => {
-        fabricRef.current.renderAll()
-      })
+      try {
+        const parsed = JSON.parse(data)
+        if (parsed.version && parsed.objects) {
+          fabricRef.current.loadFromJSON(parsed).then(() => {
+            fabricRef.current.renderAll()
+          })
+          return
+        }
+      } catch {}
+      if (data.startsWith("data:image") && fabricModuleRef.current) {
+        fabricModuleRef.current.Image.fromURL(data, (img: any) => {
+          fabricRef.current.clear()
+          if (boardColor) {
+            fabricRef.current.setBackgroundColor(boardColor, fabricRef.current.renderAll.bind(fabricRef.current))
+          }
+          fabricRef.current.add(img)
+          fabricRef.current.renderAll()
+        })
+      }
     },
     toDataURL: () => fabricRef.current ? fabricRef.current.toDataURL() : null,
     isEmpty: () => !fabricRef.current || fabricRef.current.getObjects().length === 0,
