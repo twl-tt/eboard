@@ -68,6 +68,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         if (!container) {
           ctx.fillStyle = dark ? "#1f1f1f" : "#ffffff"
           ctx.fillRect(0, 0, canvas.width, canvas.height)
+        } else if (dark) {
+          ctx.fillStyle = "#1f1f1f"
+          ctx.fillRect(0, 0, canvas.width, canvas.height)
         } else {
           ctx.clearRect(0, 0, canvas.width, canvas.height)
         }
@@ -86,7 +89,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       window.addEventListener("resize", init)
       return () => window.removeEventListener("resize", init)
     }
-  }, [color, tool, containerRef, saveHistory])
+  }, [color, tool, dark, containerRef, saveHistory])
 
   useEffect(() => {
     if (ctxRef.current) {
@@ -208,11 +211,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   if (!visible) return null
 
-  const toolbarPositionClasses = {
-    bottom: "bottom-4 left-1/2 -translate-x-1/2 flex-row",
-    top: "top-4 left-1/2 -translate-x-1/2 flex-row",
-    right: "right-4 top-1/2 -translate-y-1/2 flex-col",
-  }[toolbarPos]
+  const isHorizontal = toolbarPos !== "right"
+  const dividerClass = isHorizontal ? "w-px h-5 bg-slate-300" : "h-px w-5 bg-slate-300"
 
   return (
     <>
@@ -221,10 +221,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         className="absolute inset-0 w-full h-full pointer-events-auto z-40"
         style={{ background: "transparent" }}
       />
-      <div className={`absolute ${toolbarPositionClasses} items-center gap-1 rounded-xl border border-slate-200 bg-white/95 px-2 py-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900/95 z-50`}>
+      <div className={`absolute ${toolbarPos === "bottom" ? "bottom-4 left-1/2 -translate-x-1/2" : toolbarPos === "top" ? "top-4 left-1/2 -translate-x-1/2" : "right-4 top-1/2 -translate-y-1/2"} ${isHorizontal ? "flex-row" : "flex-col"} items-center gap-1 rounded-xl border border-slate-200 bg-white/95 px-2 py-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-900/95 z-50`}>
         <button onClick={() => setVisible(false)} className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700">
           <X size={16} />
         </button>
+        <div className={dividerClass} />
         <button onClick={() => setTool("pen")} className={`p-1.5 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
           <Pencil size={16} />
         </button>
@@ -237,11 +238,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         <button onClick={() => setTool("ellipse")} className={`p-1.5 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-200"}`}>
           <Circle size={16} />
         </button>
-        <div className="w-px h-5 bg-slate-300" />
+        <div className={dividerClass} />
         {COLORS.map(c => (
           <button key={c} onClick={() => setColor(c)} className={`w-5 h-5 rounded-full border-2 ${color === c ? "border-sky-500" : "border-white"}`} style={{ backgroundColor: c }} />
         ))}
-        <div className="w-px h-5 bg-slate-300" />
+        <div className={dividerClass} />
         <button onClick={() => (ref as any)?.current?.undo()} className="p-1.5 rounded hover:bg-slate-200">
           <Undo2 size={16} />
         </button>
@@ -251,7 +252,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         <button onClick={() => (ref as any)?.current?.clear()} className="p-1.5 rounded hover:bg-red-100 text-red-500">
           <Trash2 size={16} />
         </button>
-        <div className="w-px h-5 bg-slate-300" />
+        <div className={dividerClass} />
         <button onClick={() => setToolbarPos(p => p === "bottom" ? "right" : p === "right" ? "top" : "bottom")} className="p-1.5 rounded hover:bg-slate-200 text-slate-500" title="移動工具列">
           {toolbarPos === "bottom" && <span className="text-xs">↔</span>}
           {toolbarPos === "right" && <span className="text-xs">↕</span>}

@@ -241,6 +241,15 @@ export default function WhiteboardShell() {
     return () => document.removeEventListener("fullscreenchange", onChange)
   }, [])
 
+  useEffect(() => {
+    if (isFullscreen) {
+      document.documentElement.style.overflow = "hidden"
+    } else {
+      document.documentElement.style.overflow = ""
+    }
+    return () => { document.documentElement.style.overflow = "" }
+  }, [isFullscreen])
+
   function enterBoardMode(mode: "whiteboard" | "blackboard") {
     setBoardMode(mode)
     setTimeout(() => {
@@ -315,7 +324,8 @@ export default function WhiteboardShell() {
       className={cn(
         "relative flex min-h-screen flex-col text-slate-900 transition-colors",
         "bg-gradient-to-br from-sky-50 via-white to-violet-50",
-        "dark:bg-gradient-to-br dark:from-[#0a0f1e] dark:via-slate-950 dark:to-indigo-950 dark:text-slate-100"
+        "dark:bg-gradient-to-br dark:from-[#0a0f1e] dark:via-slate-950 dark:to-indigo-950 dark:text-slate-100",
+        isFullscreen && "overflow-hidden"
       )}
     >
       <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -562,7 +572,7 @@ export default function WhiteboardShell() {
         {mode === "read" && !article && (
           <div className="flex h-[calc(100vh-180px)] gap-3">
               <div ref={readingRef} className={cn(
-                "flex-1 rounded-3xl shadow-2xl overflow-hidden transition-colors",
+                "relative flex-1 rounded-3xl shadow-2xl overflow-hidden transition-colors",
                 boardMode === "blackboard" ? "bg-slate-900" : boardMode === "whiteboard" ? "bg-white" : "bg-slate-800"
               )}>
               <CanvasStage
