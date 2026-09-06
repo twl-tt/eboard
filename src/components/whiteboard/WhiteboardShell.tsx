@@ -91,7 +91,7 @@ export default function WhiteboardShell() {
           setArticle(data)
           setHighlights(Array.isArray(data.highlights) ? data.highlights : [])
           setTimeout(() => {
-            if (data.canvasState && canvasApiRef.current) canvasApiRef.current.load(data.canvasState)
+            if (data.canvasState && canvasApiRef.current) canvasApiRef.current.load(data.canvasState?.state ?? null)
           }, 600)
         }
       })
