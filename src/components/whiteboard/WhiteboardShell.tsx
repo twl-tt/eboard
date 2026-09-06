@@ -365,7 +365,7 @@ export default function WhiteboardShell() {
             aria-label="朗讀語言"
           >
             <option value="zh-HK">🇭🇰 粵語 zh-HK</option>
-            <option value="zh-TW">🇹🇼 國語 zh-TW</option>
+            <option value="zh-TW">🇹🇼 普通話 PTH</option>
           </select>
           <Button
             size="sm"
