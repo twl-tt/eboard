@@ -1,4 +1,4 @@
-export type HighlightColor = "purple" | "red" | "blue"
+export type HighlightColor = "yellow" | "green" | "blue"
 
 export interface Highlight {
   id: string
@@ -10,14 +10,14 @@ export interface Highlight {
 }
 
 export const HIGHLIGHT_BG: Record<HighlightColor, string> = {
-  purple: "rgba(168,85,247,0.32)",
-  red: "rgba(239,68,68,0.32)",
-  blue: "rgba(59,130,246,0.32)"
+  yellow: "rgba(253,224,71,0.35)",
+  green: "rgba(134,239,172,0.35)",
+  blue: "rgba(59,130,246,0.35)"
 }
 
 export const HIGHLIGHT_LABEL: Record<HighlightColor, string> = {
-  purple: "紫",
-  red: "紅",
+  yellow: "黃",
+  green: "綠",
   blue: "藍"
 }
 

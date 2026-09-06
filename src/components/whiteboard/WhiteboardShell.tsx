@@ -22,7 +22,7 @@ import { StickerBar } from "./StickerBar"
 
   type Mode = "read"
 
-const HIGHLIGHT_COLORS: HighlightColor[] = ["purple", "red", "blue"]
+const HIGHLIGHT_COLORS: HighlightColor[] = ["yellow", "green", "blue"]
 
 export default function WhiteboardShell() {
   const [articleId, setArticleId] = useState<string | null>(null)
@@ -38,7 +38,7 @@ export default function WhiteboardShell() {
   const [speaking, setSpeaking] = useState(false)
   const [mode, setMode] = useState<"read">("read")
   const [highlights, setHighlights] = useState<Highlight[]>([])
-  const [highlightColor, setHighlightColor] = useState<HighlightColor>("purple")
+  const [highlightColor, setHighlightColor] = useState<HighlightColor>("yellow")
   const [showExplanation, setShowExplanation] = useState(false)
   const [boardMode, setBoardMode] = useState<"normal" | "whiteboard" | "blackboard">("normal")
   const [boardColor, setBoardColor] = useState("#1f2937")
