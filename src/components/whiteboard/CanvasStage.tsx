@@ -49,7 +49,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     historyIndexRef.current = historyRef.current.length - 1
   }, [])
 
-  useEffect(() => {
+  const initCanvas = useCallback(() => {
     const canvas = canvasRef.current
     const container = containerRef?.current
     if (!canvas) return
@@ -77,23 +77,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     ctx.lineCap = "round"
     ctx.lineJoin = "round"
     ctxRef.current = ctx
+  }, [containerRef])
 
-    if (boardColor) {
-      const tempCanvas = document.createElement('canvas')
-      tempCanvas.width = canvas.width
-      tempCanvas.height = canvas.height
-      const tempCtx = tempCanvas.getContext('2d')
-      if (tempCtx) {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-        tempCtx.putImageData(imageData, 0, 0)
-        ctx.fillStyle = boardColor
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(tempCanvas, 0, 0)
-      }
-    }
-
-    saveHistory()
-  }, [containerRef, saveHistory, boardColor])
+  useEffect(() => {
+    initCanvas()
+  }, [initCanvas])
 
   useEffect(() => {
     if (ctxRef.current) {
@@ -226,13 +214,19 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   useImperativeHandle(ref, () => ({
     toJSON: () => canvasRef.current?.toDataURL() ?? null,
     load: (data: string | null) => {
-      if (!data || !canvasRef.current || !ctxRef.current) return
-      const img = new Image()
-      img.onload = () => {
-        ctxRef.current?.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height)
-        ctxRef.current?.drawImage(img, 0, 0)
+      if (!canvasRef.current || !ctxRef.current) return
+      if (data) {
+        const img = new Image()
+        img.onload = () => {
+          ctxRef.current?.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height)
+          ctxRef.current?.drawImage(img, 0, 0)
+        }
+        img.src = data
+      } else if (boardColor) {
+        ctxRef.current.fillStyle = boardColor
+        ctxRef.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+        saveHistory()
       }
-      img.src = data
     },
     toDataURL: () => canvasRef.current?.toDataURL() ?? null,
     isEmpty: () => historyIndexRef.current <= 0,
