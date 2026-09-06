@@ -1,9 +1,9 @@
 "use client"
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, useCallback } from "react"
-import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus, Highlighter } from "lucide-react"
+import { X, Pencil, Eraser, Square, Circle, Trash2, Undo2, Redo2, Minus, Highlighter, Type } from "lucide-react"
 
-export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter"
+export type CanvasTool = "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -34,6 +34,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const [tool, setTool] = useState<CanvasTool>("pen")
   const [color, setColor] = useState("#dc2626")
   const [visible, setVisible] = useState(true)
+  const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null)
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
@@ -111,13 +112,17 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
     const onDown = (e: PointerEvent | TouchEvent) => {
       e.preventDefault()
-      isDrawingRef.current = true
       const pos = getPos(e)
+      const currentTool = toolRef.current
+      if (currentTool === "text") {
+        setTextInput({ x: pos.x, y: pos.y, value: "" })
+        return
+      }
+      isDrawingRef.current = true
       startPosRef.current = pos
       if ("setPointerCapture" in canvas) {
         try { canvas.setPointerCapture(("pointerId" in e ? e.pointerId : 0) as number) } catch {}
       }
-      const currentTool = toolRef.current
       if (currentTool === "pen" || currentTool === "eraser" || currentTool === "highlighter") {
         ctxRef.current?.beginPath()
         ctxRef.current?.moveTo(pos.x, pos.y)
@@ -260,6 +265,41 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       <div className="absolute inset-0 pointer-events-auto z-40" style={{ background: "transparent" }}>
         <canvas ref={canvasRef} className="w-full h-full" />
       </div>
+      {textInput && (
+        <div
+          className="absolute z-50"
+          style={{ left: textInput.x, top: textInput.y }}
+        >
+          <input
+            autoFocus
+            type="text"
+            value={textInput.value}
+            onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && textInput.value) {
+                ctxRef.current!.fillStyle = colorRef.current
+                ctxRef.current!.font = "20px sans-serif"
+                ctxRef.current!.fillText(textInput.value, textInput.x, textInput.y)
+                saveHistory()
+                setTextInput(null)
+              } else if (e.key === "Escape") {
+                setTextInput(null)
+              }
+            }}
+            onBlur={() => {
+              if (textInput.value) {
+                ctxRef.current!.fillStyle = colorRef.current
+                ctxRef.current!.font = "20px sans-serif"
+                ctxRef.current!.fillText(textInput.value, textInput.x, textInput.y)
+                saveHistory()
+              }
+              setTextInput(null)
+            }}
+            className="px-1 py-0.5 border border-sky-500 rounded bg-white/90 text-black dark:text-white dark:bg-slate-900/90 outline-none"
+            style={{ color: colorRef.current }}
+          />
+        </div>
+      )}
       <div className="absolute top-0 left-2 flex items-center gap-0.5 rounded-lg border border-slate-200/50 bg-white/90 px-2 py-1 shadow-md dark:border-slate-700/50 dark:bg-slate-900/90 z-50 overflow-x-auto max-w-[calc(100vw-16px)]">
         <button onClick={() => setVisible(false)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800">
           <X size={14} />
@@ -282,6 +322,9 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         </button>
         <button onClick={() => setTool("highlighter")} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="螢光筆">
           <Highlighter size={14} />
+        </button>
+        <button onClick={() => setTool("text")} className={`p-1 rounded ${tool === "text" ? "bg-sky-500 text-white" : "hover:bg-slate-100"}`} title="文字">
+          <Type size={14} />
         </button>
         <div className="w-px h-4 bg-slate-300 mx-0.5" />
         {COLORS.map(c => (
