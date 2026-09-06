@@ -222,16 +222,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     toJSON: () => fabricRef.current ? JSON.stringify(fabricRef.current.toJSON()) : null,
     load: (data: string | null) => {
       if (!data || !fabricRef.current) return
-      try {
-        const parsed = JSON.parse(data)
-        if (parsed.version && parsed.objects) {
-          fabricRef.current.loadFromJSON(parsed).then(() => {
-            fabricRef.current.renderAll()
-          })
-          return
-        }
-      } catch {}
-      if (data.startsWith("data:image") && fabricModuleRef.current) {
+      if (data.startsWith("data:image")) {
         fabricModuleRef.current.Image.fromURL(data, (img: any) => {
           fabricRef.current.clear()
           if (boardColor) {
@@ -240,6 +231,15 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
           fabricRef.current.add(img)
           fabricRef.current.renderAll()
         })
+        return
+      }
+      try {
+        const parsed = JSON.parse(data)
+        fabricRef.current.loadFromJSON(parsed).then(() => {
+          fabricRef.current.renderAll()
+        })
+      } catch (e) {
+        console.error("Failed to load canvas data", e)
       }
     },
     toDataURL: () => fabricRef.current ? fabricRef.current.toDataURL() : null,
