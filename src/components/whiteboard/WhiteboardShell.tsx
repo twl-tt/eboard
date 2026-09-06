@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut, Crosshair, Save, FileDown,
-  BookOpen, Puzzle, Loader2, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Pencil
+  BookOpen, Loader2, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Pencil
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -20,7 +20,7 @@ import { ReorderMode } from "./ReorderMode"
 import { DictLookup } from "./DictLookup"
 import { StickerBar } from "./StickerBar"
 
-type Mode = "read" | "reorder"
+  type Mode = "read"
 
 const HIGHLIGHT_COLORS: HighlightColor[] = ["purple", "red", "blue"]
 
@@ -36,7 +36,7 @@ export default function WhiteboardShell() {
   const [focusId, setFocusId] = useState<string | null>(null)
   const [speakingId, setSpeakingId] = useState("")
   const [speaking, setSpeaking] = useState(false)
-  const [mode, setMode] = useState<Mode>("read")
+  const [mode, setMode] = useState<"read">("read")
   const [savingCanvas, setSavingCanvas] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [highlights, setHighlights] = useState<Highlight[]>([])
@@ -313,11 +313,6 @@ export default function WhiteboardShell() {
     { key: "pinyin", label: "普通話拼音" }
   ]
 
-  const modes: { key: Mode; label: string; icon: React.ReactNode }[] = [
-    { key: "read", label: "語文分析模式", icon: <BookOpen className="h-4 w-4" /> },
-    { key: "reorder", label: "卡片重組模式", icon: <Puzzle className="h-4 w-4" /> }
-  ]
-
   const validSentences = article?.sentences.filter((s) => s.text.trim()) ?? []
 
   return (
@@ -365,27 +360,6 @@ export default function WhiteboardShell() {
               setArticleId(id)
             }}
           />
-          <div className="ml-auto flex items-center gap-1 rounded-2xl bg-slate-200/80 p-1 dark:bg-slate-800/80">
-            {modes.map((m) => (
-              <button
-                key={m.key}
-                onClick={() => setMode(m.key)}
-                className={cn(
-                  "relative rounded-xl px-3.5 py-1.5 text-sm font-medium transition-colors",
-                  mode === m.key ? "text-slate-900 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                )}
-              >
-                {mode === m.key && (
-                  <motion.span
-                    layoutId="modePill"
-                    className="absolute inset-0 rounded-xl bg-white shadow-md dark:bg-slate-700"
-                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">{m.icon} {m.label}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -650,15 +624,6 @@ export default function WhiteboardShell() {
               </div>
             </div>
           </>
-        )}
-
-        {mode === "reorder" && article && (
-          <div className="mx-auto h-full max-w-4xl rounded-3xl bg-white/90 p-6 shadow-2xl shadow-sky-200/40 ring-1 ring-slate-200/80 backdrop-blur dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10">
-            <ReorderMode sentences={article.sentences} />
-          </div>
-        )}
-        {mode === "reorder" && !article && (
-          <div className="flex h-full items-center justify-center text-lg text-slate-400">請先選擇一篇課文進行卡片重組。</div>
         )}
         <StickerBar tags={tags} open={stickerBarOpen} onClose={() => setStickerBarOpen(false)} onDragStart={() => {}} onDragEnd={() => {}} />
       </main>
