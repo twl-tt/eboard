@@ -495,7 +495,7 @@ export default function WhiteboardShell() {
         {mode === "read" && article && (
           <>
             <div className="grid h-[calc(100vh-180px)] grid-cols-1 gap-3 lg:grid-cols-[1fr_460px]">
-              <div className="relative h-full">
+                <div className="relative h-full">
                 <div
                   ref={readingRef}
                   className={cn(
@@ -504,6 +504,8 @@ export default function WhiteboardShell() {
                       ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
                       : boardMode === "whiteboard"
                       ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
+                      : canvasVisible
+                      ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700 dark:bg-slate-900"
                       : "bg-white/90 shadow-2xl shadow-sky-200/50 ring-slate-200/80 dark:bg-slate-900/85 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10"
                   )}
                   onDragOver={(e) => {
