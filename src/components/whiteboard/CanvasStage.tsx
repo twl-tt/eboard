@@ -279,7 +279,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             onKeyDown={(e) => {
               if (e.key === "Enter" && textInput.value) {
                 ctxRef.current!.fillStyle = colorRef.current
-                ctxRef.current!.font = "20px sans-serif"
+                ctxRef.current!.font = "32px sans-serif"
                 ctxRef.current!.fillText(textInput.value, textInput.x, textInput.y)
                 saveHistory()
                 setTextInput(null)
@@ -290,7 +290,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             onBlur={() => {
               if (textInput.value) {
                 ctxRef.current!.fillStyle = colorRef.current
-                ctxRef.current!.font = "20px sans-serif"
+                ctxRef.current!.font = "32px sans-serif"
                 ctxRef.current!.fillText(textInput.value, textInput.x, textInput.y)
                 saveHistory()
               }
