@@ -191,7 +191,7 @@ export function ArticlesAdmin({ categories, refreshCategories }: { categories: C
       const res = await fetch(url, {
         method: editId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editId ? { title, categoryId, rawContent: content } : { title, categoryId, rawContent: content })
+        body: JSON.stringify(editId ? { title, categoryId, rawContent: content, translation } : { title, categoryId, rawContent: content, translation })
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error ?? "儲存失敗"); return }
