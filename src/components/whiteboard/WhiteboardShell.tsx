@@ -504,9 +504,7 @@ export default function WhiteboardShell() {
                       ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
                       : boardMode === "whiteboard"
                       ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
-                      : canvasVisible
-                      ? "shadow-2xl shadow-slate-900 ring-slate-700"
-                      : "bg-white shadow-2xl shadow-sky-200/50 ring-slate-200/80 dark:bg-slate-900 dark:shadow-2xl dark:shadow-slate-900/40 dark:ring-white/10"
+                      : "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
                   )}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
