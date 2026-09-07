@@ -117,7 +117,10 @@ export function WordCloudPanel() {
         {wordClouds.length > 0 && (
           <select
             value={activeCloud?.id ?? ""}
-            onChange={(e) => setActiveCloud(wordClouds.find((w) => w.id === e.target.value) ?? null)}
+            onChange={(e) => {
+              const found = wordClouds.find((w) => w.id === e.target.value)
+              if (found) setActiveCloud(found)
+            }}
             className="h-8 flex-1 rounded-lg border border-slate-300 bg-transparent px-2 text-xs dark:border-slate-700 dark:bg-slate-950"
           >
             {wordClouds.map((w) => (
@@ -227,7 +230,7 @@ export function WordCloudPanel() {
       )}
 
       {fullscreen && activeCloud && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-sky-600 to-indigo-800 p-0 m-0 overflow-hidden">
+        <div className="fixed inset-0 z-[60] bg-gradient-to-br from-sky-600 to-indigo-800">
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 border-b border-white/10 bg-black/20 backdrop-blur">
             <div className="flex items-center gap-4">
               <h2 className="text-lg font-bold text-white">{activeCloud.title}</h2>
@@ -242,11 +245,11 @@ export function WordCloudPanel() {
               </Button>
             </div>
           </div>
-          <div className="flex-1 p-4 pt-16 overflow-y-auto">
+          <div className="w-full h-screen pt-16 overflow-y-auto">
             {activeCloud.words && activeCloud.words.length > 0 ? (
-              <div className="w-full h-full columns-3xl gap-12 space-y-8">
+              <div className="w-full min-h-full p-8 columns-4xl gap-16 space-y-10">
                 {activeCloud.words.map((entry, i) => {
-                  const scale = 1.2 + (entry.count / maxCount) * 4
+                  const scale = 1.5 + (entry.count / maxCount) * 5
                   return (
                     <motion.span
                       key={entry.id}
@@ -256,8 +259,8 @@ export function WordCloudPanel() {
                       className="font-black cursor-default text-white inline-block"
                       style={{
                         fontSize: `${scale}rem`,
-                        lineHeight: 1.3,
-                        textShadow: "0 2px 20px rgba(0,0,0,0.4)"
+                        lineHeight: 1.2,
+                        textShadow: "0 2px 25px rgba(0,0,0,0.5)"
                       }}
                     >
                       {entry.text}
@@ -266,11 +269,8 @@ export function WordCloudPanel() {
                 })}
               </div>
             ) : (
-              <p className="text-4xl text-white/60">等待學生提交…</p>
+              <p className="text-6xl text-white/60 text-center pt-20">等待學生提交…</p>
             )}
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 z-10 px-6 py-3 text-center text-sm text-white/60 bg-black/20">
-            掃描 QR Code 提交：{typeof window !== "undefined" ? `${window.location.origin}/wordcloud/${activeCloud.id}` : ""}
           </div>
         </div>
       )}
