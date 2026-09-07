@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
 import { motion } from "framer-motion"
-import { Cloud, QrCode, Plus, Square, Trash2, Maximize2, X, ExternalLink } from "lucide-react"
+import { Cloud, QrCode, Plus, Square, Trash2, Monitor, Pencil, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -197,9 +197,9 @@ export function WordCloudPanel() {
                 size="icon"
                 onClick={() => window.open(`/wordcloud/${activeCloud.id}`, "_blank")}
                 className="h-8 w-8"
-                title="新視窗開啟"
+                title="學生提交頁面"
               >
-                <ExternalLink className="h-4 w-4" />
+                <Pencil className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
@@ -208,7 +208,7 @@ export function WordCloudPanel() {
                 className="h-8 w-8"
                 title="大屏幕顯示"
               >
-                <Maximize2 className="h-4 w-4" />
+                <Monitor className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => deleteCloud(activeCloud.id)} className="h-8 w-8 text-red-500">
                 <Trash2 className="h-4 w-4" />
