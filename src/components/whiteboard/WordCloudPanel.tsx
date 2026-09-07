@@ -34,7 +34,6 @@ export function WordCloudPanel() {
   const [showCreate, setShowCreate] = useState(false)
   const [newTitle, setNewTitle] = useState("")
   const [newMulti, setNewMulti] = useState(true)
-  const [fullscreen, setFullscreen] = useState(false)
   const timerRef = useRef<number | null>(null)
 
   const loadList = useCallback(async () => {
@@ -205,9 +204,9 @@ export function WordCloudPanel() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setFullscreen(true)}
+                onClick={() => window.open(`/wordcloud/display/${activeCloud.id}`, "_blank")}
                 className="h-8 w-8"
-                title="放大"
+                title="大屏幕顯示"
               >
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -227,54 +226,6 @@ export function WordCloudPanel() {
         </div>
       ) : (
         <p className="py-6 text-center text-sm text-slate-400">尚未有詞雲。點擊「新增詞雲」開始！</p>
-      )}
-
-      {fullscreen && activeCloud && (
-        <div className="fixed inset-0 z-[60] bg-gradient-to-br from-sky-600 to-indigo-800">
-          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 border-b border-white/10 bg-black/30 backdrop-blur mb-4">
-            <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-white">{activeCloud.title}</h2>
-              <div className="rounded-lg bg-white p-1.5">
-                <QRCodeSVG value={`${typeof window !== "undefined" ? window.location.origin : ""}/wordcloud/${activeCloud.id}`} size={70} />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-white/70">{activeCloud.words.length} 個詞</span>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={() => setFullscreen(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-          <div className="w-screen h-screen overflow-y-auto overflow-x-hidden">
-            <div className="min-h-screen p-16" style={{ columnCount: 6, columnGap: "5rem" }}>
-              {activeCloud.words && activeCloud.words.length > 0 ? (
-                activeCloud.words.map((entry, i) => {
-                  const scale = 2 + (entry.count / maxCount) * 8
-                  return (
-                    <motion.span
-                      key={entry.id}
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className="font-black cursor-default text-white inline-block mb-8 mr-8 break-words"
-                      style={{
-                        fontSize: `${scale}rem`,
-                        lineHeight: 1.1,
-                        textShadow: "0 4px 30px rgba(0,0,0,0.6)",
-                        display: "inline-block",
-                        width: "100%"
-                      }}
-                    >
-                      {entry.text}
-                    </motion.span>
-                  )
-                })
-              ) : (
-                <p className="text-8xl text-white/60 text-center pt-32">等待學生提交…</p>
-              )}
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )
