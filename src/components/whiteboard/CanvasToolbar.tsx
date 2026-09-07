@@ -30,7 +30,7 @@ const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
 
 export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
   const [color, setColor] = useState("#dc2626")
-  const [pos, setPos] = useState({ x: window.innerWidth - 70, y: 100 })
+  const [pos, setPos] = useState({ x: window.innerWidth - 70, y: 20 })
   const dragRef = useRef<{ startX: number; startY: number } | null>(null)
   const isHighlighter = currentTool === "highlighter"
 
