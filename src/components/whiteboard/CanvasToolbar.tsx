@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Pencil, Eraser, Square, Circle, Minus, Type, Highlighter, Move, Undo2, Redo2, Trash2, X } from "lucide-react"
 import type { CanvasTool } from "./CanvasStage"
 
@@ -30,9 +30,28 @@ const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
 
 export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
   const [color, setColor] = useState("#dc2626")
-  const [pos, setPos] = useState({ x: window.innerWidth - 260, y: 100 })
+  const [pos, setPos] = useState({ x: window.innerWidth - 70, y: 100 })
   const dragRef = useRef<{ startX: number; startY: number } | null>(null)
   const isHighlighter = currentTool === "highlighter"
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return
+      setPos({
+        x: e.clientX - dragRef.current.startX,
+        y: e.clientY - dragRef.current.startY
+      })
+    }
+    const handleMouseUp = () => {
+      dragRef.current = null
+    }
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseup", handleMouseUp)
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [])
 
   if (!canvasVisible) return null
 
@@ -42,30 +61,9 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
     dragRef.current = { startX: e.clientX - pos.x, startY: e.clientY - pos.y }
   }
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!dragRef.current) return
-    setPos({
-      x: e.clientX - dragRef.current.startX,
-      y: e.clientY - dragRef.current.startY
-    })
-  }
-
-  const handleMouseUp = () => {
-    dragRef.current = null
-  }
-
-  if (typeof window !== "undefined") {
-    window.removeEventListener("mousemove", handleMouseMove)
-    window.removeEventListener("mouseup", handleMouseUp)
-    if (dragRef.current) {
-      window.addEventListener("mousemove", handleMouseMove)
-      window.addEventListener("mouseup", handleMouseUp)
-    }
-  }
-
   return (
     <div
-      className="fixed z-50 flex items-center gap-1 rounded-xl border border-slate-200/50 bg-white/95 px-2 py-1.5 shadow-lg dark:border-slate-700/50 dark:bg-slate-900/95 cursor-move select-none"
+      className="fixed z-50 flex flex-col items-center gap-1 rounded-xl border border-slate-200/50 bg-white/95 px-1.5 py-2 shadow-lg dark:border-slate-700/50 dark:bg-slate-900/95 cursor-move select-none"
       style={{ left: pos.x, top: pos.y }}
       onMouseDown={handleMouseDown}
     >
@@ -77,7 +75,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
         <X className="h-3.5 w-3.5" />
       </button>
 
-      <div className="w-px h-5 bg-slate-300 dark:bg-slate-600 mx-0.5" />
+      <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
 
       {TOOLS.map((tool) => (
         <button
@@ -94,9 +92,9 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
         </button>
       ))}
 
-      <div className="w-px h-5 bg-slate-300 dark:bg-slate-600 mx-0.5" />
+      <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
 
-      <div className="flex items-center gap-1">
+      <div className="flex flex-col gap-1 items-center">
         {(isHighlighter ? HIGHLIGHTER_COLORS : COLORS).map((c) => (
           <button
             key={c}
@@ -109,7 +107,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
         ))}
       </div>
 
-      <div className="w-px h-5 bg-slate-300 dark:bg-slate-600 mx-0.5" />
+      <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
 
       <button
         onClick={onUndo}
