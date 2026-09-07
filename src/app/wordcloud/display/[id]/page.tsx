@@ -87,33 +87,42 @@ export default function WordCloudDisplayPage({ params }: { params: { id: string 
       {/* Word Cloud Display - Full Screen */}
       <div className="absolute inset-0 pt-20 pb-16 overflow-auto">
         {wordCloud.words.length > 0 ? (
-          <div className="w-full min-h-full p-10" style={{ columnCount: 6, columnGap: "3rem" }}>
+          <div className="w-full p-8 flex flex-wrap justify-center items-center gap-4 content-start">
             {wordCloud.words.map((entry, i) => {
-              const scale = 2.5 + (entry.count / maxCount) * 10
+              const scale = 1 + (entry.count / maxCount) * 1.5
               return (
-                <motion.span
+                <motion.div
                   key={entry.id}
-                  initial={{ opacity: 0, scale: 0.3 }}
+                  initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 150, damping: 15 }}
-                  className={`font-black ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="relative flex flex-col items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm px-8 py-5"
                   style={{
-                    fontSize: `${scale}rem`,
-                    lineHeight: 1.1,
-                    textShadow: "0 4px 30px rgba(0,0,0,0.4)",
-                    display: "inline-block",
-                    width: "100%",
-                    marginBottom: "2rem"
+                    minWidth: `${Math.max(6, entry.text.length * 2)}rem`
                   }}
                 >
-                  {entry.text}
-                </motion.span>
+                  <span
+                    className={`font-black text-white ${CLOUD_COLORS[i % CLOUD_COLORS.length].replace("300", "100")}`}
+                    style={{
+                      fontSize: `${scale}rem`,
+                      lineHeight: 1.2,
+                      textShadow: "0 2px 10px rgba(0,0,0,0.3)"
+                    }}
+                  >
+                    {entry.text}
+                  </span>
+                  {entry.count > 1 && (
+                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white shadow-lg">
+                      {entry.count}
+                    </span>
+                  )}
+                </motion.div>
               )
             })}
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <p className="text-7xl text-white/40">等待學生提交…</p>
+            <p className="text-6xl text-white/40">等待學生提交…</p>
           </div>
         )}
       </div>

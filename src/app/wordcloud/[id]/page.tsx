@@ -138,26 +138,29 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
             )}
 
             {wordCloud.words.length > 0 ? (
-              <div className="rounded-3xl bg-black/20 p-8 min-h-[400px]" style={{ columnCount: 4, columnGap: "2rem" }}>
+              <div className="rounded-3xl bg-black/20 p-8 min-h-[400px] flex flex-wrap justify-center items-center gap-4 content-start">
                 {wordCloud.words.map((entry, i) => {
-                  const scale = 1.5 + (entry.count / maxCount) * 3
+                  const scale = 0.8 + (entry.count / maxCount) * 1
                   return (
-                    <motion.span
+                    <div
                       key={entry.id}
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className={`font-black ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
-                      style={{
-                        fontSize: `${scale}rem`,
-                        textShadow: "0 2px 10px rgba(0,0,0,0.3)",
-                        display: "inline-block",
-                        width: "100%",
-                        marginBottom: "1rem"
-                      }}
+                      className="relative flex flex-col items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm px-6 py-3"
                     >
-                      {entry.text}
-                    </motion.span>
+                      <span
+                        className={`font-bold ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
+                        style={{
+                          fontSize: `${scale}rem`,
+                          textShadow: "0 1px 4px rgba(0,0,0,0.2)"
+                        }}
+                      >
+                        {entry.text}
+                      </span>
+                      {entry.count > 1 && (
+                        <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white shadow">
+                          {entry.count}
+                        </span>
+                      )}
+                    </div>
                   )
                 })}
               </div>

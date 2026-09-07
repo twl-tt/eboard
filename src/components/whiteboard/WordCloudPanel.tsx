@@ -157,31 +157,31 @@ export function WordCloudPanel() {
           <p className="text-center text-sm font-medium">{activeCloud.title}</p>
 
           {activeCloud.words && activeCloud.words.length > 0 ? (
-            <div className="relative w-full rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 p-6 dark:from-slate-800 dark:to-slate-900 min-h-[350px]">
-              <div className="w-full" style={{ columnCount: 3, columnGap: "1.5rem" }}>
-                {activeCloud.words.map((entry, i) => {
-                  const scale = 1 + (entry.count / maxCount) * 2
-                  return (
-                    <motion.span
-                      key={entry.id}
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className={`font-black cursor-default ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
+            <div className="w-full rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 p-4 dark:from-slate-800 dark:to-slate-900 min-h-[350px] flex flex-wrap content-start gap-2">
+              {activeCloud.words.map((entry, i) => {
+                const scale = 0.8 + (entry.count / maxCount) * 1.2
+                return (
+                  <div
+                    key={entry.id}
+                    className="relative flex flex-col items-center justify-center rounded-lg bg-white/80 px-4 py-2 shadow-sm dark:bg-slate-700/80"
+                  >
+                    <span
+                      className={`font-bold ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
                       style={{
                         fontSize: `${scale}rem`,
-                        textShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                        display: "inline-block",
-                        width: "100%",
-                        marginBottom: "0.75rem"
+                        textShadow: "0 1px 2px rgba(0,0,0,0.1)"
                       }}
-                      title={`${entry.text}: ${entry.count} 次`}
                     >
                       {entry.text}
-                    </motion.span>
-                  )
-                })}
-              </div>
+                    </span>
+                    {entry.count > 1 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white shadow">
+                        {entry.count}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           ) : (
             <div className="flex items-center justify-center w-full min-h-[350px] rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
