@@ -500,7 +500,7 @@ export default function WhiteboardShell() {
                   ? "bg-slate-900"
                   : boardMode === "whiteboard"
                   ? "bg-white"
-                  : "bg-slate-800 dark:bg-slate-900"
+                  : "bg-white dark:bg-slate-900"
               )}>
               <CanvasStage
                 ref={canvasApiRef}
@@ -528,7 +528,7 @@ export default function WhiteboardShell() {
                         ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
                         : boardMode === "whiteboard"
                         ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
-                        : "bg-slate-800 dark:bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-300 dark:ring-slate-700"
+                        : "bg-white dark:bg-slate-900 shadow-2xl shadow-sky-100 dark:shadow-slate-900 ring-slate-200 dark:ring-slate-700"
                     )}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
