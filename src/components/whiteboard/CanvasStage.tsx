@@ -145,7 +145,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
             break
           case "highlighter":
             canvas.isDrawingMode = true
-            canvas.freeDrawingBrush.color = colorRef.current + "33"
+            canvas.freeDrawingBrush.color = colorRef.current + "80"
             canvas.freeDrawingBrush.width = 25
             break
         }
@@ -287,7 +287,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     if (!fabricRef.current) return
     const canvas = fabricRef.current
     if (canvas.freeDrawingBrush && tool !== "eraser") {
-      canvas.freeDrawingBrush.color = tool === "highlighter" ? color + "33" : color
+      canvas.freeDrawingBrush.color = tool === "highlighter" ? color + "80" : color
     }
   }, [color, tool])
 
