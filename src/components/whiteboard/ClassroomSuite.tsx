@@ -64,7 +64,7 @@ export function ClassroomSuite() {
             whileTap={{ scale: 0.94 }}
             onClick={() => setPanel(panel === k ? null : k)}
             className={cn(
-              "flex h-[64px] w-[64px] flex-col items-center justify-center gap-0.5 rounded-3xl bg-gradient-to-br text-white shadow-xl transition-shadow",
+              "flex h-[52px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
               GRADIENTS[k].grad,
               GRADIENTS[k].glow,
               panel === k && "ring-4 ring-white/60 dark:ring-white/30"

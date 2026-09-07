@@ -28,6 +28,9 @@ function BlackboardContent() {
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
 
+  const [toolbarPos, setToolbarPos] = useState({ x: window.innerWidth - 64, y: 20 })
+  const toolbarDragRef = useRef<{ startX: number; startY: number } | null>(null)
+
   useEffect(() => {
     if (!canvasElRef.current) return
 
@@ -78,7 +81,7 @@ function BlackboardContent() {
             break
           case "highlighter":
             canvas.isDrawingMode = true
-            canvas.freeDrawingBrush.color = colorRef.current + "33"
+            canvas.freeDrawingBrush.color = colorRef.current + "80"
             canvas.freeDrawingBrush.width = 25
             break
         }
@@ -203,9 +206,29 @@ function BlackboardContent() {
   useEffect(() => {
     if (!fabricRef.current) return
     if (fabricRef.current.freeDrawingBrush) {
-      fabricRef.current.freeDrawingBrush.color = tool === "eraser" ? boardColor : color
+      fabricRef.current.freeDrawingBrush.color = tool === "eraser" ? boardColor : tool === "highlighter" ? color + "80" : color
     }
   }, [color, tool, boardColor])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!toolbarDragRef.current) return
+      setToolbarPos({ x: e.clientX - toolbarDragRef.current.startX, y: e.clientY - toolbarDragRef.current.startY })
+    }
+    const handleMouseUp = () => { toolbarDragRef.current = null }
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseup", handleMouseUp)
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [])
+
+  const handleToolbarMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return
+    e.preventDefault()
+    toolbarDragRef.current = { startX: e.clientX - toolbarPos.x, startY: e.clientY - toolbarPos.y }
+  }
 
   const handleToolChange = (newTool: CanvasTool) => {
     setTool(newTool)
@@ -243,50 +266,64 @@ function BlackboardContent() {
     <div className="fixed inset-0 bg-slate-900" style={{ backgroundColor: boardColor }}>
       <canvas ref={canvasElRef} className="absolute inset-0" />
 
-      <div className="absolute top-0 left-2 flex items-center gap-0.5 rounded-lg border border-slate-700/50 bg-slate-900/90 px-2 py-1 shadow-md z-50">
-        <button onClick={() => router.push(articleId ? `/whiteboard?article=${articleId}` : "/whiteboard")} className="p-1 rounded hover:bg-slate-700 text-white" title="返回">
-          <ArrowLeft size={14} />
+      <div
+        className="fixed z-50 flex flex-col items-center gap-1 rounded-xl border border-slate-700/50 bg-slate-900/95 px-1.5 py-2 shadow-lg cursor-move select-none"
+        style={{ left: toolbarPos.x, top: toolbarPos.y }}
+        onMouseDown={handleToolbarMouseDown}
+      >
+        <button onClick={() => router.push(articleId ? `/whiteboard?article=${articleId}` : "/whiteboard")} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white" title="返回">
+          <ArrowLeft className="h-3.5 w-3.5" />
         </button>
-        <div className="w-px h-4 bg-slate-600 mx-0.5" />
-        <button onClick={() => setTool("select")} className={`p-1 rounded ${tool === "select" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="選擇">
-          <Move size={14} />
+
+        <div className="w-full h-px bg-slate-700 my-0.5" />
+
+        <button onClick={() => setTool("select")} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "select" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="選擇">
+          <Move className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => handleToolChange("pen")} className={`p-1 rounded ${tool === "pen" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="畫筆">
-          <Pencil size={14} />
+        <button onClick={() => handleToolChange("pen")} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "pen" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="畫筆">
+          <Pencil className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => handleToolChange("eraser")} className={`p-1 rounded ${tool === "eraser" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="橡皮擦">
-          <Eraser size={14} />
+        <button onClick={() => handleToolChange("eraser")} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "eraser" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="橡皮擦">
+          <Eraser className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => handleToolChange("rect")} className={`p-1 rounded ${tool === "rect" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="矩形">
-          <Square size={14} />
+        <button onClick={() => handleToolChange("rect")} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "rect" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="矩形">
+          <Square className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => handleToolChange("ellipse")} className={`p-1 rounded ${tool === "ellipse" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="橢圓">
-          <Circle size={14} />
+        <button onClick={() => handleToolChange("ellipse")} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "ellipse" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="橢圓">
+          <Circle className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => handleToolChange("line")} className={`p-1 rounded ${tool === "line" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="直線">
-          <Minus size={14} />
+        <button onClick={() => handleToolChange("line")} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "line" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="直線">
+          <Minus className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => { handleToolChange("highlighter"); if (!HIGHLIGHTER_COLORS.includes(color)) setColor("#fef08a") }} className={`p-1 rounded ${tool === "highlighter" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="螢光筆">
-          <Highlighter size={14} />
+        <button onClick={() => { handleToolChange("highlighter"); if (!HIGHLIGHTER_COLORS.includes(color)) setColor("#fef08a") }} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "highlighter" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="螢光筆">
+          <Highlighter className="h-3.5 w-3.5" />
         </button>
-        <button onClick={() => handleToolChange("text")} className={`p-1 rounded ${tool === "text" ? "bg-sky-500 text-white" : "hover:bg-slate-700 text-white"}`} title="文字">
-          <Type size={14} />
+        <button onClick={() => handleToolChange("text")} className={`flex h-8 w-8 items-center justify-center rounded-lg ${tool === "text" ? "bg-sky-500 text-white" : "text-slate-400 hover:bg-slate-700 hover:text-white"}`} title="文字">
+          <Type className="h-3.5 w-3.5" />
         </button>
-        <div className="w-px h-4 bg-slate-600 mx-0.5" />
-        {(tool === "highlighter" ? HIGHLIGHTER_COLORS : COLORS).map(c => (
-          <button key={c} onClick={() => setColor(c)} className={`w-4 h-4 rounded-full border-2 ${color === c ? "border-sky-500" : "border-slate-600"}`} style={{ backgroundColor: c }} />
-        ))}
-        <div className="w-px h-4 bg-slate-600 mx-0.5" />
-        <button onClick={undo} className="p-1 rounded hover:bg-slate-700 text-white" title="復原">
-          <Undo2 size={14} />
+
+        <div className="w-full h-px bg-slate-700 my-0.5" />
+
+        <div className="flex flex-col gap-1 items-center">
+          {(tool === "highlighter" ? HIGHLIGHTER_COLORS : COLORS).map(c => (
+            <button key={c} onClick={() => setColor(c)} className={`h-6 w-6 rounded-full border-2 ${color === c ? "border-sky-500 scale-110" : "border-slate-700"} hover:scale-110 transition-all`} style={{ backgroundColor: c }} />
+          ))}
+        </div>
+
+        <div className="w-full h-px bg-slate-700 my-0.5" />
+
+        <button onClick={undo} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white" title="復原">
+          <Undo2 className="h-3.5 w-3.5" />
         </button>
-        <button onClick={redo} className="p-1 rounded hover:bg-slate-700 text-white" title="重做">
-          <Redo2 size={14} />
+        <button onClick={redo} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white" title="重做">
+          <Redo2 className="h-3.5 w-3.5" />
         </button>
-        <button onClick={clear} className="p-1 rounded hover:bg-red-900 text-red-400" title="清除">
-          <Trash2 size={14} />
+        <button onClick={clear} className="flex h-7 w-7 items-center justify-center rounded-lg text-red-400 hover:bg-red-900/30" title="清除">
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
-        <div className="w-px h-4 bg-slate-600 mx-0.5" />
+
+        <div className="w-full h-px bg-slate-700 my-0.5" />
+
         <input
           type="color"
           value={boardColor}
@@ -296,7 +333,7 @@ function BlackboardContent() {
               fabricRef.current.setBackgroundColor(e.target.value, fabricRef.current.renderAll.bind(fabricRef.current))
             }
           }}
-          className="h-6 w-6 cursor-pointer rounded border border-slate-600"
+          className="h-6 w-6 cursor-pointer rounded border border-slate-700"
           title="黑板顏色"
         />
       </div>
