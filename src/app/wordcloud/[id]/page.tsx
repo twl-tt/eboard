@@ -14,6 +14,7 @@ interface WordCloud {
   title: string
   words: WordCloudEntry[]
   isActive: boolean
+  multiSubmit: boolean
 }
 
 export default function WordCloudVotePage({ params }: { params: { id: string } }) {
@@ -38,6 +39,12 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
   }, [load])
 
   useEffect(() => {
+    try {
+      if (localStorage.getItem(`wrp-wc-${params.id}`)) setSubmitted(true)
+    } catch {}
+  }, [params.id])
+
+  useEffect(() => {
     if (!wordCloud) return
     const t = setInterval(() => {
       fetch(`/api/classroom/wordcloud/${params.id}`)
@@ -50,6 +57,7 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
 
   async function submit() {
     if (!wordCloud?.isActive || busy) return
+    if (!wordCloud.multiSubmit && submitted) return
     const text = word.trim()
     if (!text) return
     setBusy(true)
@@ -61,7 +69,12 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
       })
       if (!res.ok) throw new Error("提交失敗")
       setWord("")
-      setSubmitted(true)
+      if (!wordCloud.multiSubmit) {
+        setSubmitted(true)
+        try {
+          localStorage.setItem(`wrp-wc-${wordCloud.id}`, "1")
+        } catch {}
+      }
       load()
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -96,13 +109,13 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
                   value={word}
                   onChange={(e) => setWord(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") submit() }}
-                  placeholder="輸入一個詞語，按 Enter 提交"
-                  disabled={busy || submitted}
+                  placeholder={wordCloud.multiSubmit ? "輸入一個詞語，按 Enter 提交" : "輸入一個詞語，按 Enter 提交（只能提交一次）"}
+                  disabled={busy || (!wordCloud.multiSubmit && submitted)}
                   className="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-lg focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 disabled:opacity-50"
                 />
                 <button
                   onClick={submit}
-                  disabled={busy || submitted || !word.trim()}
+                  disabled={busy || (!wordCloud.multiSubmit && submitted) || !word.trim()}
                   className="rounded-xl bg-gradient-to-r from-sky-500 to-indigo-500 px-5 py-2.5 font-bold text-white disabled:opacity-50"
                 >
                   提交
@@ -110,8 +123,11 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
               </div>
             )}
 
-            {submitted && (
-              <p className="mb-4 text-center text-sm font-medium text-emerald-500">✓ 已提交！試再提交另一個詞語</p>
+            {!wordCloud.multiSubmit && submitted && (
+              <p className="mb-4 text-center text-sm font-medium text-emerald-500">✓ 已提交！</p>
+            )}
+            {wordCloud.multiSubmit && submitted && (
+              <p className="mb-4 text-center text-sm font-medium text-emerald-500">✓ 已提交！可以再提交更多詞語</p>
             )}
 
             {!wordCloud.isActive && (

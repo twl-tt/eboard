@@ -50,7 +50,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (body.isActive !== undefined) {
       const updated = await db.wordCloud.update({
         where: { id },
-        data: { isActive: body.isActive }
+        data: { isActive: body.isActive },
+        include: { words: { orderBy: { count: "desc" } } }
+      })
+      return NextResponse.json(updated)
+    }
+
+    if (body.multiSubmit !== undefined) {
+      const updated = await db.wordCloud.update({
+        where: { id },
+        data: { multiSubmit: body.multiSubmit },
+        include: { words: { orderBy: { count: "desc" } } }
       })
       return NextResponse.json(updated)
     }

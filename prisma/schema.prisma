@@ -90,11 +90,12 @@ model PollOption {
 }
 
 model WordCloud {
-  id        String      @id @default(uuid())
-  title     String
-  words     WordCloudEntry[]
-  isActive  Boolean     @default(true)
-  createdAt DateTime    @default(now())
+  id          String      @id @default(uuid())
+  title       String
+  words       WordCloudEntry[]
+  isActive    Boolean     @default(true)
+  multiSubmit Boolean     @default(true)
+  createdAt   DateTime    @default(now())
 }
 
 model WordCloudEntry {

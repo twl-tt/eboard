@@ -18,6 +18,7 @@ interface WordCloud {
   title: string
   words: WordCloudEntry[]
   isActive: boolean
+  multiSubmit: boolean
   createdAt: string
 }
 
@@ -32,6 +33,7 @@ export function WordCloudPanel() {
   const [activeCloud, setActiveCloud] = useState<WordCloud | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [newTitle, setNewTitle] = useState("")
+  const [newMulti, setNewMulti] = useState(true)
   const timerRef = useRef<number | null>(null)
 
   const loadList = useCallback(async () => {
@@ -75,12 +77,13 @@ export function WordCloudPanel() {
     const res = await fetch("/api/classroom/wordcloud", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTitle.trim() })
+      body: JSON.stringify({ title: newTitle.trim(), multiSubmit: newMulti })
     })
     if (res.ok) {
       const wc: WordCloud = await res.json()
       setShowCreate(false)
       setNewTitle("")
+      setNewMulti(true)
       setActiveCloud(wc)
       loadList()
     }
@@ -128,6 +131,17 @@ export function WordCloudPanel() {
       {showCreate && (
         <div className="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
           <Input placeholder="詞雲主題，例如：你對課文的印象？" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={newMulti}
+                onChange={(e) => setNewMulti(e.target.checked)}
+                className="rounded border-slate-300"
+              />
+              允許重複提交
+            </label>
+          </div>
           <Button onClick={create}>建立詞雲</Button>
         </div>
       )}

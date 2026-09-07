@@ -18,7 +18,8 @@ export async function GET() {
 }
 
 const createSchema = z.object({
-  title: z.string().min(1).max(200)
+  title: z.string().min(1).max(200),
+  multiSubmit: z.boolean().optional()
 })
 
 export async function POST(req: Request) {
@@ -31,7 +32,8 @@ export async function POST(req: Request) {
     const wordCloud = await db.wordCloud.create({
       data: {
         title: parsed.data.title,
-        isActive: true
+        isActive: true,
+        multiSubmit: parsed.data.multiSubmit ?? true
       },
       include: { words: true }
     })
