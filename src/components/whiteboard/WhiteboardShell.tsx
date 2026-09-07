@@ -17,6 +17,7 @@ import { ArticlePicker } from "./ArticlePicker"
 import { ReadingPane } from "./ReadingPane"
 import { CanvasStage, type CanvasApi, type CanvasTool } from "./CanvasStage"
 import { ClassroomSuite } from "./ClassroomSuite"
+import { CanvasToolbar } from "./CanvasToolbar"
 import { ReorderMode } from "./ReorderMode"
 import { DictLookup } from "./DictLookup"
 import { StickerBar } from "./StickerBar"
@@ -590,7 +591,18 @@ export default function WhiteboardShell() {
         <StickerBar tags={tags} open={stickerBarOpen} onClose={() => setStickerBarOpen(false)} onDragStart={() => {}} onDragEnd={() => {}} />
       </main>
 
-      <ClassroomSuite />
+      <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-2">
+        <CanvasToolbar
+          currentTool={canvasTool}
+          onToolChange={setCanvasTool}
+          onUndo={() => canvasApiRef.current?.undo()}
+          onRedo={() => canvasApiRef.current?.redo()}
+          onClear={() => canvasApiRef.current?.clear()}
+          canvasVisible={canvasVisible}
+          onClose={() => setCanvasVisible(false)}
+        />
+        <ClassroomSuite />
+      </div>
     </div>
   )
 }
