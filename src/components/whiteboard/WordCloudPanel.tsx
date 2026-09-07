@@ -227,34 +227,36 @@ export function WordCloudPanel() {
       )}
 
       {fullscreen && activeCloud && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
-          <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <h2 className="text-lg font-bold">{activeCloud.title}</h2>
+        <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-sky-600 to-indigo-800 p-0 m-0 overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 border-b border-white/10 bg-black/20 backdrop-blur">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-bold text-white">{activeCloud.title}</h2>
+              <div className="rounded-lg bg-white p-1.5">
+                <QRCodeSVG value={`${typeof window !== "undefined" ? window.location.origin : ""}/wordcloud/${activeCloud.id}`} size={70} />
+              </div>
+            </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-500">{activeCloud.words.length} 個詞</span>
-              <Button variant="ghost" size="sm" onClick={() => window.open(`/wordcloud/${activeCloud.id}`, "_blank")}>
-                <ExternalLink className="h-4 w-4 mr-1" /> 新視窗
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setFullscreen(false)}>
+              <span className="text-sm text-white/70">{activeCloud.words.length} 個詞</span>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={() => setFullscreen(false)}>
                 <X className="h-5 w-5" />
               </Button>
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-center p-8">
+          <div className="flex-1 flex items-center justify-center p-4 pt-16">
             {activeCloud.words && activeCloud.words.length > 0 ? (
-              <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-4 max-w-5xl">
+              <div className="w-full h-full flex flex-wrap content-start justify-center items-start gap-x-6 gap-y-4 p-8 overflow-y-auto">
                 {activeCloud.words.map((entry, i) => {
-                  const scale = 0.8 + (entry.count / maxCount) * 2.2
+                  const scale = 1 + (entry.count / maxCount) * 3
                   return (
                     <motion.span
                       key={entry.id}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className={`font-black cursor-default ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
+                      className={`font-black cursor-default text-white ${i % 2 === 0 ? "text-shadow-[0_2px_10px_rgba(0,0,0,0.3)]" : "text-shadow-[0_2px_15px_rgba(0,0,0,0.5)]"}`}
                       style={{
                         fontSize: `${scale}rem`,
-                        textShadow: "0 2px 8px rgba(0,0,0,0.1)"
+                        lineHeight: 1.2
                       }}
                     >
                       {entry.text}
@@ -263,11 +265,11 @@ export function WordCloudPanel() {
                 })}
               </div>
             ) : (
-              <p className="text-2xl text-slate-400">等待學生提交…</p>
+              <p className="text-4xl text-white/60">等待學生提交…</p>
             )}
           </div>
-          <div className="px-6 py-3 text-center text-sm text-slate-400 bg-white/50 dark:bg-slate-900/50">
-            學生掃描 QR Code 提交詞語：{typeof window !== "undefined" ? `${window.location.origin}/wordcloud/${activeCloud.id}` : ""}
+          <div className="absolute bottom-0 left-0 right-0 z-10 px-6 py-3 text-center text-sm text-white/60 bg-black/20">
+            掃描 QR Code 提交：{typeof window !== "undefined" ? `${window.location.origin}/wordcloud/${activeCloud.id}` : ""}
           </div>
         </div>
       )}
