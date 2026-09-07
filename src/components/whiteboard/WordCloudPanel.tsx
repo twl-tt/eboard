@@ -158,20 +158,23 @@ export function WordCloudPanel() {
           <p className="text-center text-sm font-medium">{activeCloud.title}</p>
 
           {activeCloud.words && activeCloud.words.length > 0 ? (
-            <div className="relative w-full rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 p-4 dark:from-slate-800 dark:to-slate-900 min-h-[200px]">
-              <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5">
+            <div className="relative w-full rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 p-6 dark:from-slate-800 dark:to-slate-900 min-h-[350px]">
+              <div className="w-full" style={{ columnCount: 3, columnGap: "1.5rem" }}>
                 {activeCloud.words.map((entry, i) => {
-                  const scale = 0.6 + (entry.count / maxCount) * 1.4
+                  const scale = 1 + (entry.count / maxCount) * 2
                   return (
                     <motion.span
                       key={entry.id}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className={`font-bold cursor-default ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
+                      className={`font-black cursor-default ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
                       style={{
                         fontSize: `${scale}rem`,
-                        textShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                        textShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                        display: "inline-block",
+                        width: "100%",
+                        marginBottom: "0.75rem"
                       }}
                       title={`${entry.text}: ${entry.count} 次`}
                     >
@@ -180,13 +183,10 @@ export function WordCloudPanel() {
                   )
                 })}
               </div>
-              {activeCloud.words.length === 0 && (
-                <p className="absolute inset-0 flex items-center justify-center text-sm text-slate-400">等待學生提交…</p>
-              )}
             </div>
           ) : (
-            <div className="flex items-center justify-center w-full min-h-[200px] rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-              <p className="text-sm text-slate-400">等待學生提交…</p>
+            <div className="flex items-center justify-center w-full min-h-[350px] rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+              <p className="text-xl text-slate-400">等待學生提交…</p>
             </div>
           )}
 
