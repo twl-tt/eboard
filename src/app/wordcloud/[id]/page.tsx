@@ -171,7 +171,7 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
             )}
 
             <p className="mt-6 text-center text-lg text-white/60">
-              {wordCloud.words.length} 個詞 · 大家一起寫出課文的印象！
+              {wordCloud.words.length} 個詞
             </p>
           </>
         )}
