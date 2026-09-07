@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
 import { motion } from "framer-motion"
-import { Cloud, QrCode, Plus, Square, Trash2 } from "lucide-react"
+import { Cloud, QrCode, Plus, Square, Trash2, Maximize2, X, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -34,6 +34,7 @@ export function WordCloudPanel() {
   const [showCreate, setShowCreate] = useState(false)
   const [newTitle, setNewTitle] = useState("")
   const [newMulti, setNewMulti] = useState(true)
+  const [fullscreen, setFullscreen] = useState(false)
   const timerRef = useRef<number | null>(null)
 
   const loadList = useCallback(async () => {
@@ -188,7 +189,25 @@ export function WordCloudPanel() {
 
           <div className="flex w-full items-center justify-between">
             <span className="text-xs text-slate-400">{activeCloud.words.length} 個詞</span>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.open(`/wordcloud/${activeCloud.id}`, "_blank")}
+                className="h-8 w-8"
+                title="新視窗開啟"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setFullscreen(true)}
+                className="h-8 w-8"
+                title="放大"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => deleteCloud(activeCloud.id)} className="h-8 w-8 text-red-500">
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -205,6 +224,52 @@ export function WordCloudPanel() {
         </div>
       ) : (
         <p className="py-6 text-center text-sm text-slate-400">尚未有詞雲。點擊「新增詞雲」開始！</p>
+      )}
+
+      {fullscreen && activeCloud && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-slate-900 dark:to-slate-800">
+          <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
+            <h2 className="text-lg font-bold">{activeCloud.title}</h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-500">{activeCloud.words.length} 個詞</span>
+              <Button variant="ghost" size="sm" onClick={() => window.open(`/wordcloud/${activeCloud.id}`, "_blank")}>
+                <ExternalLink className="h-4 w-4 mr-1" /> 新視窗
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setFullscreen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 flex items-center justify-center p-8">
+            {activeCloud.words && activeCloud.words.length > 0 ? (
+              <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-4 max-w-5xl">
+                {activeCloud.words.map((entry, i) => {
+                  const scale = 0.8 + (entry.count / maxCount) * 2.2
+                  return (
+                    <motion.span
+                      key={entry.id}
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                      className={`font-black cursor-default ${CLOUD_COLORS[i % CLOUD_COLORS.length]}`}
+                      style={{
+                        fontSize: `${scale}rem`,
+                        textShadow: "0 2px 8px rgba(0,0,0,0.1)"
+                      }}
+                    >
+                      {entry.text}
+                    </motion.span>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-2xl text-slate-400">等待學生提交…</p>
+            )}
+          </div>
+          <div className="px-6 py-3 text-center text-sm text-slate-400 bg-white/50 dark:bg-slate-900/50">
+            學生掃描 QR Code 提交詞語：{typeof window !== "undefined" ? `${window.location.origin}/wordcloud/${activeCloud.id}` : ""}
+          </div>
+        </div>
       )}
     </div>
   )
