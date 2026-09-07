@@ -246,7 +246,7 @@ export function WordCloudPanel() {
             </div>
           </div>
           <div className="w-screen h-screen overflow-y-auto overflow-x-hidden">
-            <div className="min-h-screen p-12 columns-6xl gap-20 space-y-12">
+            <div className="min-h-screen p-16" style={{ columnCount: 6, columnGap: "5rem" }}>
               {activeCloud.words && activeCloud.words.length > 0 ? (
                 activeCloud.words.map((entry, i) => {
                   const scale = 2 + (entry.count / maxCount) * 8
@@ -256,11 +256,13 @@ export function WordCloudPanel() {
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className="font-black cursor-default text-white inline-block mr-8"
+                      className="font-black cursor-default text-white inline-block mb-8 mr-8 break-words"
                       style={{
                         fontSize: `${scale}rem`,
                         lineHeight: 1.1,
-                        textShadow: "0 4px 30px rgba(0,0,0,0.6)"
+                        textShadow: "0 4px 30px rgba(0,0,0,0.6)",
+                        display: "inline-block",
+                        width: "100%"
                       }}
                     >
                       {entry.text}
