@@ -494,11 +494,18 @@ export default function WhiteboardShell() {
       <main className="relative z-10 flex-1 px-3 pb-32 pt-3">
         {mode === "read" && !article && (
           <div className="flex h-[calc(100vh-180px)] gap-3">
-              <div ref={readingRef} className="relative flex-1 rounded-3xl shadow-2xl overflow-hidden">
+              <div ref={readingRef} className={cn(
+                "relative flex-1 rounded-3xl shadow-2xl overflow-hidden",
+                boardMode === "blackboard"
+                  ? "bg-slate-900"
+                  : boardMode === "whiteboard"
+                  ? "bg-white"
+                  : "bg-slate-800 dark:bg-slate-900"
+              )}>
               <CanvasStage
                 ref={canvasApiRef}
                 articleId=""
-                boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : boardMode === "normal" ? "#1f2937" : null}
+                    boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : boardMode === "normal" ? "transparent" : null}
                 containerRef={readingRef}
                 currentTool={canvasTool}
                 onToolChange={setCanvasTool}
@@ -513,16 +520,16 @@ export default function WhiteboardShell() {
           <>
             <div className="grid h-[calc(100vh-180px)] grid-cols-1">
                 <div className="relative h-full">
-                <div
-                  ref={readingRef}
-                  className={cn(
-                    "relative h-full overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
-                    boardMode === "blackboard"
-                      ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
-                      : boardMode === "whiteboard"
-                      ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
-                      : "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
-                  )}
+                  <div
+                    ref={readingRef}
+                    className={cn(
+                      "relative h-full overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
+                      boardMode === "blackboard"
+                        ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
+                        : boardMode === "whiteboard"
+                        ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
+                        : "bg-slate-800 dark:bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-300 dark:ring-slate-700"
+                    )}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
                       e.preventDefault()

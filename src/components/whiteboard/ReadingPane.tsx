@@ -86,7 +86,7 @@ export function ReadingPane({
   return (
     <div
       ref={containerRef}
-      className="font-han text-slate-900 dark:text-slate-100 select-text pr-[25%]"
+      className="font-han text-slate-800 dark:text-slate-100 select-text pr-[25%]"
       style={{ fontSize: `${fontSizeRem}rem`, lineHeight: 1.9, wordBreak: "break-all" }}
     >
       {sentences.map((s) =>
