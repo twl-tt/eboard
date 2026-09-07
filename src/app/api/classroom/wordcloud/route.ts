@@ -32,7 +32,8 @@ export async function POST(req: Request) {
       data: {
         title: parsed.data.title,
         isActive: true
-      }
+      },
+      include: { words: true }
     })
     return NextResponse.json(wordCloud, { status: 201 })
   } catch (e) {

@@ -139,7 +139,7 @@ export function WordCloudPanel() {
           </div>
           <p className="text-center text-sm font-medium">{activeCloud.title}</p>
 
-          {activeCloud.words.length > 0 ? (
+          {activeCloud.words && activeCloud.words.length > 0 ? (
             <div className="relative w-full rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 p-4 dark:from-slate-800 dark:to-slate-900 min-h-[200px]">
               <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5">
                 {activeCloud.words.map((entry, i) => {
