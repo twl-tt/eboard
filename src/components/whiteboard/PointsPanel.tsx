@@ -15,6 +15,7 @@ interface Props {
 export function PointsPanel({ students, onRefresh }: Props) {
   const [ranked, setRanked] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     const handler = () => onRefresh()
@@ -72,23 +73,54 @@ export function PointsPanel({ students, onRefresh }: Props) {
             <span className="w-full truncate text-sm font-semibold">
               {ranked && i < 3 ? ["🥇", "🥈", "🥉"][i] + " " : ""}{s.name}
             </span>
-            <span className={cn("rounded-full px-2 text-xs font-bold", s.points >= 5 ? "bg-emerald-500/15 text-emerald-500" : "bg-sky-600/15 text-sky-500")}>
+            <span
+              onClick={() => setEditingId(editingId === s.id ? null : s.id)}
+              className={cn("rounded-full px-2 text-xs font-bold cursor-pointer hover:opacity-80", s.points >= 5 ? "bg-emerald-500/15 text-emerald-500" : "bg-sky-600/15 text-sky-500")}
+            >
               {s.points} 分
             </span>
-            <div className="mt-1 flex w-full gap-1">
-              <button
-                onClick={() => award(s, -1)}
-                className="flex h-8 flex-1 items-center justify-center rounded-lg bg-red-500/15 text-red-500 hover:bg-red-500/25"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => award(s, 1)}
-                className="flex h-8 flex-1 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
-            </div>
+            {editingId === s.id ? (
+              <input
+                autoFocus
+                type="number"
+                defaultValue={s.points}
+                onBlur={async (e) => {
+                  const newPoints = parseInt(e.target.value) || 0
+                  const delta = newPoints - s.points
+                  if (delta !== 0) {
+                    setBusyId(s.id)
+                    await fetch("/api/classroom/points", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ studentId: s.id, delta, reason: delta > 0 ? "直接調整分數" : "直接調整分數" })
+                    })
+                    onRefresh()
+                    setBusyId(null)
+                  }
+                  setEditingId(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur()
+                  if (e.key === "Escape") setEditingId(null)
+                }}
+                className="h-7 w-14 rounded-md border border-sky-400 bg-white px-1 text-center text-sm font-bold focus:outline-none focus:ring-2 focus:ring-sky-400"
+              />
+            ) : (
+              <div className="mt-1 flex w-full gap-1">
+                <button
+                  onClick={() => award(s, -1)}
+                  className="flex h-8 flex-1 items-center justify-center rounded-lg bg-red-500/15 text-red-500 hover:bg-red-500/25"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => award(s, 1)}
+                  className="flex h-8 flex-1 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
