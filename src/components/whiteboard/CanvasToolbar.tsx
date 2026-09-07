@@ -7,6 +7,8 @@ import type { CanvasTool } from "./CanvasStage"
 interface Props {
   currentTool: CanvasTool
   onToolChange: (tool: CanvasTool) => void
+  onColorChange: (color: string) => void
+  currentColor: string
   onUndo: () => void
   onRedo: () => void
   onClear: () => void
@@ -28,8 +30,7 @@ const TOOLS: { id: CanvasTool; icon: React.ReactNode; label: string }[] = [
 const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c", "#eab308"]
 const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
 
-export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
-  const [color, setColor] = useState("#dc2626")
+export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
   const [pos, setPos] = useState({ x: window.innerWidth - 70, y: 20 })
   const dragRef = useRef<{ startX: number; startY: number } | null>(null)
   const isHighlighter = currentTool === "highlighter"
@@ -69,10 +70,10 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
     >
       <button
         onClick={onClose}
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
         title="關閉"
       >
-        <X className="h-3.5 w-3.5" />
+        <X className="h-4 w-4" />
       </button>
 
       <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
@@ -81,7 +82,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
         <button
           key={tool.id}
           onClick={() => onToolChange(tool.id)}
-          className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all ${
+          className={`flex h-9 w-9 items-center justify-center rounded-lg transition-all ${
             currentTool === tool.id
               ? "bg-sky-500 text-white"
               : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -98,9 +99,9 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
         {(isHighlighter ? HIGHLIGHTER_COLORS : COLORS).map((c) => (
           <button
             key={c}
-            onClick={() => setColor(c)}
-            className={`h-5 w-5 rounded-full border transition-all hover:scale-110 ${
-              color === c ? "border-sky-500 scale-110" : "border-slate-200 dark:border-slate-700"
+            onClick={() => onColorChange(c)}
+            className={`h-6 w-6 rounded-full border transition-all hover:scale-110 ${
+              currentColor === c ? "border-sky-500 scale-110" : "border-slate-200 dark:border-slate-700"
             }`}
             style={{ backgroundColor: c }}
           />
@@ -111,24 +112,24 @@ export function CanvasToolbar({ currentTool, onToolChange, onUndo, onRedo, onCle
 
       <button
         onClick={onUndo}
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         title="復原"
       >
-        <Undo2 className="h-3.5 w-3.5" />
+        <Undo2 className="h-4 w-4" />
       </button>
       <button
         onClick={onRedo}
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
         title="重做"
       >
-        <Redo2 className="h-3.5 w-3.5" />
+        <Redo2 className="h-4 w-4" />
       </button>
       <button
         onClick={onClear}
-        className="flex h-7 w-7 items-center justify-center rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+        className="flex h-8 w-8 items-center justify-center rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
         title="清除"
       >
-        <Trash2 className="h-3.5 w-3.5" />
+        <Trash2 className="h-4 w-4" />
       </button>
     </div>
   )

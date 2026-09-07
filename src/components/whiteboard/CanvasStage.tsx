@@ -22,9 +22,11 @@ interface Props {
   containerRef: React.RefObject<HTMLDivElement>
   currentTool?: CanvasTool
   onToolChange?: (tool: CanvasTool) => void
+  currentColor?: string
+  onColorChange?: (color: string) => void
 }
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef, currentTool, onToolChange }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef, currentTool, onToolChange, currentColor, onColorChange }, ref) {
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
   const fabricModuleRef = useRef<any>(null)
@@ -44,6 +46,11 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
+  useEffect(() => {
+    if (currentColor) {
+      setColor(currentColor)
+    }
+  }, [currentColor])
 
   const handleToolbarMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) return

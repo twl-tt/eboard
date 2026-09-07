@@ -56,6 +56,7 @@ export default function WhiteboardShell() {
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
   const [canvasVisible, setCanvasVisible] = useState(true)
   const [canvasTool, setCanvasTool] = useState<CanvasTool>("pen")
+  const [canvasColor, setCanvasColor] = useState("#dc2626")
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -501,6 +502,8 @@ export default function WhiteboardShell() {
                 containerRef={readingRef}
                 currentTool={canvasTool}
                 onToolChange={setCanvasTool}
+                currentColor={canvasColor}
+                onColorChange={setCanvasColor}
               />
             </div>
           </div>
@@ -548,6 +551,8 @@ export default function WhiteboardShell() {
                       containerRef={readingRef as React.RefObject<HTMLDivElement>}
                       currentTool={canvasTool}
                       onToolChange={setCanvasTool}
+                      currentColor={canvasColor}
+                      onColorChange={setCanvasColor}
                     />
                   )}
                   <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
@@ -594,6 +599,8 @@ export default function WhiteboardShell() {
       <CanvasToolbar
         currentTool={canvasTool}
         onToolChange={setCanvasTool}
+        currentColor={canvasColor}
+        onColorChange={setCanvasColor}
         onUndo={() => canvasApiRef.current?.undo()}
         onRedo={() => canvasApiRef.current?.redo()}
         onClear={() => canvasApiRef.current?.clear()}
