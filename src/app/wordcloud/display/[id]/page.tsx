@@ -85,7 +85,7 @@ export default function WordCloudDisplayPage({ params }: { params: { id: string 
       </div>
 
       {/* Word Cloud Display - Full Screen */}
-      <div className="absolute inset-0 pt-20 pb-16 overflow-auto">
+      <div className="absolute inset-0 pt-24 pb-4 overflow-auto">
         {wordCloud.words.length > 0 ? (
           <div className="w-full p-8 flex flex-wrap justify-center items-center gap-4 content-start">
             {wordCloud.words.map((entry, i) => {
