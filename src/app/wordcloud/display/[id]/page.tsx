@@ -58,7 +58,10 @@ export default function WordCloudDisplayPage({ params }: { params: { id: string 
     <div className="fixed inset-0 bg-gradient-to-br from-sky-600 to-indigo-800 overflow-hidden">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-8 py-5 bg-black/20 backdrop-blur-sm">
-        <h1 className="text-2xl font-bold text-white">{wordCloud.title}</h1>
+        <div className="flex items-center gap-4">
+          <span className="rounded-full bg-amber-500 px-4 py-1.5 text-sm font-bold text-white">📺 大屏幕顯示</span>
+          <h1 className="text-2xl font-bold text-white">{wordCloud.title}</h1>
+        </div>
         <div className="flex items-center gap-6">
           <span className="text-lg text-white/70">{wordCloud.words.length} 個詞</span>
           {wordCloud.isActive && (
@@ -118,7 +121,7 @@ export default function WordCloudDisplayPage({ params }: { params: { id: string 
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 z-20 px-8 py-4 bg-black/20 backdrop-blur-sm">
         <p className="text-center text-white/50">
-          掃描上方 QR Code 或到 <span className="font-mono text-white/70">/{wordCloud.id}</span> 提交詞語
+          請學生到 <span className="font-mono text-white/70">/{wordCloud.id}</span> 提交詞語
         </p>
       </div>
     </div>

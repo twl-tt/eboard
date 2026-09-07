@@ -94,6 +94,9 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-600 to-indigo-800 p-4 font-han">
       <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-4">
+          <span className="inline-block rounded-full bg-emerald-500 px-6 py-2 text-lg font-bold text-white">✏️ 學生提交</span>
+        </div>
         <h1 className="mb-2 text-center text-3xl font-bold text-white">{wordCloud?.title ?? "載入中…"}</h1>
         <p className="mb-6 text-center text-sm text-white/60">校本智慧電子白板 · 詞雲</p>
 

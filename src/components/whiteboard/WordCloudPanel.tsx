@@ -152,7 +152,7 @@ export function WordCloudPanel() {
       {activeCloud ? (
         <div className="flex flex-col items-center gap-3">
           <div className="rounded-xl bg-white p-3 shadow">
-            <QRCodeSVG value={`${typeof window !== "undefined" ? window.location.origin : ""}/wordcloud/${activeCloud.id}`} size={150} />
+            <QRCodeSVG key={`qr-${activeCloud.id}`} value={`${typeof window !== "undefined" ? window.location.origin : ""}/wordcloud/${activeCloud.id}`} size={150} />
           </div>
           <p className="text-center text-sm font-medium">{activeCloud.title}</p>
 
