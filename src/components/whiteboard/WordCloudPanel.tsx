@@ -242,21 +242,22 @@ export function WordCloudPanel() {
               </Button>
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-center p-4 pt-16">
+          <div className="flex-1 p-4 pt-16 overflow-y-auto">
             {activeCloud.words && activeCloud.words.length > 0 ? (
-              <div className="w-full h-full flex flex-wrap content-start justify-center items-start gap-x-6 gap-y-4 p-8 overflow-y-auto">
+              <div className="w-full h-full columns-3xl gap-12 space-y-8">
                 {activeCloud.words.map((entry, i) => {
-                  const scale = 1 + (entry.count / maxCount) * 3
+                  const scale = 1.2 + (entry.count / maxCount) * 4
                   return (
                     <motion.span
                       key={entry.id}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className={`font-black cursor-default text-white ${i % 2 === 0 ? "text-shadow-[0_2px_10px_rgba(0,0,0,0.3)]" : "text-shadow-[0_2px_15px_rgba(0,0,0,0.5)]"}`}
+                      className="font-black cursor-default text-white inline-block"
                       style={{
                         fontSize: `${scale}rem`,
-                        lineHeight: 1.2
+                        lineHeight: 1.3,
+                        textShadow: "0 2px 20px rgba(0,0,0,0.4)"
                       }}
                     >
                       {entry.text}
