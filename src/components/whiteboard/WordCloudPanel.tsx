@@ -231,9 +231,9 @@ export function WordCloudPanel() {
 
       {fullscreen && activeCloud && (
         <div className="fixed inset-0 z-[60] bg-gradient-to-br from-sky-600 to-indigo-800">
-          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 border-b border-white/10 bg-black/20 backdrop-blur">
+          <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 border-b border-white/10 bg-black/30 backdrop-blur mb-4">
             <div className="flex items-center gap-4">
-              <h2 className="text-lg font-bold text-white">{activeCloud.title}</h2>
+              <h2 className="text-xl font-bold text-white">{activeCloud.title}</h2>
               <div className="rounded-lg bg-white p-1.5">
                 <QRCodeSVG value={`${typeof window !== "undefined" ? window.location.origin : ""}/wordcloud/${activeCloud.id}`} size={70} />
               </div>
@@ -245,32 +245,32 @@ export function WordCloudPanel() {
               </Button>
             </div>
           </div>
-          <div className="w-full h-screen pt-16 overflow-y-auto">
-            {activeCloud.words && activeCloud.words.length > 0 ? (
-              <div className="w-full min-h-full p-8 columns-4xl gap-16 space-y-10">
-                {activeCloud.words.map((entry, i) => {
-                  const scale = 1.5 + (entry.count / maxCount) * 5
+          <div className="w-screen h-screen overflow-y-auto overflow-x-hidden">
+            <div className="min-h-screen p-12 columns-6xl gap-20 space-y-12">
+              {activeCloud.words && activeCloud.words.length > 0 ? (
+                activeCloud.words.map((entry, i) => {
+                  const scale = 2 + (entry.count / maxCount) * 8
                   return (
                     <motion.span
                       key={entry.id}
                       initial={{ opacity: 0, scale: 0.5 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className="font-black cursor-default text-white inline-block"
+                      className="font-black cursor-default text-white inline-block mr-8"
                       style={{
                         fontSize: `${scale}rem`,
-                        lineHeight: 1.2,
-                        textShadow: "0 2px 25px rgba(0,0,0,0.5)"
+                        lineHeight: 1.1,
+                        textShadow: "0 4px 30px rgba(0,0,0,0.6)"
                       }}
                     >
                       {entry.text}
                     </motion.span>
                   )
-                })}
-              </div>
-            ) : (
-              <p className="text-6xl text-white/60 text-center pt-20">等待學生提交…</p>
-            )}
+                })
+              ) : (
+                <p className="text-8xl text-white/60 text-center pt-32">等待學生提交…</p>
+              )}
+            </div>
           </div>
         </div>
       )}
