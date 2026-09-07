@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap } from "lucide-react"
+import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap, Cloud } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
 import { LuckyPicker } from "./LuckyPicker"
@@ -10,16 +10,18 @@ import { PointsPanel } from "./PointsPanel"
 import { PollPanel } from "./PollPanel"
 import { QuizPanel } from "./QuizPanel"
 import { GroupPanel } from "./GroupPanel"
+import { WordCloudPanel } from "./WordCloudPanel"
 import { cn } from "@/lib/utils"
 
-type PanelKey = "group" | "picker" | "points" | "poll" | "quiz" | null
+type PanelKey = "group" | "picker" | "points" | "poll" | "quiz" | "wordcloud" | null
 
 const GRADIENTS: Record<Exclude<PanelKey, null>, { grad: string; glow: string; label: string }> = {
   group: { grad: "from-pink-500 to-rose-600", glow: "shadow-rose-500/40", label: "分組" },
   picker: { grad: "from-violet-500 to-fuchsia-600", glow: "shadow-fuchsia-500/40", label: "抽籤" },
   points: { grad: "from-amber-400 to-orange-500", glow: "shadow-orange-500/40", label: "加分" },
   poll: { grad: "from-emerald-400 to-teal-600", glow: "shadow-emerald-500/40", label: "投票" },
-  quiz: { grad: "from-indigo-500 to-violet-600", glow: "shadow-indigo-500/40", label: "測驗" }
+  quiz: { grad: "from-indigo-500 to-violet-600", glow: "shadow-indigo-500/40", label: "測驗" },
+  wordcloud: { grad: "from-sky-400 to-indigo-600", glow: "shadow-sky-500/40", label: "詞雲" }
 }
 
 const ICONS: Record<Exclude<PanelKey, null>, React.ReactNode> = {
@@ -27,7 +29,8 @@ const ICONS: Record<Exclude<PanelKey, null>, React.ReactNode> = {
   picker: <Dices className="h-7 w-7" />,
   points: <Star className="h-7 w-7" />,
   poll: <BarChart3 className="h-7 w-7" />,
-  quiz: <Brain className="h-7 w-7" />
+  quiz: <Brain className="h-7 w-7" />,
+  wordcloud: <Cloud className="h-7 w-7" />
 }
 
 export function ClassroomSuite() {
@@ -46,7 +49,7 @@ export function ClassroomSuite() {
     if (panel === "picker" || panel === "points" || panel === "group") loadStudents()
   }, [panel, loadStudents])
 
-  const keys: Exclude<PanelKey, null>[] = ["group", "picker", "points", "poll", "quiz"]
+  const keys: Exclude<PanelKey, null>[] = ["group", "picker", "points", "poll", "quiz", "wordcloud"]
 
   return (
     <>
@@ -85,7 +88,7 @@ export function ClassroomSuite() {
             <div className={cn("h-1.5 w-full bg-gradient-to-r", GRADIENTS[panel].grad)} />
             <div className="flex items-center justify-between px-4 py-2.5">
               <h3 className="font-bold">
-                {panel === "group" ? "🧩 分組" : panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : "🧠 AI 測驗"}
+                {panel === "group" ? "🧩 分組" : panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : panel === "quiz" ? "🧠 AI 測驗" : panel === "wordcloud" ? "☁️ 詞雲" : ""}
               </h3>
               <Button variant="ghost" size="icon" onClick={() => setPanel(null)}>
                 <X className="h-4 w-4" />
@@ -97,6 +100,7 @@ export function ClassroomSuite() {
               {panel === "points" && <PointsPanel students={students} onRefresh={loadStudents} />}
               {panel === "poll" && <PollPanel />}
               {panel === "quiz" && <QuizPanel />}
+              {panel === "wordcloud" && <WordCloudPanel />}
             </div>
           </motion.div>
         )}

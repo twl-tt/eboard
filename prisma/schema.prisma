@@ -89,6 +89,22 @@ model PollOption {
   votes  Int    @default(0)
 }
 
+model WordCloud {
+  id        String      @id @default(uuid())
+  title     String
+  words     WordCloudEntry[]
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+}
+
+model WordCloudEntry {
+  id          String   @id @default(uuid())
+  wordCloudId String
+  wordCloud   WordCloud @relation(fields: [wordCloudId], references: [id], onDelete: Cascade)
+  text        String
+  count       Int      @default(1)
+}
+
 model Tag {
   id        String   @id @default(uuid())
   name      String
