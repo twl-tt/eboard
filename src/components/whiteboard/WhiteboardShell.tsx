@@ -591,18 +591,17 @@ export default function WhiteboardShell() {
         <StickerBar tags={tags} open={stickerBarOpen} onClose={() => setStickerBarOpen(false)} onDragStart={() => {}} onDragEnd={() => {}} />
       </main>
 
-      <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-2">
-        <CanvasToolbar
-          currentTool={canvasTool}
-          onToolChange={setCanvasTool}
-          onUndo={() => canvasApiRef.current?.undo()}
-          onRedo={() => canvasApiRef.current?.redo()}
-          onClear={() => canvasApiRef.current?.clear()}
-          canvasVisible={canvasVisible}
-          onClose={() => setCanvasVisible(false)}
-        />
-        <ClassroomSuite />
-      </div>
+      <CanvasToolbar
+        currentTool={canvasTool}
+        onToolChange={setCanvasTool}
+        onUndo={() => canvasApiRef.current?.undo()}
+        onRedo={() => canvasApiRef.current?.redo()}
+        onClear={() => canvasApiRef.current?.clear()}
+        canvasVisible={canvasVisible}
+        onClose={() => setCanvasVisible(false)}
+      />
+
+      <ClassroomSuite />
     </div>
   )
 }
