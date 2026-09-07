@@ -21,7 +21,7 @@ const GRADIENTS: Record<Exclude<PanelKey, null>, { grad: string; glow: string; l
   points: { grad: "from-amber-400 to-orange-500", glow: "shadow-orange-500/40", label: "加分" },
   poll: { grad: "from-emerald-400 to-teal-600", glow: "shadow-emerald-500/40", label: "投票" },
   quiz: { grad: "from-indigo-500 to-violet-600", glow: "shadow-indigo-500/40", label: "測驗" },
-  wordcloud: { grad: "from-sky-400 to-indigo-600", glow: "shadow-sky-500/40", label: "詞雲" }
+  wordcloud: { grad: "from-sky-400 to-indigo-600", glow: "shadow-sky-500/40", label: "詞牆" }
 }
 
 const ICONS: Record<Exclude<PanelKey, null>, React.ReactNode> = {
@@ -88,7 +88,7 @@ export function ClassroomSuite() {
             <div className={cn("h-1.5 w-full bg-gradient-to-r", GRADIENTS[panel].grad)} />
             <div className="flex items-center justify-between px-4 py-2.5">
               <h3 className="font-bold">
-                {panel === "group" ? "🧩 分組" : panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : panel === "quiz" ? "🧠 AI 測驗" : panel === "wordcloud" ? "☁️ 詞雲" : ""}
+                {panel === "group" ? "🧩 分組" : panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : panel === "quiz" ? "🧠 AI 測驗" : panel === "wordcloud" ? "☁️ 詞牆" : ""}
               </h3>
               <Button variant="ghost" size="icon" onClick={() => setPanel(null)}>
                 <X className="h-4 w-4" />

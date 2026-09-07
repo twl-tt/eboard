@@ -31,7 +31,7 @@ export default function WordCloudDisplayPage({ params }: { params: { id: string 
   const load = useCallback(async () => {
     try {
       const res = await fetch(`/api/classroom/wordcloud/${params.id}`)
-      if (!res.ok) throw new Error("找不到此詞雲")
+      if (!res.ok) throw new Error("找不到此詞牆")
       setWordCloud(await res.json())
     } catch (e) {
       console.error(e)

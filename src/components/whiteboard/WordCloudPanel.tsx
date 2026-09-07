@@ -111,7 +111,7 @@ export function WordCloudPanel() {
     <div className="flex flex-col gap-3">
       <div className="flex gap-2">
         <Button size="sm" onClick={() => setShowCreate((v) => !v)}>
-          <Plus className="h-4 w-4" /> 新增詞雲
+          <Plus className="h-4 w-4" /> 新增詞牆
         </Button>
         {wordClouds.length > 0 && (
           <select
@@ -133,7 +133,7 @@ export function WordCloudPanel() {
 
       {showCreate && (
         <div className="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-          <Input placeholder="詞雲主題，例如：你對課文的印象？" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+          <Input placeholder="詞牆主題，例如：你對課文的印象？" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -145,7 +145,7 @@ export function WordCloudPanel() {
               允許重複提交
             </label>
           </div>
-          <Button onClick={create}>建立詞雲</Button>
+          <Button onClick={create}>建立詞牆</Button>
         </div>
       )}
 
@@ -225,7 +225,7 @@ export function WordCloudPanel() {
           <p className="flex items-center gap-1 text-xs text-slate-400"><QrCode className="h-4 w-4" /> 學生掃描 QR Code 即可提交詞語</p>
         </div>
       ) : (
-        <p className="py-6 text-center text-sm text-slate-400">尚未有詞雲。點擊「新增詞雲」開始！</p>
+        <p className="py-6 text-center text-sm text-slate-400">尚未有詞牆。點擊「新增詞牆」開始！</p>
       )}
     </div>
   )

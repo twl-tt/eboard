@@ -27,7 +27,7 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
   const load = useCallback(async () => {
     try {
       const res = await fetch(`/api/classroom/wordcloud/${params.id}`)
-      if (!res.ok) throw new Error("找不到此詞雲")
+      if (!res.ok) throw new Error("找不到此詞牆")
       setWordCloud(await res.json())
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -98,7 +98,7 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
           <span className="inline-block rounded-full bg-emerald-500 px-6 py-2 text-lg font-bold text-white">✏️ 學生提交</span>
         </div>
         <h1 className="mb-2 text-center text-3xl font-bold text-white">{wordCloud?.title ?? "載入中…"}</h1>
-        <p className="mb-6 text-center text-sm text-white/60">校本智慧電子白板 · 詞雲</p>
+        <p className="mb-6 text-center text-sm text-white/60">校本智慧電子白板 · 詞牆</p>
 
         {!wordCloud && !error && <p className="py-8 text-center text-white/60">連線中…</p>}
         {error && <p className="py-8 text-center text-red-400">{error}</p>}
@@ -134,7 +134,7 @@ export default function WordCloudVotePage({ params }: { params: { id: string } }
             )}
 
             {!wordCloud.isActive && (
-              <p className="mb-6 text-center text-xl text-red-300">此詞雲已結束</p>
+              <p className="mb-6 text-center text-xl text-red-300">此詞牆已結束</p>
             )}
 
             {wordCloud.words.length > 0 ? (
