@@ -216,21 +216,11 @@ function BlackboardContent() {
       setToolbarPos({ x: e.clientX - toolbarDragRef.current.startX, y: e.clientY - toolbarDragRef.current.startY })
     }
     const handleMouseUp = () => { toolbarDragRef.current = null }
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!toolbarDragRef.current) return
-      const t = e.touches[0]
-      setToolbarPos({ x: t.clientX - toolbarDragRef.current.startX, y: t.clientY - toolbarDragRef.current.startY })
-    }
-    const handleTouchEnd = () => { toolbarDragRef.current = null }
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("mouseup", handleMouseUp)
-    window.addEventListener("touchmove", handleTouchMove, { passive: false })
-    window.addEventListener("touchend", handleTouchEnd)
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mouseup", handleMouseUp)
-      window.removeEventListener("touchmove", handleTouchMove)
-      window.removeEventListener("touchend", handleTouchEnd)
     }
   }, [])
 
@@ -245,6 +235,17 @@ function BlackboardContent() {
     e.preventDefault()
     const t = e.touches[0]
     toolbarDragRef.current = { startX: t.clientX - toolbarPos.x, startY: t.clientY - toolbarPos.y }
+  }
+
+  const handleToolbarTouchMove = (e: React.TouchEvent) => {
+    if (!toolbarDragRef.current) return
+    e.preventDefault()
+    const t = e.touches[0]
+    setToolbarPos({ x: t.clientX - toolbarDragRef.current.startX, y: t.clientY - toolbarDragRef.current.startY })
+  }
+
+  const handleToolbarTouchEnd = () => {
+    toolbarDragRef.current = null
   }
 
   const handleToolChange = (newTool: CanvasTool) => {
@@ -288,6 +289,8 @@ function BlackboardContent() {
         style={{ left: toolbarPos.x, top: toolbarPos.y }}
         onMouseDown={handleToolbarMouseDown}
         onTouchStart={handleToolbarTouchStart}
+        onTouchMove={handleToolbarTouchMove}
+        onTouchEnd={handleToolbarTouchEnd}
       >
         <button onClick={() => router.push(articleId ? `/whiteboard?article=${articleId}` : "/whiteboard")} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white" title="返回">
           <ArrowLeft className="h-3.5 w-3.5" />
