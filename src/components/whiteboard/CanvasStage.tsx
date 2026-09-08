@@ -105,7 +105,8 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         width: rect.width,
         height: rect.height,
         backgroundColor: boardColor || null,
-        selection: true
+        selection: true,
+        allowTouchScrolling: true
       })
       fabricRef.current = canvas
 
@@ -370,7 +371,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
   return (
     <>
-      <div className="absolute inset-0 z-40">
+      <div
+        className="absolute inset-0 z-40"
+        style={{ touchAction: "pan-y" }}
+      >
         <canvas ref={canvasElRef} />
       </div>
     </>

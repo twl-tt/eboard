@@ -62,11 +62,19 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
     dragRef.current = { startX: e.clientX - pos.x, startY: e.clientY - pos.y }
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return
+    e.preventDefault()
+    const t = e.touches[0]
+    dragRef.current = { startX: t.clientX - pos.x, startY: t.clientY - pos.y }
+  }
+
   return (
     <div
       className="fixed z-50 flex flex-col items-center gap-1 rounded-xl border border-slate-200/50 bg-white/95 px-1.5 py-2 shadow-lg dark:border-slate-700/50 dark:bg-slate-900/95 cursor-move select-none"
       style={{ left: pos.x, top: pos.y }}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       <button
         onClick={onClose}

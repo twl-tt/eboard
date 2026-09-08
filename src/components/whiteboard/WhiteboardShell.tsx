@@ -495,7 +495,7 @@ export default function WhiteboardShell() {
         {mode === "read" && !article && (
           <div className="flex h-[calc(100vh-180px)] gap-3">
               <div ref={readingRef} className={cn(
-                "relative flex-1 rounded-3xl shadow-2xl overflow-hidden",
+                "relative flex-1 rounded-3xl shadow-2xl overflow-y-auto",
                 boardMode === "blackboard"
                   ? "bg-slate-900"
                   : boardMode === "whiteboard"
@@ -530,6 +530,7 @@ export default function WhiteboardShell() {
                         ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
                         : "bg-white dark:bg-slate-900 shadow-2xl shadow-sky-100 dark:shadow-slate-900 ring-slate-200 dark:ring-slate-700"
                     )}
+                    style={{ touchAction: "pan-y" }}
                   onDragOver={(e) => {
                     if (e.dataTransfer.types.includes("application/x-sticker")) {
                       e.preventDefault()
@@ -595,6 +596,9 @@ export default function WhiteboardShell() {
                     }}
                     showExplanation={showExplanation}
                   />
+                  <div className="sticky bottom-0 flex justify-center pb-2 pt-4 pointer-events-none">
+                    <div className="h-1 w-24 rounded-full bg-slate-300 dark:bg-slate-600 shadow-lg" />
+                  </div>
                 </div>
               </div>
             </div>

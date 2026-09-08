@@ -216,11 +216,21 @@ function BlackboardContent() {
       setToolbarPos({ x: e.clientX - toolbarDragRef.current.startX, y: e.clientY - toolbarDragRef.current.startY })
     }
     const handleMouseUp = () => { toolbarDragRef.current = null }
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!toolbarDragRef.current) return
+      const t = e.touches[0]
+      setToolbarPos({ x: t.clientX - toolbarDragRef.current.startX, y: t.clientY - toolbarDragRef.current.startY })
+    }
+    const handleTouchEnd = () => { toolbarDragRef.current = null }
     window.addEventListener("mousemove", handleMouseMove)
     window.addEventListener("mouseup", handleMouseUp)
+    window.addEventListener("touchmove", handleTouchMove, { passive: false })
+    window.addEventListener("touchend", handleTouchEnd)
     return () => {
       window.removeEventListener("mousemove", handleMouseMove)
       window.removeEventListener("mouseup", handleMouseUp)
+      window.removeEventListener("touchmove", handleTouchMove)
+      window.removeEventListener("touchend", handleTouchEnd)
     }
   }, [])
 
@@ -228,6 +238,13 @@ function BlackboardContent() {
     if ((e.target as HTMLElement).closest("button")) return
     e.preventDefault()
     toolbarDragRef.current = { startX: e.clientX - toolbarPos.x, startY: e.clientY - toolbarPos.y }
+  }
+
+  const handleToolbarTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return
+    e.preventDefault()
+    const t = e.touches[0]
+    toolbarDragRef.current = { startX: t.clientX - toolbarPos.x, startY: t.clientY - toolbarPos.y }
   }
 
   const handleToolChange = (newTool: CanvasTool) => {
@@ -264,12 +281,13 @@ function BlackboardContent() {
 
   return (
     <div className="fixed inset-0 bg-slate-900" style={{ backgroundColor: boardColor }}>
-      <canvas ref={canvasElRef} className="absolute inset-0" />
+      <canvas ref={canvasElRef} className="absolute inset-0" style={{ touchAction: "pan-y" }} />
 
       <div
         className="fixed z-50 flex flex-col items-center gap-1 rounded-xl border border-slate-700/50 bg-slate-900/95 px-1.5 py-2 shadow-lg cursor-move select-none"
         style={{ left: toolbarPos.x, top: toolbarPos.y }}
         onMouseDown={handleToolbarMouseDown}
+        onTouchStart={handleToolbarTouchStart}
       >
         <button onClick={() => router.push(articleId ? `/whiteboard?article=${articleId}` : "/whiteboard")} className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-700 hover:text-white" title="返回">
           <ArrowLeft className="h-3.5 w-3.5" />
