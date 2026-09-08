@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment, useCallback, useEffect, useState } from "react"
-import { Plus, Trash2, FileUp, Trophy, Pencil, ChevronDown } from "lucide-react"
+import { Plus, Trash2, FileUp, Trophy, Pencil, ChevronDown, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input, Label, Textarea } from "@/components/ui/input"
 import type { StudentDTO } from "@/lib/types"
@@ -17,6 +17,8 @@ export function StudentsAdmin() {
   const [historyId, setHistoryId] = useState<string | null>(null)
   const [classFilter, setClassFilter] = useState<string>("__all__")
   const [awardDelta, setAwardDelta] = useState<number>(1)
+  const [editingPointsId, setEditingPointsId] = useState<string | null>(null)
+  const [pointsInput, setPointsInput] = useState("")
 
   const load = useCallback(async () => {
     const res = await fetch("/api/students")
@@ -71,21 +73,19 @@ export function StudentsAdmin() {
     load()
   }
 
-  async function setPoints(s: StudentDTO) {
-    const input = prompt("輸入新的總分：", String(s.points))
-    if (input === null) return
-    const newPoints = parseInt(input)
-    if (isNaN(newPoints)) {
-      alert("請輸入有效數字")
+  async function confirmSetPoints(s: StudentDTO) {
+    const newPoints = parseInt(pointsInput)
+    if (isNaN(newPoints) || newPoints < 0) {
+      alert("請輸入有效的非負整數")
       return
     }
-    const delta = newPoints - s.points
-    if (delta === 0) return
-    await fetch("/api/classroom/points", {
+    await fetch(`/api/students/${s.id}/points`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId: s.id, delta, reason: "後台直接設定分數" })
+      body: JSON.stringify({ points: newPoints })
     })
+    setEditingPointsId(null)
+    setPointsInput("")
     load()
   }
 
@@ -209,11 +209,31 @@ export function StudentsAdmin() {
                   </td>
                   <td className="px-4 py-2 text-slate-500">{s.className ?? "—"}</td>
                   <td
-                    className="cursor-pointer px-4 py-2"
-                    onClick={() => setPoints(s)}
+                    className="px-4 py-2"
+                    onClick={() => {
+                      setEditingPointsId(s.id)
+                      setPointsInput(String(s.points))
+                    }}
                     title="點擊直接設定總分"
                   >
-                    <span className={`font-mono font-bold ${ranked && i === 0 ? "text-amber-500" : ""}`}>{s.points}</span>
+                    {editingPointsId === s.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          autoFocus
+                          className="h-7 w-24 text-center font-mono"
+                          value={pointsInput}
+                          onChange={(e) => setPointsInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") confirmSetPoints(s)
+                            if (e.key === "Escape") { setEditingPointsId(null); setPointsInput("") }
+                          }}
+                        />
+                        <button onClick={() => confirmSetPoints(s)} className="text-emerald-500 hover:text-emerald-600"><Check className="h-4 w-4" /></button>
+                        <button onClick={() => { setEditingPointsId(null); setPointsInput("") }} className="text-slate-400 hover:text-slate-600"><X className="h-4 w-4" /></button>
+                      </div>
+                    ) : (
+                      <span className={`font-mono font-bold ${ranked && i === 0 ? "text-amber-500" : ""}`}>{s.points}</span>
+                    )}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="success" size="sm" className="mr-1" onClick={() => award(s, awardDelta)}>+{awardDelta}</Button>
