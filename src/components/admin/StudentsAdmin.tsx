@@ -74,6 +74,12 @@ export function StudentsAdmin() {
     load()
   }
 
+  async function deleteLog(logId: string) {
+    if (!confirm("確定删除此分數紀錄？")) return
+    await fetch(`/api/classroom/scoreLogs/${logId}`, { method: "DELETE" })
+    load()
+  }
+
   async function toggleHistory(id: string) {
     if (historyId === id) {
       setHistoryId(null)
@@ -153,9 +159,12 @@ export function StudentsAdmin() {
                       ) : (
                         <ul className="space-y-1 text-xs">
                           {(s.recentLogs ?? []).map((l) => (
-                            <li key={l.id}>
+                            <li key={l.id} className="flex items-center gap-1">
                               <span className={l.delta > 0 ? "text-emerald-500" : "text-red-500"}>{l.delta > 0 ? `+${l.delta}` : l.delta}</span>{" "}
                               {l.reason} · <span className="text-slate-400">{new Date(l.createdAt).toLocaleString("zh-HK")}</span>
+                              <button onClick={() => deleteLog(l.id)} className="ml-1 text-red-400 hover:text-red-600" title="刪除此紀錄">
+                                <Trash2 className="h-3 w-3" />
+                              </button>
                             </li>
                           ))}
                         </ul>

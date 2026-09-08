@@ -28,6 +28,7 @@ export function PointsPanel({ students, onRefresh }: Props) {
   )
 
   const award = useCallback(async (s: StudentDTO, delta: number) => {
+    if (busyId === s.id) return
     setBusyId(s.id)
     try {
       await fetch("/api/classroom/points", {
@@ -40,7 +41,7 @@ export function PointsPanel({ students, onRefresh }: Props) {
     } finally {
       setBusyId(null)
     }
-  }, [onRefresh])
+  }, [onRefresh, busyId])
 
   return (
     <div className="flex flex-col gap-3">
