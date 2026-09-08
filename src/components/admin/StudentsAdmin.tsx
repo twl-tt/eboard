@@ -1,10 +1,11 @@
 "use client"
 
 import { Fragment, useCallback, useEffect, useState } from "react"
-import { Plus, Trash2, FileUp, Trophy, Pencil } from "lucide-react"
+import { Plus, Trash2, FileUp, Trophy, Pencil, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input, Label, Textarea } from "@/components/ui/input"
 import type { StudentDTO } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 export function StudentsAdmin() {
   const [students, setStudents] = useState<StudentDTO[]>([])
@@ -14,6 +15,8 @@ export function StudentsAdmin() {
   const [csv, setCsv] = useState("")
   const [ranked, setRanked] = useState(false)
   const [historyId, setHistoryId] = useState<string | null>(null)
+  const [classFilter, setClassFilter] = useState<string>("__all__")
+  const [awardDelta, setAwardDelta] = useState<number>(1)
 
   const load = useCallback(async () => {
     const res = await fetch("/api/students")
@@ -59,10 +62,29 @@ export function StudentsAdmin() {
   }
 
   async function award(s: StudentDTO, delta: number) {
+    if (delta === 0) return
     await fetch("/api/classroom/points", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ studentId: s.id, delta, reason: delta > 0 ? "後台手動加分" : "後台手動扣分" })
+    })
+    load()
+  }
+
+  async function setPoints(s: StudentDTO) {
+    const input = prompt("輸入新的總分：", String(s.points))
+    if (input === null) return
+    const newPoints = parseInt(input)
+    if (isNaN(newPoints)) {
+      alert("請輸入有效數字")
+      return
+    }
+    const delta = newPoints - s.points
+    if (delta === 0) return
+    await fetch("/api/classroom/points", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentId: s.id, delta, reason: "後台直接設定分數" })
     })
     load()
   }
@@ -108,7 +130,9 @@ export function StudentsAdmin() {
     setHistoryId(id)
   }
 
-  const sorted = [...students].sort((a, b) => (ranked ? b.points - a.points : (a.seatNo ?? 9999) - (b.seatNo ?? 9999)))
+  const classes = Array.from(new Set(students.map((s) => s.className).filter(Boolean) as string[])).sort()
+  const filtered = classFilter === "__all__" ? students : students.filter((s) => s.className === classFilter)
+  const sorted = [...filtered].sort((a, b) => (ranked ? b.points - a.points : (a.seatNo ?? 9999) - (b.seatNo ?? 9999)))
 
   return (
     <div className="flex flex-col gap-4">
@@ -131,6 +155,30 @@ export function StudentsAdmin() {
               <FileUp className="h-3.5 w-3.5" /> 選擇 .csv 檔案
               <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
             </label>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+          <Label>班別篩選</Label>
+          <div className="relative">
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="h-8 w-36 appearance-none rounded-lg border border-slate-300 bg-white px-3 pr-8 text-sm dark:border-slate-700 dark:bg-slate-900"
+            >
+              <option value="__all__">全部班別</option>
+              {classes.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+          <Label>加/扣分數值</Label>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setAwardDelta((d) => Math.max(1, d - 1))}>−</Button>
+            <Input className="w-16 text-center" type="number" value={awardDelta} onChange={(e) => setAwardDelta(parseInt(e.target.value) || 1)} />
+            <Button size="sm" variant="secondary" onClick={() => setAwardDelta((d) => d + 1)}>+</Button>
           </div>
         </div>
         <Button variant={ranked ? "amber" : "secondary"} onClick={() => setRanked((v) => !v)}>
@@ -160,10 +208,16 @@ export function StudentsAdmin() {
                     {!historyId && s.recentLogs?.length ? <span className="ml-2 text-xs text-slate-400">{s.recentLogs.length} 筆近期紀錄 ▾</span> : null}
                   </td>
                   <td className="px-4 py-2 text-slate-500">{s.className ?? "—"}</td>
-                  <td className="px-4 py-2"><span className={`font-mono font-bold ${ranked && i === 0 ? "text-amber-500" : ""}`}>{s.points}</span></td>
+                  <td
+                    className="cursor-pointer px-4 py-2"
+                    onClick={() => setPoints(s)}
+                    title="點擊直接設定總分"
+                  >
+                    <span className={`font-mono font-bold ${ranked && i === 0 ? "text-amber-500" : ""}`}>{s.points}</span>
+                  </td>
                   <td className="px-4 py-2 text-right">
-                    <Button variant="success" size="sm" className="mr-1" onClick={() => award(s, 1)}>+1</Button>
-                    <Button variant="destructive" size="sm" className="mr-1" onClick={() => award(s, -1)}>-1</Button>
+                    <Button variant="success" size="sm" className="mr-1" onClick={() => award(s, awardDelta)}>+{awardDelta}</Button>
+                    <Button variant="destructive" size="sm" className="mr-1" onClick={() => award(s, -awardDelta)}>−{awardDelta}</Button>
                     <Button variant="ghost" size="icon" onClick={() => remove(s)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                   </td>
                 </tr>
