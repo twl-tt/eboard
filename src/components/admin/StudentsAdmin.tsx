@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment, useCallback, useEffect, useState } from "react"
-import { Plus, Trash2, FileUp, Trophy } from "lucide-react"
+import { Plus, Trash2, FileUp, Trophy, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input, Label, Textarea } from "@/components/ui/input"
 import type { StudentDTO } from "@/lib/types"
@@ -77,6 +77,22 @@ export function StudentsAdmin() {
   async function deleteLog(logId: string) {
     if (!confirm("確定删除此分數紀錄？")) return
     await fetch(`/api/classroom/scoreLogs/${logId}`, { method: "DELETE" })
+    load()
+  }
+
+  async function editLog(logId: string, currentDelta: number) {
+    const input = prompt("輸入新的分數變動（例如 5 或 -2）：", String(currentDelta))
+    if (input === null) return
+    const newDelta = parseInt(input)
+    if (isNaN(newDelta) || newDelta === 0) {
+      alert("請輸入有效的非零整數")
+      return
+    }
+    await fetch(`/api/classroom/scoreLogs/${logId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ delta: newDelta })
+    })
     load()
   }
 
@@ -159,10 +175,13 @@ export function StudentsAdmin() {
                       ) : (
                         <ul className="space-y-1 text-xs">
                           {(s.recentLogs ?? []).map((l) => (
-                            <li key={l.id} className="flex items-center gap-1">
+<li key={l.id} className="flex items-center gap-1">
                               <span className={l.delta > 0 ? "text-emerald-500" : "text-red-500"}>{l.delta > 0 ? `+${l.delta}` : l.delta}</span>{" "}
                               {l.reason} · <span className="text-slate-400">{new Date(l.createdAt).toLocaleString("zh-HK")}</span>
-                              <button onClick={() => deleteLog(l.id)} className="ml-1 text-red-400 hover:text-red-600" title="刪除此紀錄">
+                              <button onClick={() => editLog(l.id, l.delta)} className="ml-1 text-sky-400 hover:text-sky-600" title="編輯此紀錄">
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                              <button onClick={() => deleteLog(l.id)} className="ml-1 text-red-400 hover:text-red-600" title="删除此紀錄">
                                 <Trash2 className="h-3 w-3" />
                               </button>
                             </li>
