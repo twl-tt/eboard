@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut,
-  BookOpen, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Pencil
+  BookOpen, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -445,15 +445,6 @@ export default function WhiteboardShell() {
 
           <Button
             size="sm"
-            variant={canvasVisible ? "default" : "ghost"}
-            onClick={() => setCanvasVisible(v => !v)}
-            title="畫板"
-          >
-            <Pencil className="h-4 w-4" /> 畫板
-          </Button>
-
-          <Button
-            size="sm"
             variant="ghost"
             onClick={() => window.open(article ? `/blackboard?article=${article.id}` : "/blackboard", "_blank")}
             title="新視窗開啟黑板"
@@ -619,7 +610,10 @@ export default function WhiteboardShell() {
         onClose={() => setCanvasVisible(false)}
       />
 
-      <ClassroomSuite />
+      <ClassroomSuite
+        onToggleCanvas={() => setCanvasVisible(v => !v)}
+        canvasVisible={canvasVisible}
+      />
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap, Cloud } from "lucide-react"
+import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap, Cloud, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
 import { LuckyPicker } from "./LuckyPicker"
@@ -33,7 +33,12 @@ const ICONS: Record<Exclude<PanelKey, null>, React.ReactNode> = {
   wordcloud: <Cloud className="h-7 w-7" />
 }
 
-export function ClassroomSuite() {
+export interface ClassroomSuiteProps {
+  onToggleCanvas?: () => void
+  canvasVisible?: boolean
+}
+
+export function ClassroomSuite({ onToggleCanvas, canvasVisible }: ClassroomSuiteProps) {
   const [panel, setPanel] = useState<PanelKey>(null)
   const [students, setStudents] = useState<StudentDTO[]>([])
 
@@ -54,12 +59,33 @@ export function ClassroomSuite() {
   return (
     <>
       <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-2.5">
+        {onToggleCanvas && (
+          <motion.button
+            key="canvas"
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0, type: "spring", stiffness: 260, damping: 22 }}
+            whileHover={{ scale: 1.07, y: -2 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={onToggleCanvas}
+            className={cn(
+              "flex h-[52px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
+              canvasVisible
+                ? "from-sky-500 to-indigo-600 shadow-sky-500/40"
+                : "from-slate-500 to-slate-700 shadow-slate-500/40"
+            )}
+            title={canvasVisible ? "隱藏畫板" : "顯示畫板"}
+          >
+            <Pencil className="h-6 w-6" />
+            <span className="text-xs font-black tracking-wide">畫板</span>
+          </motion.button>
+        )}
         {keys.map((k, i) => (
           <motion.button
             key={k}
             initial={{ opacity: 0, x: 60 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.12 * i, type: "spring", stiffness: 260, damping: 22 }}
+            transition={{ delay: 0.12 * (i + 1), type: "spring", stiffness: 260, damping: 22 }}
             whileHover={{ scale: 1.07, y: -2 }}
             whileTap={{ scale: 0.94 }}
             onClick={() => setPanel(panel === k ? null : k)}
