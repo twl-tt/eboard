@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react"
 import { Plus, Minus, Trophy, RefreshCw, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
-import { celebrate } from "@/lib/sound"
 import { cn } from "@/lib/utils"
 
 interface Props {
@@ -40,7 +39,6 @@ export function PointsPanel({ students, onRefresh }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ studentId: s.id, delta, reason: delta > 0 ? "課堂表現加分" : "課堂提醒扣分" })
       })
-      if (delta > 0) celebrate()
       onRefresh()
     } finally {
       setBusyId(null)
