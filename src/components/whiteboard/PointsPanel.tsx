@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Plus, Minus, Trophy, RefreshCw } from "lucide-react"
+import { Plus, Minus, Trophy, RefreshCw, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
 import { celebrate } from "@/lib/sound"
@@ -16,6 +16,8 @@ export function PointsPanel({ students, onRefresh }: Props) {
   const [ranked, setRanked] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [classFilter, setClassFilter] = useState<string>("__all__")
+  const [awardDelta, setAwardDelta] = useState<number>(1)
 
   useEffect(() => {
     const handler = () => onRefresh()
@@ -23,7 +25,9 @@ export function PointsPanel({ students, onRefresh }: Props) {
     return () => window.removeEventListener("points-updated", handler)
   }, [onRefresh])
 
-  const sorted = [...students].sort((a, b) =>
+  const classes = Array.from(new Set(students.map((s) => s.className).filter(Boolean) as string[])).sort()
+  const filtered = classFilter === "__all__" ? students : students.filter((s) => s.className === classFilter)
+  const sorted = [...filtered].sort((a, b) =>
     ranked ? b.points - a.points : (a.seatNo ?? 999) - (b.seatNo ?? 999)
   )
 
@@ -45,14 +49,32 @@ export function PointsPanel({ students, onRefresh }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button variant={ranked ? "amber" : "secondary"} size="sm" onClick={() => setRanked((v) => !v)}>
           <Trophy className="h-4 w-4" /> {ranked ? "排行榜模式" : "座號模式"}
         </Button>
         <Button variant="ghost" size="sm" onClick={onRefresh}>
           <RefreshCw className="h-4 w-4" /> 重新載入
         </Button>
-        <span className="ml-auto text-xs text-slate-400">共 {students.length} 位學生</span>
+        <div className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-0.5 dark:border-slate-700">
+          <Button size="sm" variant="ghost" onClick={() => setAwardDelta((d) => Math.max(1, d - 1))}>−</Button>
+          <span className="w-6 text-center text-sm font-bold tabular-nums">{awardDelta}</span>
+          <Button size="sm" variant="ghost" onClick={() => setAwardDelta((d) => d + 1)}>+</Button>
+        </div>
+        <div className="relative">
+          <select
+            value={classFilter}
+            onChange={(e) => setClassFilter(e.target.value)}
+            className="h-8 appearance-none rounded-lg border border-slate-300 bg-white pl-3 pr-8 text-sm dark:border-slate-700 dark:bg-slate-900"
+          >
+            <option value="__all__">全部班別</option>
+            {classes.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        </div>
+        <span className="ml-auto text-xs text-slate-400">共 {filtered.length} 位學生</span>
       </div>
 
       <div className="grid max-h-[60vh] grid-cols-3 gap-2 overflow-y-auto pr-1">
@@ -109,14 +131,16 @@ export function PointsPanel({ students, onRefresh }: Props) {
             ) : (
               <div className="mt-1 flex w-full gap-1">
                 <button
-                  onClick={() => award(s, -1)}
-                  className="flex h-8 flex-1 items-center justify-center rounded-lg bg-red-500/15 text-red-500 hover:bg-red-500/25"
+                  onClick={() => award(s, -awardDelta)}
+                  disabled={busyId === s.id}
+                  className="flex h-8 flex-1 items-center justify-center rounded-lg bg-red-500/15 text-red-500 hover:bg-red-500/25 disabled:opacity-50"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
                 <button
-                  onClick={() => award(s, 1)}
-                  className="flex h-8 flex-1 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25"
+                  onClick={() => award(s, awardDelta)}
+                  disabled={busyId === s.id}
+                  className="flex h-8 flex-1 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25 disabled:opacity-50"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
