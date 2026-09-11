@@ -193,20 +193,6 @@ export function StudentsAdmin() {
             <Button size="sm" variant="secondary" onClick={() => setAwardDelta((d) => d + 1)}>+</Button>
           </div>
         </div>
-        <div className="flex flex-col gap-1 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
-          <Label>觸控偏移校準</Label>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <Label className="text-xs">X</Label>
-              <Input className="w-16" type="number" value={touchOffsetX} onChange={(e) => setTouchOffsetX(parseInt(e.target.value) || 0)} />
-            </div>
-            <div className="flex items-center gap-1">
-              <Label className="text-xs">Y</Label>
-              <Input className="w-16" type="number" value={touchOffsetY} onChange={(e) => setTouchOffsetY(parseInt(e.target.value) || 0)} />
-            </div>
-            <Button size="sm" onClick={saveTouchOffset}>儲存</Button>
-          </div>
-        </div>
         <Button variant={ranked ? "amber" : "secondary"} onClick={() => setRanked((v) => !v)}>
           <Trophy className="h-4 w-4" /> {ranked ? "排行榜" : "按座號"}
         </Button>
@@ -298,6 +284,27 @@ export function StudentsAdmin() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-6 rounded-xl border border-slate-200 p-6 dark:border-slate-800">
+        <h2 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-4">觸控偏移校準</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">調整觸控座標偏移量，以修正 HDMI 電視顯示器的硬體偏差。</p>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">X 偏移</Label>
+            <Input className="w-24" type="number" value={touchOffsetX} onChange={(e) => setTouchOffsetX(parseInt(e.target.value) || 0)} />
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs">Y 偏移</Label>
+            <Input className="w-24" type="number" value={touchOffsetY} onChange={(e) => setTouchOffsetY(parseInt(e.target.value) || 0)} />
+          </div>
+          <Button size="sm" onClick={saveTouchOffset}>儲存校準值</Button>
+        </div>
+        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            已儲存: <span className="font-mono text-amber-500">X: {touchOffsetX}, Y: {touchOffsetY}</span>
+          </p>
+        </div>
       </div>
     </div>
   )
