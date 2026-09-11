@@ -24,9 +24,17 @@ function BlackboardContent() {
   const historyIndexRef = useRef(-1)
   const toolRef = useRef<CanvasTool>("pen")
   const colorRef = useRef("#dc2626")
+  const [touchOffsetX, setTouchOffsetX] = useState(0)
+  const [touchOffsetY, setTouchOffsetY] = useState(0)
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
+  useEffect(() => {
+    const savedX = parseInt(localStorage.getItem("touchOffsetX") || "0")
+    const savedY = parseInt(localStorage.getItem("touchOffsetY") || "0")
+    setTouchOffsetX(savedX)
+    setTouchOffsetY(savedY)
+  }, [])
 
   const [toolbarPos, setToolbarPos] = useState({ x: window.innerWidth - 64, y: 20 })
   const toolbarDragRef = useRef<{ startX: number; startY: number } | null>(null)
@@ -50,6 +58,18 @@ function BlackboardContent() {
         selection: true
       })
       fabricRef.current = canvas
+
+      // Apply touch offset to adjust touch coordinates
+      if (touchOffsetX !== 0 || touchOffsetY !== 0) {
+        const originalGetPointer = canvas.getPointer.bind(canvas)
+        canvas.getPointer = (e: any, ignoreZoom = false) => {
+          const pointer = originalGetPointer(e, ignoreZoom)
+          return {
+            x: pointer.x - touchOffsetX,
+            y: pointer.y - touchOffsetY
+          }
+        }
+      }
 
       const saveHistory = () => {
         const json = JSON.stringify(canvas.toJSON())
@@ -224,6 +244,20 @@ function BlackboardContent() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!fabricRef.current) return
+    const canvas = fabricRef.current
+    const originalGetPointer = canvas.__originalGetPointer || canvas.getPointer.bind(canvas)
+    canvas.__originalGetPointer = originalGetPointer
+    canvas.getPointer = (e: any, ignoreZoom = false) => {
+      const pointer = originalGetPointer(e, ignoreZoom)
+      return {
+        x: pointer.x - touchOffsetX,
+        y: pointer.y - touchOffsetY
+      }
+    }
+  }, [touchOffsetX, touchOffsetY])
+
   const handleToolbarMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) return
     e.preventDefault()
@@ -278,6 +312,11 @@ function BlackboardContent() {
     if (!fabricRef.current) return
     fabricRef.current.clear()
     fabricRef.current.setBackgroundColor(boardColor, fabricRef.current.renderAll.bind(fabricRef.current))
+  }
+
+  const saveTouchOffset = () => {
+    localStorage.setItem("touchOffsetX", String(touchOffsetX))
+    localStorage.setItem("touchOffsetY", String(touchOffsetY))
   }
 
   return (
@@ -342,6 +381,34 @@ function BlackboardContent() {
         <button onClick={clear} className="flex h-7 w-7 items-center justify-center rounded-lg text-red-400 hover:bg-red-900/30" title="清除">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
+
+        <div className="w-full h-px bg-slate-700 my-0.5" />
+
+        <div className="flex flex-col items-center gap-1 text-[10px] text-slate-400">
+          <span>觸控校準</span>
+          <div className="flex items-center gap-1">
+            <span>X</span>
+            <input
+              type="number"
+              value={touchOffsetX}
+              onChange={(e) => setTouchOffsetX(parseInt(e.target.value) || 0)}
+              className="h-6 w-12 rounded bg-slate-800 px-1 text-center text-xs text-white focus:outline-none"
+            />
+            <span>Y</span>
+            <input
+              type="number"
+              value={touchOffsetY}
+              onChange={(e) => setTouchOffsetY(parseInt(e.target.value) || 0)}
+              className="h-6 w-12 rounded bg-slate-800 px-1 text-center text-xs text-white focus:outline-none"
+            />
+            <button
+              onClick={saveTouchOffset}
+              className="h-6 rounded bg-sky-600 px-2 text-xs text-white hover:bg-sky-500"
+            >
+              儲存
+            </button>
+          </div>
+        </div>
 
         <div className="w-full h-px bg-slate-700 my-0.5" />
 

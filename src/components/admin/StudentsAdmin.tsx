@@ -19,11 +19,23 @@ export function StudentsAdmin() {
   const [awardDelta, setAwardDelta] = useState<number>(1)
   const [editingPointsId, setEditingPointsId] = useState<string | null>(null)
   const [pointsInput, setPointsInput] = useState("")
+  const [touchOffsetX, setTouchOffsetX] = useState(0)
+  const [touchOffsetY, setTouchOffsetY] = useState(0)
 
   const load = useCallback(async () => {
     const res = await fetch("/api/students")
     if (res.ok) setStudents(await res.json())
+    const savedX = parseInt(localStorage.getItem("touchOffsetX") || "0")
+    const savedY = parseInt(localStorage.getItem("touchOffsetY") || "0")
+    setTouchOffsetX(savedX)
+    setTouchOffsetY(savedY)
   }, [])
+
+  const saveTouchOffset = () => {
+    localStorage.setItem("touchOffsetX", String(touchOffsetX))
+    localStorage.setItem("touchOffsetY", String(touchOffsetY))
+    window.dispatchEvent(new CustomEvent("touch-offset-changed", { detail: { x: touchOffsetX, y: touchOffsetY } }))
+  }
 
   useEffect(() => {
     load()
@@ -179,6 +191,20 @@ export function StudentsAdmin() {
             <Button size="sm" variant="secondary" onClick={() => setAwardDelta((d) => Math.max(1, d - 1))}>−</Button>
             <Input className="w-16 text-center" type="number" value={awardDelta} onChange={(e) => setAwardDelta(parseInt(e.target.value) || 1)} />
             <Button size="sm" variant="secondary" onClick={() => setAwardDelta((d) => d + 1)}>+</Button>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+          <Label>觸控偏移校準</Label>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <Label className="text-xs">X</Label>
+              <Input className="w-16" type="number" value={touchOffsetX} onChange={(e) => setTouchOffsetX(parseInt(e.target.value) || 0)} />
+            </div>
+            <div className="flex items-center gap-1">
+              <Label className="text-xs">Y</Label>
+              <Input className="w-16" type="number" value={touchOffsetY} onChange={(e) => setTouchOffsetY(parseInt(e.target.value) || 0)} />
+            </div>
+            <Button size="sm" onClick={saveTouchOffset}>儲存</Button>
           </div>
         </div>
         <Button variant={ranked ? "amber" : "secondary"} onClick={() => setRanked((v) => !v)}>

@@ -57,6 +57,8 @@ export default function WhiteboardShell() {
   const [canvasVisible, setCanvasVisible] = useState(true)
   const [canvasTool, setCanvasTool] = useState<CanvasTool>("pen")
   const [canvasColor, setCanvasColor] = useState("#dc2626")
+  const [touchOffsetX, setTouchOffsetX] = useState(0)
+  const [touchOffsetY, setTouchOffsetY] = useState(0)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -65,6 +67,10 @@ export default function WhiteboardShell() {
   useEffect(() => {
     warmVoices()
     setDark(document.documentElement.classList.contains("dark"))
+    const savedX = parseInt(localStorage.getItem("touchOffsetX") || "0")
+    const savedY = parseInt(localStorage.getItem("touchOffsetY") || "0")
+    setTouchOffsetX(savedX)
+    setTouchOffsetY(savedY)
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         stopSpeak()
@@ -72,8 +78,19 @@ export default function WhiteboardShell() {
         setSpeakingId("")
       }
     }
+    const onTouchOffsetChanged = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { x: number; y: number } | null
+      if (detail) {
+        setTouchOffsetX(detail.x)
+        setTouchOffsetY(detail.y)
+      }
+    }
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
+    window.addEventListener("touch-offset-changed", onTouchOffsetChanged)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("touch-offset-changed", onTouchOffsetChanged)
+    }
   }, [])
 
   useEffect(() => () => stopSpeak(), [])
@@ -493,16 +510,18 @@ export default function WhiteboardShell() {
                   ? "bg-white"
                   : "bg-white dark:bg-slate-900"
               )}>
-              <CanvasStage
-                ref={canvasApiRef}
-                articleId=""
-                    boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : boardMode === "normal" ? "transparent" : null}
-                containerRef={readingRef}
-                currentTool={canvasTool}
-                onToolChange={setCanvasTool}
-                currentColor={canvasColor}
-                onColorChange={setCanvasColor}
-              />
+<CanvasStage
+                 ref={canvasApiRef}
+                 articleId=""
+                     boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : boardMode === "normal" ? "transparent" : null}
+                 containerRef={readingRef}
+                 currentTool={canvasTool}
+                 onToolChange={setCanvasTool}
+                 currentColor={canvasColor}
+                 onColorChange={setCanvasColor}
+                 touchOffsetX={touchOffsetX}
+                 touchOffsetY={touchOffsetY}
+               />
             </div>
           </div>
         )}
@@ -552,6 +571,8 @@ export default function WhiteboardShell() {
                       onToolChange={setCanvasTool}
                       currentColor={canvasColor}
                       onColorChange={setCanvasColor}
+                      touchOffsetX={touchOffsetX}
+                      touchOffsetY={touchOffsetY}
                     />
                   )}
                   <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />

@@ -24,9 +24,11 @@ interface Props {
   onToolChange?: (tool: CanvasTool) => void
   currentColor?: string
   onColorChange?: (color: string) => void
+  touchOffsetX?: number
+  touchOffsetY?: number
 }
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef, currentTool, onToolChange, currentColor, onColorChange }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef, currentTool, onToolChange, currentColor, onColorChange, touchOffsetX = 0, touchOffsetY = 0 }, ref) {
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
   const fabricModuleRef = useRef<any>(null)
@@ -43,6 +45,23 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const colorRef = useRef("#dc2626")
   const isErasingRef = useRef(false)
   const eraseRadiusRef = useRef(20)
+  const touchOffsetRef = useRef({ x: touchOffsetX, y: touchOffsetY })
+
+  useEffect(() => {
+    touchOffsetRef.current = { x: touchOffsetX, y: touchOffsetY }
+    if (fabricRef.current) {
+      const canvas = fabricRef.current
+      const originalGetPointer = canvas.__originalGetPointer || canvas.getPointer.bind(canvas)
+      canvas.__originalGetPointer = originalGetPointer
+      canvas.getPointer = (e: any, ignoreZoom = false) => {
+        const pointer = originalGetPointer(e, ignoreZoom)
+        return {
+          x: pointer.x - touchOffsetRef.current.x,
+          y: pointer.y - touchOffsetRef.current.y
+        }
+      }
+    }
+  }, [touchOffsetX, touchOffsetY])
 
   useEffect(() => { toolRef.current = tool }, [tool])
   useEffect(() => { colorRef.current = color }, [color])
@@ -109,6 +128,22 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         allowTouchScrolling: true
       })
       fabricRef.current = canvas
+
+      // Apply touch offset to adjust touch coordinates
+      const applyTouchOffset = () => {
+        if (touchOffsetRef.current.x !== 0 || touchOffsetRef.current.y !== 0) {
+          const originalGetPointer = canvas.getPointer.bind(canvas)
+          canvas.__originalGetPointer = originalGetPointer
+          canvas.getPointer = (e: any, ignoreZoom = false) => {
+            const pointer = originalGetPointer(e, ignoreZoom)
+            return {
+              x: pointer.x - touchOffsetRef.current.x,
+              y: pointer.y - touchOffsetRef.current.y
+            }
+          }
+        }
+      }
+      applyTouchOffset()
 
       if (boardColor) {
         canvas.setBackgroundColor(boardColor, canvas.renderAll.bind(canvas))
