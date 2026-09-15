@@ -140,7 +140,7 @@ export function LuckyPicker({ students }: Props) {
           {filtered[idx]?.name ?? "?"}
         </motion.span>
         <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-0.5 text-xs font-black text-white shadow-lg shadow-orange-500/40">
-          {filtered[idx]?.seatNo ? `${filtered[idx].seatNo} 號` : "READY"}
+          {filtered[idx]?.seatNo ? `${filtered[idx].seatNo}` : "READY"}
         </span>
         <div
           className={cn(
