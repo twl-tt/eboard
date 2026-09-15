@@ -94,6 +94,7 @@ export function PointsPanel({ students, onRefresh }: Props) {
             <span className="w-full truncate text-sm font-semibold">
               {ranked && i < 3 ? ["🥇", "🥈", "🥉"][i] + " " : ""}{s.name}
             </span>
+            <span className="text-[10px] text-slate-400">{s.className ?? "—"}</span>
             <span
               onClick={() => setEditingId(editingId === s.id ? null : s.id)}
               className={cn("rounded-full px-2 text-xs font-bold cursor-pointer hover:opacity-80", s.points >= 5 ? "bg-emerald-500/15 text-emerald-500" : "bg-sky-600/15 text-sky-500")}

@@ -140,7 +140,7 @@ export function LuckyPicker({ students }: Props) {
           {filtered[idx]?.name ?? "?"}
         </motion.span>
         <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-0.5 text-xs font-black text-white shadow-lg shadow-orange-500/40">
-          {filtered[idx]?.seatNo ? `${filtered[idx].seatNo} 號` : "READY"}
+          {filtered[idx]?.className ? `${filtered[idx].className} ` : ""}{filtered[idx]?.seatNo ? `${filtered[idx].seatNo} 號` : "READY"}
         </span>
         <div
           className={cn(
@@ -171,7 +171,9 @@ export function LuckyPicker({ students }: Props) {
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
             className="w-full rounded-2xl border border-emerald-500/50 bg-gradient-to-br from-emerald-500/15 to-teal-500/10 p-4 text-center"
           >
-            <p className="text-xl font-black text-emerald-500 dark:text-emerald-300">🎉 恭喜 {winner.name}！</p>
+            <p className="text-xl font-black text-emerald-500 dark:text-emerald-300">
+            🎉 恭喜 {winner.name}{winner.className ? `（${winner.className}）` : ""}！
+          </p>
             <div className="mt-3 flex justify-center gap-2">
               <Button variant="success" onClick={() => award(1)} className="shadow-md shadow-emerald-500/30">
                 <Star className="h-4 w-4" /> 加 1 分
