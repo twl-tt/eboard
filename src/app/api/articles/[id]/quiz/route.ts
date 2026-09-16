@@ -39,7 +39,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const base = process.env.OPENAI_BASE_URL ?? "https://api.openai.com/v1"
     const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini"
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), 30000)
+    const timer = setTimeout(() => controller.abort(), 60000)
     try {
       const res = await fetch(`${base}/chat/completions`, {
         method: "POST",
@@ -69,7 +69,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       const data = (await res.json()) as { choices?: { message?: { content?: string } }[] }
       const content = data.choices?.[0]?.message?.content
       if (!content) return NextResponse.json({ error: "AI 沒有回傳內容", questions: [] }, { status: 200 })
-      const parsed = JSON.parse(content) as { questions?: unknown[] }
+      let parsed
+      try {
+        parsed = JSON.parse(content.trim())
+      } catch {
+        return NextResponse.json({ error: "AI 回傳非有效 JSON", questions: [] }, { status: 200 })
+      }
       const questions = (parsed.questions ?? []).filter(VALID_QUESTION) as GeneratedQuestion[]
       return NextResponse.json({ questions: questions.slice(0, count) })
     } finally {
