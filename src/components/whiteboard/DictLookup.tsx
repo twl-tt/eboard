@@ -114,7 +114,13 @@ export function DictLookup() {
                   result.pronunciations.map((p, i) => (
                     <div key={i} className="rounded-xl bg-slate-100 p-3 dark:bg-slate-800">
                       <div className="text-lg font-bold text-sky-600 dark:text-sky-400">粵拼：{p.jyutping}</div>
-                      <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{p.meaning}</div>
+                      <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                        {p.meaning.split("。").filter(Boolean).map((def, j) => (
+                          <div key={j} className="break-all">
+                            {def.trim()}{"。"}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))
                 ) : (
