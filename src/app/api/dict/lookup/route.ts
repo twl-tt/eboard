@@ -6,30 +6,25 @@ export async function GET(req: NextRequest) {
   if (!q || q.length !== 1) return NextResponse.json({ error: "Need single character" }, { status: 400 })
 
   try {
-    // Try moedict.tw first (alternative dictionary source)
-    const moedictResult = await tryMoedictLookup(q)
-    if (moedictResult && moedictResult.pronunciations.length > 0) {
-      return NextResponse.json({ word: q, pronunciations: moedictResult.pronunciations })
-    }
-
-    // Fall back to CUHK dictionary
     const big5buf = iconv.encode(q, "big5")
     const big5hex = Array.from(big5buf).map(b => "%" + b.toString(16).padStart(2, "0")).join("")
-    const url = `https://humanum.arts.cuhk.edu.hk/Lexis/lexi-can/search.php?q=${big5hex}`
+    const cuhkUrl = `https://humanum.arts.cuhk.edu.hk/Lexis/lexi-can/search.php?q=${big5hex}`
 
-    const res = await fetch(url)
-    if (!res.ok) return NextResponse.json({ error: "Upstream error" }, { status: 502 })
+    const cuhkRes = await fetch(cuhkUrl)
+    if (!cuhkRes.ok) return NextResponse.json({ error: "Upstream error" }, { status: 502 })
 
-    const ab = await res.arrayBuffer()
-    const html = new TextDecoder("big5").decode(new Uint8Array(ab))
+    const cuhkAb = await cuhkRes.arrayBuffer()
+    const cuhkHtml = new TextDecoder("big5").decode(new Uint8Array(cuhkAb))
 
-    if (html.includes("錯誤") || html.includes("輸入的字")) {
+    if (cuhkHtml.includes("錯誤") || cuhkHtml.includes("輸入的字")) {
       return NextResponse.json({ word: q, pronunciations: [] })
     }
 
+    let definition = await getMoedictDefinition(q)
+
     const pronunciations: { jyutping: string; meaning: string }[] = []
 
-    const trMatches = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/g) || []
+    const trMatches = cuhkHtml.match(/<tr[^>]*>[\s\S]*?<\/tr>/g) || []
     for (const row of trMatches) {
       const initialMatch = /<font\s+color=["']?red["']?[^>]*>([^<]+)<\/font>/.exec(row)
       const finalMatch = /<font\s+color=["']?green["']?[^>]*>([^<]+)<\/font>/.exec(row)
@@ -38,19 +33,11 @@ export async function GET(req: NextRequest) {
       if (initialMatch && finalMatch && toneMatch) {
         const jyutping = initialMatch[1] + finalMatch[1] + toneMatch[1]
 
-        const tdMatches = row.match(/<td[^>]*>([\s\S]*?)<\/td>/g) || []
-        let meaning = ""
-        for (const td of tdMatches) {
-          const divMatch = /<div[^>]*>([\s\S]*?)<\/div>/.exec(td)
-          if (divMatch && !divMatch[1].includes("display: none")) {
-            meaning = divMatch[1].replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim()
-            break
-          }
+        if (!definition) {
+          definition = extractCuhkDefinition(cuhkHtml, jyutping) || `${q} 詞義`
         }
 
-        if (meaning) {
-          pronunciations.push({ jyutping, meaning })
-        }
+        pronunciations.push({ jyutping, meaning: definition })
       }
     }
 
@@ -60,19 +47,59 @@ export async function GET(req: NextRequest) {
   }
 }
 
+function extractCuhkDefinition(cuhkHtml: string, jyutping: string): string | null {
+  const divIdMatch = new RegExp(`${escapeRegex(jyutping)}_detial`)
+  const match = cuhkHtml.match(new RegExp(`id="${jyutping}_detial"[^>]*style="display: none"[^>]*>([\\s\\S]*?)<\\/div>`))
+  if (match && match[1]) {
+    return match[1]
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(/[，,]/)[0]
+  }
+  return null
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+async function getMoedictDefinition(char: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://www.moedict.tw/${char}`, {
+      headers: { "Accept": "text/html" }
+    })
+    if (!res.ok) return null
+
+    const html = await res.text()
+
+    const metaMatch = /<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["'][^>]*\/>/.exec(html)
+    if (metaMatch && metaMatch[1]) {
+      return metaMatch[1].trim()
+    }
+
+    const ogMatch = /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']*)["'][^>]*\/>/.exec(html)
+    if (ogMatch && ogMatch[1]) {
+      return ogMatch[1].trim()
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
 async function tryMoedictLookup(char: string): Promise<{ pronunciations: { jyutping: string; meaning: string }[] } | null> {
   try {
-    // moedict.tw API endpoint - try direct character lookup
     const res = await fetch(`https://www.moedict.tw/${char}`, {
       headers: { "Accept": "application/json" }
     })
     if (!res.ok) return null
     const data = await res.json()
-    // moedict.tw JSON format: { word, pronunciations: [{ jyutping, meaning }] }
     if (data && data.pronunciations && Array.isArray(data.pronunciations)) {
       return { pronunciations: data.pronunciations }
     }
-    // Also try HTML parsing fallback
     const html = await res.text()
     const initialMatch = /<font\s+color=["']?red["']?[^>]*>([^<]+)<\/font>/.exec(html)
     const finalMatch = /<font\s+color=["']?green["']?[^>]*>([^<]+)<\/font>/.exec(html)
