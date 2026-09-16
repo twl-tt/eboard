@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap, Cloud, Pencil } from "lucide-react"
+import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap, Cloud, Pencil, Clock, Timer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
 import { LuckyPicker } from "./LuckyPicker"
@@ -11,11 +11,13 @@ import { PollPanel } from "./PollPanel"
 import { QuizPanel } from "./QuizPanel"
 import { GroupPanel } from "./GroupPanel"
 import { WordCloudPanel } from "./WordCloudPanel"
+import { TimerPanel } from "./TimerPanel"
 import { cn } from "@/lib/utils"
 
-type PanelKey = "group" | "picker" | "points" | "poll" | "quiz" | "wordcloud" | null
+type PanelKey = "timer" | "group" | "picker" | "points" | "poll" | "quiz" | "wordcloud" | null
 
 const GRADIENTS: Record<Exclude<PanelKey, null>, { grad: string; glow: string; label: string }> = {
+  timer: { grad: "from-cyan-500 to-blue-600", glow: "shadow-blue-500/40", label: "計時" },
   group: { grad: "from-pink-500 to-rose-600", glow: "shadow-rose-500/40", label: "分組" },
   picker: { grad: "from-violet-500 to-fuchsia-600", glow: "shadow-fuchsia-500/40", label: "抽籤" },
   points: { grad: "from-amber-400 to-orange-500", glow: "shadow-orange-500/40", label: "加分" },
@@ -25,12 +27,13 @@ const GRADIENTS: Record<Exclude<PanelKey, null>, { grad: string; glow: string; l
 }
 
 const ICONS: Record<Exclude<PanelKey, null>, React.ReactNode> = {
-  group: <Users className="h-7 w-7" />,
-  picker: <Dices className="h-7 w-7" />,
-  points: <Star className="h-7 w-7" />,
-  poll: <BarChart3 className="h-7 w-7" />,
-  quiz: <Brain className="h-7 w-7" />,
-  wordcloud: <Cloud className="h-7 w-7" />
+  timer: <Timer className="h-6 w-6" />,
+  group: <Users className="h-6 w-6" />,
+  picker: <Dices className="h-6 w-6" />,
+  points: <Star className="h-6 w-6" />,
+  poll: <BarChart3 className="h-6 w-6" />,
+  quiz: <Brain className="h-6 w-6" />,
+  wordcloud: <Cloud className="h-6 w-6" />
 }
 
 export interface ClassroomSuiteProps {
@@ -54,7 +57,7 @@ export function ClassroomSuite({ onToggleCanvas, canvasVisible }: ClassroomSuite
     if (panel === "picker" || panel === "points" || panel === "group") loadStudents()
   }, [panel, loadStudents])
 
-  const keys: Exclude<PanelKey, null>[] = ["group", "picker", "points", "poll", "quiz", "wordcloud"]
+  const keys: Exclude<PanelKey, null>[] = ["timer", "group", "picker", "points", "poll", "quiz", "wordcloud"]
 
   return (
     <>
@@ -66,7 +69,7 @@ export function ClassroomSuite({ onToggleCanvas, canvasVisible }: ClassroomSuite
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0, type: "spring", stiffness: 260, damping: 22 }}
             whileHover={{ scale: 1.07, y: -2 }}
-            whileTap={{ scale: 0.94 }}
+whileTap={{ scale: 0.94 }}
             onClick={onToggleCanvas}
             className={cn(
               "flex h-[52px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
@@ -76,10 +79,10 @@ export function ClassroomSuite({ onToggleCanvas, canvasVisible }: ClassroomSuite
             )}
             title={canvasVisible ? "隱藏畫板" : "顯示畫板"}
           >
-            <Pencil className="h-6 w-6" />
+            <Pencil className="h-5 w-5" />
             <span className="text-xs font-black tracking-wide">畫板</span>
           </motion.button>
-        )}
+          )}
         {keys.map((k, i) => (
           <motion.button
             key={k}
@@ -90,7 +93,7 @@ export function ClassroomSuite({ onToggleCanvas, canvasVisible }: ClassroomSuite
             whileTap={{ scale: 0.94 }}
             onClick={() => setPanel(panel === k ? null : k)}
             className={cn(
-              "flex h-[52px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
+              "flex h-[44px] w-[44px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
               GRADIENTS[k].grad,
               GRADIENTS[k].glow,
               panel === k && "ring-4 ring-white/60 dark:ring-white/30"
@@ -114,13 +117,14 @@ export function ClassroomSuite({ onToggleCanvas, canvasVisible }: ClassroomSuite
             <div className={cn("h-1.5 w-full bg-gradient-to-r", GRADIENTS[panel].grad)} />
             <div className="flex items-center justify-between px-4 py-2.5">
               <h3 className="font-bold">
-                {panel === "group" ? "🧩 分組" : panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : panel === "quiz" ? "🧠 AI 測驗" : panel === "wordcloud" ? "☁️ 詞牆" : ""}
+                {panel === "timer" ? "⏱️ 計時器" : panel === "group" ? "🧩 分組" : panel === "picker" ? "🎲 隨機抽籤" : panel === "points" ? "⭐ 課室加分" : panel === "poll" ? "📊 即時投票" : panel === "quiz" ? "🧠 AI 測驗" : panel === "wordcloud" ? "☁️ 詞牆" : ""}
               </h3>
               <Button variant="ghost" size="icon" onClick={() => setPanel(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <div className="overflow-y-auto p-4 pt-0">
+              {panel === "timer" && <TimerPanel />}
               {panel === "group" && <GroupPanel students={students} onRefresh={loadStudents} />}
               {panel === "picker" && <LuckyPicker students={students} />}
               {panel === "points" && <PointsPanel students={students} onRefresh={loadStudents} />}
