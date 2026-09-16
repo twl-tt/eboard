@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ word: q, pronunciations: [] })
     }
 
-    let definition = await getMoedictDefinition(q)
+    // Fetch moedict.tw definition in parallel for fallback
+    const moedictDef = await getMoedictDefinition(q)
 
     const pronunciations: { jyutping: string; meaning: string }[] = []
 
@@ -33,8 +34,12 @@ export async function GET(req: NextRequest) {
       if (initialMatch && finalMatch && toneMatch) {
         const jyutping = initialMatch[1] + finalMatch[1] + toneMatch[1]
 
+        // Try CUHK-specific definition first (per-pronunciation)
+        let definition = extractCuhkDefinition(cuhkHtml, jyutping)
+        
+        // Fall back to moedict.tw definition if CUHK doesn't have one
         if (!definition) {
-          definition = extractCuhkDefinition(cuhkHtml, jyutping) || `${q} 詞義`
+          definition = moedictDef || `${q} 詞義`
         }
 
         pronunciations.push({ jyutping, meaning: definition })
@@ -48,15 +53,13 @@ export async function GET(req: NextRequest) {
 }
 
 function extractCuhkDefinition(cuhkHtml: string, jyutping: string): string | null {
-  const divIdMatch = new RegExp(`${escapeRegex(jyutping)}_detial`)
-  const match = cuhkHtml.match(new RegExp(`id="${jyutping}_detial"[^>]*style="display: none"[^>]*>([\\s\\S]*?)<\\/div>`))
+  const match = cuhkHtml.match(new RegExp(`id="${escapeRegex(jyutping)}_detial"[^>]*style="display: none"[^>]*>([\\s\\S]*?)<\\/div>`))
   if (match && match[1]) {
     return match[1]
       .replace(/<[^>]+>/g, "")
       .replace(/&nbsp;/g, " ")
       .replace(/\s+/g, " ")
       .trim()
-      .split(/[，,]/)[0]
   }
   return null
 }
