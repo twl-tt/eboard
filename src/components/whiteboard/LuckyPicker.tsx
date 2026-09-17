@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Dices, Star } from "lucide-react"
+import { Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
 import { celebrate, tick, ding } from "@/lib/sound"
@@ -36,6 +36,8 @@ export function LuckyPicker({ students }: Props) {
   const [highlight, setHighlight] = useState(-1)
   const [winnerIdx, setWinnerIdx] = useState(0)
   const [winner, setWinner] = useState<StudentDTO | null>(null)
+  const [awarding, setAwarding] = useState(false)
+  const [awardError, setAwardError] = useState("")
   const [classFilter, setClassFilter] = useState<string>("__all__")
   const timersRef = useRef<number[]>([])
   const rollToken = useRef(0)
@@ -97,10 +99,11 @@ export function LuckyPicker({ students }: Props) {
   }
 
   const roll = () => {
-    if (phase !== "idle" || filtered.length === 0) return
+    if ((phase !== "idle" && phase !== "done") || awarding || filtered.length === 0) return
     const token = ++rollToken.current
     clearTimers()
     setWinner(null)
+    setAwardError("")
     const pool = filtered
     const w = Math.floor(Math.random() * pool.length)
     setWinnerIdx(w)
@@ -141,24 +144,33 @@ export function LuckyPicker({ students }: Props) {
   }
 
   async function award(delta: number) {
-    if (!winner) return
-    await fetch("/api/classroom/points", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ studentId: winner.id, delta, reason: `夾公仔回答（${winner.name}）` })
-    })
-    if (delta > 0) {
-      celebrate()
+    if (!winner || awarding) return
+    const token = rollToken.current
+    setAwarding(true)
+    setAwardError("")
+    try {
+      const response = await fetch("/api/classroom/points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentId: winner.id, delta, reason: `抽選回答（${winner.name}）` })
+      })
+      if (!response.ok) throw new Error("award failed")
       window.dispatchEvent(new CustomEvent("points-updated"))
+      if (token !== rollToken.current) return
+      if (delta > 0) celebrate()
+      setWinner(null)
+      setPhase("idle")
+      setClawX(HOME_X)
+    } catch {
+      if (token === rollToken.current) setAwardError("未能更新分數，請重試。")
+    } finally {
+      setAwarding(false)
     }
-    setWinner(null)
-    setPhase("idle")
-    setClawX(HOME_X)
   }
 
   const active = phase !== "idle" && phase !== "done"
   const grabbed = phase === "grab" || phase === "lift" || phase === "move"
-  const clawY = phase === "descend" || phase === "grab" ? pile[winnerIdx]?.y - 30 : HOME_Y
+  const clawY = phase === "descend" || phase === "grab" ? (pile[winnerIdx]?.y ?? 108) - 66 : HOME_Y
   const clawTargetX = phase === "move" || phase === "drop" ? DROP_X : phase === "descend" || phase === "grab" ? pile[winnerIdx]?.x ?? clawX : clawX
   const clawTransition =
     phase === "descend" || phase === "lift" || phase === "move"
@@ -166,6 +178,58 @@ export function LuckyPicker({ students }: Props) {
       : { type: "spring" as const, stiffness: 170, damping: 20 }
   const prongOpen = !grabbed
   const heldName = pool_name(filtered, winnerIdx)
+  const prongSpread = prongOpen ? 34 : 7
+  const clawBody = (
+    <>
+      <div className="h-2 w-14 rounded-full bg-slate-500 shadow dark:bg-slate-400" />
+      <div className="h-8 w-1.5 rounded-full bg-gradient-to-b from-slate-400 to-slate-600 dark:from-slate-300 dark:to-slate-500" />
+      <div className="relative h-16 w-16">
+        <div
+          className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 rounded-full border border-slate-600 bg-gradient-to-b from-slate-200 to-slate-400 shadow dark:border-slate-500 dark:from-slate-100 dark:to-slate-400"
+        />
+        {grabbed && (
+          <div
+            className={cn(
+              "absolute left-1/2 top-2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-black text-white shadow-lg",
+              DOLL_COLORS[winnerIdx % DOLL_COLORS.length]
+            )}
+          >
+            {heldName}
+          </div>
+        )}
+        {[-1, 0, 1].map((side) => {
+          const spread = side === 0 ? 0 : prongSpread
+          return (
+            <motion.svg
+              key={side}
+              className="absolute left-1/2 top-2 h-14 w-14 -translate-x-1/2"
+              viewBox="0 0 48 56"
+              style={side === 0 ? { zIndex: 1 } : undefined}
+              animate={{ rotate: side * spread }}
+              transition={{ type: "spring", stiffness: 300, damping: 17 }}
+            >
+              <path
+                d="M24 2 C 24 22, 12 26, 8 44 Q 6 52 13 52"
+                fill="none"
+                stroke="url(#claw-metal)"
+                strokeWidth="4.5"
+                strokeLinecap="round"
+              />
+            </motion.svg>
+          )
+        })}
+      </div>
+      <svg width="0" height="0" className="absolute">
+        <defs>
+          <linearGradient id="claw-metal" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#e2e8f0" />
+            <stop offset="45%" stopColor="#94a3b8" />
+            <stop offset="100%" stopColor="#475569" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </>
+  )
 
   return (
     <div className="flex flex-col items-center gap-4 py-2">
@@ -258,30 +322,7 @@ export function LuckyPicker({ students }: Props) {
               animate={{ x: clawTargetX, y: clawY }}
               transition={clawTransition}
             >
-              <div className="h-1.5 w-16 rounded-full bg-slate-500 shadow dark:bg-slate-400" />
-              <div className="h-9 w-1 bg-slate-500 dark:bg-slate-400" />
-              <div className="relative h-16 w-16">
-                {grabbed && (
-                  <div
-                    className={cn(
-                      "absolute left-1/2 top-2.5 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-br text-[11px] font-black text-white shadow-lg",
-                      DOLL_COLORS[winnerIdx % DOLL_COLORS.length]
-                    )}
-                  >
-                    {heldName}
-                  </div>
-                )}
-                <motion.span
-                  className="absolute left-0 top-1 h-1.5 w-8 origin-right rounded-full bg-slate-600 dark:bg-slate-300"
-                  animate={{ rotate: prongOpen ? 38 : 6 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 18 }}
-                />
-                <motion.span
-                  className="absolute right-1 top-0 h-1.5 w-8 origin-left rounded-full bg-slate-600 dark:bg-slate-300"
-                  animate={{ rotate: prongOpen ? -38 : -6 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 18 }}
-                />
-              </div>
+              {clawBody}
             </motion.div>
           </div>
         </div>
@@ -290,11 +331,15 @@ export function LuckyPicker({ students }: Props) {
       <Button
         size="xl"
         onClick={roll}
-        disabled={active}
+        disabled={active || awarding}
         className="w-full bg-gradient-to-r from-pink-500 to-rose-600 shadow-lg shadow-pink-500/40 hover:from-pink-400 hover:to-rose-500"
       >
-        <Dices className="h-6 w-6" /> {active ? "夾取中…" : "🎯 開始夾公仔"}
+        {active ? "抽選中…" : "開始"}
       </Button>
+
+      {awardError && (
+        <p className="text-xs font-semibold text-red-500">{awardError}</p>
+      )}
 
       <AnimatePresence>
         {winner && (
@@ -305,12 +350,12 @@ export function LuckyPicker({ students }: Props) {
             transition={{ type: "spring", stiffness: 300, damping: 24 }}
             className="w-full rounded-2xl border border-emerald-500/50 bg-gradient-to-br from-emerald-500/15 to-teal-500/10 p-4 text-center"
           >
-            <p className="text-xl font-black text-emerald-500 dark:text-emerald-300">🎉 夾到 {winner.name}！</p>
+            <p className="text-xl font-black text-emerald-500 dark:text-emerald-300">🎉 {winner.name}</p>
             <div className="mt-3 flex justify-center gap-2">
-              <Button variant="success" onClick={() => award(1)} className="shadow-md shadow-emerald-500/30">
+              <Button variant="success" disabled={awarding} onClick={() => award(1)} className="shadow-md shadow-emerald-500/30">
                 <Star className="h-4 w-4" /> 加 1 分
               </Button>
-              <Button variant="outline" onClick={() => award(-1)}>
+              <Button variant="outline" disabled={awarding} onClick={() => award(-1)}>
                 扣 1 分
               </Button>
             </div>
