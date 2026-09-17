@@ -27,21 +27,26 @@ const TOOLS: { id: CanvasTool; icon: React.ReactNode; label: string }[] = [
   { id: "text", icon: <Type className="h-3.5 w-3.5" />, label: "文字" },
 ]
 
-const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a", "#ea580c", "#eab308"]
-const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
+const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a"]
+
+const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
 export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
-  const [pos, setPos] = useState({ x: window.innerWidth - 70, y: 20 })
+  const [pos, setPos] = useState({ x: 12, y: 130 })
   const dragRef = useRef<{ startX: number; startY: number } | null>(null)
-  const isHighlighter = currentTool === "highlighter"
 
   useEffect(() => {
+    const clampPos = (p: { x: number; y: number }) => ({
+      x: Math.min(Math.max(p.x, 4), window.innerWidth - 52),
+      y: Math.min(Math.max(p.y, 4), window.innerHeight - 60)
+    })
+    setPos(prev => clampPos(prev))
     const handleMouseMove = (e: MouseEvent) => {
       if (!dragRef.current) return
-      setPos({
+      setPos(clampPos({
         x: e.clientX - dragRef.current.startX,
         y: e.clientY - dragRef.current.startY
-      })
+      }))
     }
     const handleMouseUp = () => {
       dragRef.current = null
@@ -73,7 +78,10 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
     if (!dragRef.current) return
     e.preventDefault()
     const t = e.touches[0]
-    setPos({ x: t.clientX - dragRef.current.startX, y: t.clientY - dragRef.current.startY })
+    setPos({
+      x: Math.min(Math.max(t.clientX - dragRef.current.startX, 4), window.innerWidth - 52),
+      y: Math.min(Math.max(t.clientY - dragRef.current.startY, 4), window.innerHeight - 60)
+    })
   }
 
   const handleTouchEnd = () => {
@@ -117,7 +125,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
 
       <div className="flex flex-col gap-1 items-center">
-        {(isHighlighter ? HIGHLIGHTER_COLORS : COLORS).map((c) => (
+        {COLORS.map((c) => (
           <button
             key={c}
             onClick={() => onColorChange(c)}

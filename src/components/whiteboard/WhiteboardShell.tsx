@@ -7,11 +7,12 @@ import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut,
   BookOpen, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker
 } from "lucide-react"
-import type { ArticleFull, PhoneticMode } from "@/lib/types"
+import type { ArticleFull, PhoneticMode, TagDTO } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { speakSeq, stopSpeak, warmVoices } from "@/lib/tts"
 import { celebrate } from "@/lib/sound"
 import { HIGHLIGHT_BG, HIGHLIGHT_LABEL, type Highlight, type HighlightColor } from "@/lib/highlight"
+import { copyText } from "@/lib/clipboard"
 import { Button } from "@/components/ui/button"
 import { ArticlePicker } from "./ArticlePicker"
 import { ReadingPane } from "./ReadingPane"
@@ -59,6 +60,10 @@ export default function WhiteboardShell() {
   const [canvasColor, setCanvasColor] = useState("#dc2626")
   const [touchOffsetX, setTouchOffsetX] = useState(0)
   const [touchOffsetY, setTouchOffsetY] = useState(0)
+  const [dragTag, setDragTag] = useState<TagDTO | null>(null)
+  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null)
+  const [copyHint, setCopyHint] = useState(false)
+  const copyHintTimer = useRef<number | null>(null)
 
   const canvasApiRef = useRef<CanvasApi>(null)
   const readingRef = useRef<HTMLDivElement>(null)
@@ -94,6 +99,36 @@ export default function WhiteboardShell() {
   }, [])
 
   useEffect(() => () => stopSpeak(), [])
+
+  const stickerPointerMove = useCallback((e: PointerEvent) => {
+    setGhost({ x: e.clientX, y: e.clientY })
+  }, [])
+
+  const stickerPointerUp = useCallback((e: PointerEvent) => {
+    const tag = dragTag
+    setDragTag(null)
+    setGhost(null)
+    if (!tag || !readingRef.current || !canvasApiRef.current) return
+    const rect = readingRef.current.getBoundingClientRect()
+    const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom
+    if (!inside) return
+    const x = e.clientX - rect.left - touchOffsetX
+    const y = e.clientY - rect.top - touchOffsetY
+    canvasApiRef.current.addText(tag.name, x, y, tag.color === "amber" ? "#f59e0b" : tag.color === "emerald" ? "#10b981" : tag.color === "sky" ? "#0ea5e9" : tag.color === "rose" ? "#f43f5e" : "#8b5cf6")
+    setStickerBarOpen(false)
+  }, [dragTag, touchOffsetX, touchOffsetY])
+
+  useEffect(() => {
+    if (!dragTag) return
+    window.addEventListener("pointermove", stickerPointerMove)
+    window.addEventListener("pointerup", stickerPointerUp)
+    return () => {
+      window.removeEventListener("pointermove", stickerPointerMove)
+      window.removeEventListener("pointerup", stickerPointerUp)
+    }
+  }, [dragTag, stickerPointerMove, stickerPointerUp])
+
+  useEffect(() => () => { if (copyHintTimer.current) window.clearTimeout(copyHintTimer.current) }, [])
 
   useEffect(() => {
     fetch("/api/tags").then((r) => r.ok ? r.json() : []).then(setTags).catch(() => {})
@@ -578,6 +613,25 @@ export default function WhiteboardShell() {
                   <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-2 border-b border-dashed border-slate-300 pb-4 dark:border-slate-700">
                     <h2 className="text-2xl font-black tracking-tight">{article.title}</h2>
+                    <button
+                      onClick={async () => {
+                        const ok = await copyText(`${article.title}\n\n${validSentences.map(s => s.text).join("\n")}`)
+                        if (ok) {
+                          setCopyHint(true)
+                          if (copyHintTimer.current) window.clearTimeout(copyHintTimer.current)
+                          copyHintTimer.current = window.setTimeout(() => setCopyHint(false), 1500)
+                        }
+                      }}
+                      className={cn(
+                        "rounded-full px-3 py-1 text-xs font-bold transition-all",
+                        copyHint
+                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
+                          : "bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 dark:text-sky-300"
+                      )}
+                      title="複製全文"
+                    >
+                      {copyHint ? "已複製" : "📋 複製全文"}
+                    </button>
                     <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold">
                       {article.grade && (
                         <span className="rounded-full bg-sky-500/10 px-2.5 py-1 text-sky-700 dark:text-sky-300">{article.grade}</span>
@@ -616,7 +670,26 @@ export default function WhiteboardShell() {
             </div>
           </>
         )}
-        <StickerBar tags={tags} open={stickerBarOpen} onClose={() => setStickerBarOpen(false)} onDragStart={() => {}} onDragEnd={() => {}} />
+        <StickerBar
+          tags={tags}
+          open={stickerBarOpen}
+          onClose={() => setStickerBarOpen(false)}
+          onDragStart={(t) => { setDragTag(t); setGhost(null) }}
+          onDragEnd={() => {}}
+        />
+        {dragTag && ghost && (
+          <div
+            className="pointer-events-none fixed z-[60] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/80 px-3 py-1 text-sm font-black text-white shadow-xl"
+            style={{ left: ghost.x, top: ghost.y }}
+          >
+            {dragTag.name}
+          </div>
+        )}
+        {dragTag && !ghost && (
+          <div className="pointer-events-none fixed inset-x-0 top-20 z-[60] flex justify-center">
+            <span className="rounded-full bg-violet-600 px-4 py-1.5 text-sm font-bold text-white shadow-xl">拖到文章區域放開即可貼上</span>
+          </div>
+        )}
       </main>
 
       <CanvasToolbar

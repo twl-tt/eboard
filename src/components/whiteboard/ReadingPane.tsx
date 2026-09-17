@@ -1,9 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { ClipboardCheck, ClipboardCopy, Volume2 } from "lucide-react"
 import type { ArticleFull, PhoneticMode, Sentence } from "@/lib/types"
 import { cn, isHanzi } from "@/lib/utils"
 import { speakSeq } from "@/lib/tts"
+import { copyText } from "@/lib/clipboard"
 import { HIGHLIGHT_BG, type Highlight, type HighlightColor } from "@/lib/highlight"
 
 interface Props {
@@ -36,6 +38,8 @@ export function ReadingPane({
   showExplanation = false
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [copiedId, setCopiedId] = useState("")
+  const copiedTimer = useRef<number | null>(null)
   const hlBySentence = useMemo(() => {
     const map = new Map<string, Highlight[]>()
     for (const h of highlights) {
@@ -82,6 +86,17 @@ export function ReadingPane({
     document.addEventListener("mouseup", onMouseUp)
     return () => document.removeEventListener("mouseup", onMouseUp)
   }, [onAddHighlight])
+
+  useEffect(() => () => { if (copiedTimer.current) window.clearTimeout(copiedTimer.current) }, [])
+
+  const copySentence = useCallback(async (s: Sentence) => {
+    const ok = await copyText(s.text)
+    if (ok) {
+      setCopiedId(s.id)
+      if (copiedTimer.current) window.clearTimeout(copiedTimer.current)
+      copiedTimer.current = window.setTimeout(() => setCopiedId(""), 1500)
+    }
+  }, [])
 
   return (
     <div
@@ -149,6 +164,16 @@ export function ReadingPane({
                 return <span key={ti}>{inner}</span>
               })}
               <button
+                className="absolute -right-11 -top-3 hidden rounded-full bg-sky-600 p-1 text-white shadow hover:bg-sky-500 group-hover:block"
+                title="複製此句"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copySentence(s)
+                }}
+              >
+                {copiedId === s.id ? <ClipboardCheck className="h-4 w-4" /> : <ClipboardCopy className="h-4 w-4" />}
+              </button>
+              <button
                 className="absolute -right-2 -top-3 hidden rounded-full bg-sky-600 p-1 text-white shadow hover:bg-sky-500 group-hover:block"
                 title="朗讀此句"
                 onClick={(e) => {
@@ -156,7 +181,7 @@ export function ReadingPane({
                   speakSeq([{ id: s.id, text: s.text }], voiceLang, {})
                 }}
               >
-                🔊
+                <Volume2 className="h-4 w-4" />
               </button>
             </span>
             {showExplanation && s.explanation && (

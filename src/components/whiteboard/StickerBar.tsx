@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import { Sticker as StickerIcon, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import type { TagDTO } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -23,7 +22,7 @@ const COLOR_BG: Record<string, string> = {
   fuchsia: "linear-gradient(135deg, #f0abfc 0%, #e879f9 100%)"
 }
 
-export function StickerBar({ tags, open, onClose, onDragStart, onDragEnd }: Props) {
+export function StickerBar({ tags, open, onClose, onDragStart }: Props) {
   const categories = useMemo(() => {
     const set = new Set<string>()
     for (const t of tags) set.add(t.category)
@@ -32,12 +31,17 @@ export function StickerBar({ tags, open, onClose, onDragStart, onDragEnd }: Prop
 
   if (!open) return null
 
+  const startDrag = (tag: TagDTO, e: React.PointerEvent) => {
+    e.preventDefault()
+    onDragStart(tag)
+  }
+
   return (
     <div className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2">
       <div className="flex max-w-[92vw] flex-col gap-2 rounded-3xl border border-white/60 bg-white/90 p-3 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90">
         <div className="flex items-center gap-2">
           <StickerIcon className="h-4 w-4 text-pink-500" />
-          <span className="text-xs font-bold text-slate-500">貼紙標籤（拖到畫布任意位置）</span>
+          <span className="text-xs font-bold text-slate-500">貼紙標籤（按住拖到文章區域）</span>
           {tags.length === 0 && (
             <span className="text-[10px] text-slate-400">到「管理後台 → 標籤管理」新增標籤</span>
           )}
@@ -54,22 +58,18 @@ export function StickerBar({ tags, open, onClose, onDragStart, onDragEnd }: Prop
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{cat}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {tags.filter((t) => t.category === cat).map((t) => (
-                    <div
+                    <button
                       key={t.id}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData("application/x-sticker", t.id)
-                        e.dataTransfer.setData("text/plain", t.name)
-                        e.dataTransfer.effectAllowed = "copy"
-                        onDragStart(t)
-                      }}
-                      onDragEnd={onDragEnd}
-                      title={`${t.name}（${t.category}）— 拖到白板`}
-                      className="cursor-grab select-none rounded-2xl border border-white/40 px-2.5 py-1 text-xs font-black text-white shadow-md transition-transform hover:scale-110 active:cursor-grabbing"
+                      onPointerDown={(e) => startDrag(t, e)}
+                      title={`${t.name}（${t.category}）— 按住拖到白板`}
+                      className={cn(
+                        "cursor-grab touch-none select-none rounded-2xl border border-white/40 px-2.5 py-1 text-xs font-black text-white shadow-md",
+                        "transition-transform hover:scale-110 active:cursor-grabbing active:scale-105"
+                      )}
                       style={{ background: COLOR_BG[t.color] ?? COLOR_BG.violet, textShadow: "0 1px 1px rgba(0,0,0,0.25)" }}
                     >
                       {t.name}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
