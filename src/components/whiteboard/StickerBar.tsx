@@ -10,7 +10,6 @@ interface Props {
   open: boolean
   onClose: () => void
   onDragStart: (tag: TagDTO) => void
-  onDragEnd: () => void
 }
 
 const COLOR_BG: Record<string, string> = {
@@ -32,7 +31,9 @@ export function StickerBar({ tags, open, onClose, onDragStart }: Props) {
   if (!open) return null
 
   const startDrag = (tag: TagDTO, e: React.PointerEvent) => {
+    if (!e.isPrimary || e.button !== 0) return
     e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
     onDragStart(tag)
   }
 

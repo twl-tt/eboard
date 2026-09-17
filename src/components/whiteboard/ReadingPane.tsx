@@ -21,6 +21,7 @@ interface Props {
   onAddHighlight: (h: { sentenceId: string; tokenStart: number; tokenEnd: number }) => void
   onRemoveHighlight: (id: string) => void
   showExplanation?: boolean
+  highlightSelection?: boolean
 }
 
 export function ReadingPane({
@@ -35,7 +36,8 @@ export function ReadingPane({
   highlights,
   onAddHighlight,
   onRemoveHighlight,
-  showExplanation = false
+  showExplanation = false,
+  highlightSelection = false
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [copiedId, setCopiedId] = useState("")
@@ -51,6 +53,7 @@ export function ReadingPane({
   }, [highlights])
 
   useEffect(() => {
+    if (!highlightSelection) return
     const root = containerRef.current
     if (!root) return
     let lastUp = 0
@@ -85,7 +88,7 @@ export function ReadingPane({
     const onMouseUp = () => setTimeout(handler, 10)
     document.addEventListener("mouseup", onMouseUp)
     return () => document.removeEventListener("mouseup", onMouseUp)
-  }, [onAddHighlight])
+  }, [onAddHighlight, highlightSelection])
 
   useEffect(() => () => { if (copiedTimer.current) window.clearTimeout(copiedTimer.current) }, [])
 
@@ -164,7 +167,7 @@ export function ReadingPane({
                 return <span key={ti}>{inner}</span>
               })}
               <button
-                className="absolute -right-11 -top-3 hidden rounded-full bg-sky-600 p-1 text-white shadow hover:bg-sky-500 group-hover:block"
+                className="relative z-50 mx-1 inline-flex select-none rounded-full bg-sky-600 p-1 align-middle text-white shadow hover:bg-sky-500"
                 title="複製此句"
                 onClick={(e) => {
                   e.stopPropagation()

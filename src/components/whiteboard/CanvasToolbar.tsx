@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
 import { Pencil, Eraser, Square, Circle, Minus, Type, Highlighter, Move, Undo2, Redo2, Trash2, X } from "lucide-react"
 import type { CanvasTool } from "./CanvasStage"
 
@@ -17,6 +16,7 @@ interface Props {
 }
 
 const TOOLS: { id: CanvasTool; icon: React.ReactNode; label: string }[] = [
+  { id: "read", icon: <Type className="h-3.5 w-3.5" />, label: "選取及複製課文" },
   { id: "select", icon: <Move className="h-3.5 w-3.5" />, label: "選擇" },
   { id: "pen", icon: <Pencil className="h-3.5 w-3.5" />, label: "畫筆" },
   { id: "eraser", icon: <Eraser className="h-3.5 w-3.5" />, label: "橡皮擦" },
@@ -29,73 +29,14 @@ const TOOLS: { id: CanvasTool; icon: React.ReactNode; label: string }[] = [
 
 const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a"]
 
-const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
-
 export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
-  const [pos, setPos] = useState({ x: 12, y: 130 })
-  const dragRef = useRef<{ startX: number; startY: number } | null>(null)
-
-  useEffect(() => {
-    const clampPos = (p: { x: number; y: number }) => ({
-      x: Math.min(Math.max(p.x, 4), window.innerWidth - 52),
-      y: Math.min(Math.max(p.y, 4), window.innerHeight - 60)
-    })
-    setPos(prev => clampPos(prev))
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragRef.current) return
-      setPos(clampPos({
-        x: e.clientX - dragRef.current.startX,
-        y: e.clientY - dragRef.current.startY
-      }))
-    }
-    const handleMouseUp = () => {
-      dragRef.current = null
-    }
-    window.addEventListener("mousemove", handleMouseMove)
-    window.addEventListener("mouseup", handleMouseUp)
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove)
-      window.removeEventListener("mouseup", handleMouseUp)
-    }
-  }, [])
-
   if (!canvasVisible) return null
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest("button")) return
-    e.preventDefault()
-    dragRef.current = { startX: e.clientX - pos.x, startY: e.clientY - pos.y }
-  }
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if ((e.target as HTMLElement).closest("button")) return
-    e.preventDefault()
-    const t = e.touches[0]
-    dragRef.current = { startX: t.clientX - pos.x, startY: t.clientY - pos.y }
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!dragRef.current) return
-    e.preventDefault()
-    const t = e.touches[0]
-    setPos({
-      x: Math.min(Math.max(t.clientX - dragRef.current.startX, 4), window.innerWidth - 52),
-      y: Math.min(Math.max(t.clientY - dragRef.current.startY, 4), window.innerHeight - 60)
-    })
-  }
-
-  const handleTouchEnd = () => {
-    dragRef.current = null
-  }
 
   return (
     <div
-      className="fixed z-50 flex flex-col items-center gap-1 rounded-xl border border-slate-200/50 bg-white/95 px-1.5 py-2 shadow-lg dark:border-slate-700/50 dark:bg-slate-900/95 cursor-move select-none"
-      style={{ left: pos.x, top: pos.y }}
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      role="toolbar"
+      aria-label="畫布工具"
+      className="fixed bottom-5 left-2 z-50 grid max-h-[50dvh] grid-cols-2 items-center gap-1 overflow-y-auto rounded-xl border border-slate-200/50 bg-white/95 p-2 shadow-lg dark:border-slate-700/50 dark:bg-slate-900/95 select-none"
     >
       <button
         onClick={onClose}
@@ -105,7 +46,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
         <X className="h-3.5 w-3.5" />
       </button>
 
-      <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
+      <div className="col-span-2 w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
 
       {TOOLS.map((tool) => (
         <button
@@ -122,9 +63,9 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
         </button>
       ))}
 
-      <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
+      <div className="col-span-2 w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
 
-      <div className="flex flex-col gap-1 items-center">
+      <div className="col-span-2 grid grid-cols-2 gap-2 justify-items-center" aria-label="四種顏色">
         {COLORS.map((c) => (
           <button
             key={c}
@@ -137,7 +78,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
         ))}
       </div>
 
-      <div className="w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
+      <div className="col-span-2 w-full h-px bg-slate-200 dark:bg-slate-600 my-0.5" />
 
       <button
         onClick={onUndo}

@@ -56,7 +56,8 @@ export default function WhiteboardShell() {
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
   const [canvasVisible, setCanvasVisible] = useState(true)
-  const [canvasTool, setCanvasTool] = useState<CanvasTool>("pen")
+  const [canvasTool, setCanvasTool] = useState<CanvasTool>("read")
+  const [highlightSelection, setHighlightSelection] = useState(false)
   const [canvasColor, setCanvasColor] = useState("#dc2626")
   const [touchOffsetX, setTouchOffsetX] = useState(0)
   const [touchOffsetY, setTouchOffsetY] = useState(0)
@@ -110,10 +111,11 @@ export default function WhiteboardShell() {
     setGhost(null)
     if (!tag || !readingRef.current || !canvasApiRef.current) return
     const rect = readingRef.current.getBoundingClientRect()
+    const canvasRect = readingRef.current.querySelector("canvas.upper-canvas")?.getBoundingClientRect()
     const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom
-    if (!inside) return
-    const x = e.clientX - rect.left - touchOffsetX
-    const y = e.clientY - rect.top - touchOffsetY
+    if (!inside || !canvasRect) return
+    const x = e.clientX - canvasRect.left - touchOffsetX
+    const y = e.clientY - canvasRect.top - touchOffsetY
     canvasApiRef.current.addText(tag.name, x, y, tag.color === "amber" ? "#f59e0b" : tag.color === "emerald" ? "#10b981" : tag.color === "sky" ? "#0ea5e9" : tag.color === "rose" ? "#f43f5e" : "#8b5cf6")
     setStickerBarOpen(false)
   }, [dragTag, touchOffsetX, touchOffsetY])
@@ -121,10 +123,15 @@ export default function WhiteboardShell() {
   useEffect(() => {
     if (!dragTag) return
     window.addEventListener("pointermove", stickerPointerMove)
+    const cancelDrag = () => { setDragTag(null); setGhost(null) }
     window.addEventListener("pointerup", stickerPointerUp)
+    window.addEventListener("pointercancel", cancelDrag)
+    window.addEventListener("blur", cancelDrag)
     return () => {
       window.removeEventListener("pointermove", stickerPointerMove)
       window.removeEventListener("pointerup", stickerPointerUp)
+      window.removeEventListener("pointercancel", cancelDrag)
+      window.removeEventListener("blur", cancelDrag)
     }
   }, [dragTag, stickerPointerMove, stickerPointerUp])
 
@@ -439,11 +446,11 @@ export default function WhiteboardShell() {
             {HIGHLIGHT_COLORS.map((c) => (
               <button
                 key={c}
-                onClick={() => setHighlightColor(c)}
+                onClick={() => { setHighlightColor(c); setHighlightSelection(true); setCanvasTool("read") }}
                 title={`${HIGHLIGHT_LABEL[c]}色螢光筆`}
                 className={cn(
                   "h-6 w-6 rounded-full transition-transform hover:scale-110",
-                  highlightColor === c ? "ring-2 ring-slate-700 dark:ring-white" : "ring-2 ring-transparent"
+                  highlightSelection && highlightColor === c ? "ring-2 ring-slate-700 dark:ring-white" : "ring-2 ring-transparent"
                 )}
                 style={{ backgroundColor: HIGHLIGHT_BG[c].replace(",0.32", ",0.85") }}
               />
@@ -565,36 +572,17 @@ export default function WhiteboardShell() {
           <>
             <div className="grid h-[calc(100vh-180px)] grid-cols-1">
                 <div className="relative h-full">
-                  <div
-                    ref={readingRef}
-                    className={cn(
-                      "relative h-full overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
-                      boardMode === "blackboard"
-                        ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
-                        : boardMode === "whiteboard"
-                        ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
-                        : "bg-white dark:bg-slate-900 shadow-2xl shadow-sky-100 dark:shadow-slate-900 ring-slate-200 dark:ring-slate-700"
-                    )}
-                    style={{ touchAction: "pan-y" }}
-                  onDragOver={(e) => {
-                    if (e.dataTransfer.types.includes("application/x-sticker")) {
-                      e.preventDefault()
-                      e.dataTransfer.dropEffect = "copy"
-                    }
-                  }}
-                  onDrop={(e) => {
-                    const tagId = e.dataTransfer.getData("application/x-sticker")
-                    if (!tagId) return
-                    e.preventDefault()
-                    const tag = tags.find(t => t.id === tagId)
-                    if (tag && readingRef.current && canvasApiRef.current) {
-                      const rect = readingRef.current.getBoundingClientRect()
-                      const x = e.clientX - rect.left
-                      const y = e.clientY - rect.top
-                      canvasApiRef.current.addText(tag.name, x, y, tag.color === "amber" ? "#f59e0b" : tag.color === "emerald" ? "#10b981" : tag.color === "sky" ? "#0ea5e9" : tag.color === "rose" ? "#f43f5e" : "#8b5cf6")
-                    }
-                    setStickerBarOpen(false)
-                  }}
+                <div
+                  ref={readingRef}
+                  className={cn(
+                    "relative h-full overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
+                    boardMode === "blackboard"
+                      ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
+                      : boardMode === "whiteboard"
+                      ? "bg-white shadow-2xl shadow-sky-200 ring-slate-200"
+                      : "bg-white dark:bg-slate-900 shadow-2xl shadow-sky-100 dark:shadow-slate-900 ring-slate-200 dark:ring-slate-700"
+                  )}
+                  style={{ touchAction: "pan-y" }}
                 >
                   {canvasVisible && (
                     <CanvasStage
@@ -623,7 +611,7 @@ export default function WhiteboardShell() {
                         }
                       }}
                       className={cn(
-                        "rounded-full px-3 py-1 text-xs font-bold transition-all",
+                        "relative z-50 rounded-full px-3 py-1 text-xs font-bold transition-all",
                         copyHint
                           ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
                           : "bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 dark:text-sky-300"
@@ -652,6 +640,7 @@ export default function WhiteboardShell() {
                     speakingId={speakingId}
                     voiceLang={voiceLang}
                     highlights={highlights}
+                    highlightSelection={highlightSelection && canvasTool === "read"}
                     onAddHighlight={addHighlight}
                     onRemoveHighlight={removeHighlight}
                     onSentenceClick={(s) => {
@@ -675,7 +664,6 @@ export default function WhiteboardShell() {
           open={stickerBarOpen}
           onClose={() => setStickerBarOpen(false)}
           onDragStart={(t) => { setDragTag(t); setGhost(null) }}
-          onDragEnd={() => {}}
         />
         {dragTag && ghost && (
           <div
@@ -694,7 +682,7 @@ export default function WhiteboardShell() {
 
       <CanvasToolbar
         currentTool={canvasTool}
-        onToolChange={setCanvasTool}
+        onToolChange={(tool) => { setCanvasTool(tool); setHighlightSelection(false) }}
         currentColor={canvasColor}
         onColorChange={setCanvasColor}
         onUndo={() => canvasApiRef.current?.undo()}

@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
 import { X, Pencil, Eraser, Square, Circle, Trash2, Minus, Highlighter, Type, Move, Undo2, Redo2 } from "lucide-react"
 
-export type CanvasTool = "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text"
+export type CanvasTool = "read" | "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -109,12 +109,14 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     if (!canvasElRef.current || !containerRef.current) return
 
     let canvas: any
+    let disposed = false
     let isDrawing = false
     let startPoint: any = null
     let currentShape: any = null
 
     const init = async () => {
       const { fabric } = await import("fabric")
+      if (disposed || !canvasElRef.current || !containerRef.current) return
       fabricModuleRef.current = fabric
 
       const container = containerRef.current!
@@ -300,16 +302,17 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       canvas.on("text:changed", () => saveHistory())
 
       canvas.setToolMode = setToolMode
-      setToolMode("pen")
+      setToolMode(toolRef.current)
       saveHistory()
     }
 
     init()
 
     return () => {
-      if (fabricRef.current) {
-        fabricRef.current.dispose()
-        fabricRef.current = null
+      disposed = true
+      if (canvas) {
+        canvas.dispose()
+        if (fabricRef.current === canvas) fabricRef.current = null
       }
     }
   }, [boardColor, containerRef])
@@ -408,7 +411,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
     <>
       <div
         className="absolute inset-0 z-40"
-        style={{ touchAction: "pan-y" }}
+        style={{ touchAction: tool === "read" ? "pan-y" : "none", pointerEvents: tool === "read" ? "none" : "auto" }}
       >
         <canvas ref={canvasElRef} />
       </div>
