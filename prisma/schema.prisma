@@ -77,16 +77,43 @@ model Poll {
   question     String
   isActive     Boolean      @default(true)
   correctIndex Int?
+  isQuiz       Boolean      @default(false)
   options      PollOption[]
+  answers      QuizAnswer[]
   createdAt    DateTime     @default(now())
+
+  @@index([isQuiz, createdAt])
 }
 
 model PollOption {
-  id     String @id @default(uuid())
-  pollId String
-  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  text   String
-  votes  Int    @default(0)
+  id            String  @id @default(uuid())
+  pollId        String
+  poll          Poll    @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  text          String
+  votes         Int     @default(0)
+  questionIndex Int     @default(0)
+  questionText  String?
+  optionIndex   Int     @default(0)
+  isCorrect     Boolean @default(false)
+  explanation   String?
+  answers       QuizAnswer[]
+
+  @@index([pollId, questionIndex, optionIndex])
+}
+
+model QuizAnswer {
+  id            String     @id @default(uuid())
+  pollId        String
+  poll          Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  voterId       String     @db.Uuid
+  questionIndex Int
+  optionId      String
+  option        PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([pollId, voterId, questionIndex])
+  @@index([optionId])
 }
 
 model WordCloud {

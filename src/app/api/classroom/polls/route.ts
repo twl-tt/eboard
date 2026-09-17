@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic"
 export async function GET() {
   try {
     const polls = await db.poll.findMany({
+      where: { isQuiz: false },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: { options: true }

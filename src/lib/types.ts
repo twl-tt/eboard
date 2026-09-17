@@ -56,6 +56,22 @@ export interface PollDTO {
   options: { id: string; text: string; votes: number }[]
 }
 
+export interface QuizDTO {
+  id: string
+  question: string
+  isActive: boolean
+  options: {
+    id: string
+    text: string
+    votes: number
+    questionIndex: number
+    questionText: string
+    isCorrect?: boolean
+    explanation?: string | null
+  }[]
+  answers?: Record<number, string>
+}
+
 export interface TagDTO {
   id: string
   name: string
