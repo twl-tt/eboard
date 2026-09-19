@@ -24,11 +24,12 @@ interface Props {
   onToolChange?: (tool: CanvasTool) => void
   currentColor?: string
   onColorChange?: (color: string) => void
+  brushSize?: number
   touchOffsetX?: number
   touchOffsetY?: number
 }
 
-export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef, currentTool, onToolChange, currentColor, onColorChange, touchOffsetX = 0, touchOffsetY = 0 }, ref) {
+export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ articleId, boardColor, containerRef, currentTool, onToolChange, currentColor, onColorChange, brushSize = 3, touchOffsetX = 0, touchOffsetY = 0 }, ref) {
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
   const fabricModuleRef = useRef<any>(null)
@@ -43,9 +44,18 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
   const historyIndexRef = useRef(-1)
   const toolRef = useRef<CanvasTool>(currentTool || "pen")
   const colorRef = useRef("#dc2626")
+  const brushSizeRef = useRef<number>(brushSize)
   const isErasingRef = useRef(false)
   const eraseRadiusRef = useRef(20)
   const touchOffsetRef = useRef({ x: touchOffsetX, y: touchOffsetY })
+
+  useEffect(() => {
+    brushSizeRef.current = brushSize
+    const canvas = fabricRef.current
+    if (canvas && canvas.freeDrawingBrush && (toolRef.current === "pen" || toolRef.current === "highlighter")) {
+      canvas.freeDrawingBrush.width = brushSize
+    }
+  }, [brushSize])
 
   useEffect(() => {
     touchOffsetRef.current = { x: touchOffsetX, y: touchOffsetY }

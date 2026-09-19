@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 interface Props {
   students: StudentDTO[]
   onRefresh: () => void | Promise<void>
+  classFilter: string
+  onClassFilterChange: (filter: string) => void
 }
 
 const GROUP_GRADIENTS = [
@@ -23,9 +25,8 @@ const GROUP_GRADIENTS = [
   "from-cyan-400 to-sky-600"
 ]
 
-export function GroupPanel({ students, onRefresh }: Props) {
+export function GroupPanel({ students, onRefresh, classFilter, onClassFilterChange }: Props) {
   const [groupCount, setGroupCount] = useState(4)
-  const [classFilter, setClassFilter] = useState("__all__")
   const [busy, setBusy] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -110,7 +111,7 @@ export function GroupPanel({ students, onRefresh }: Props) {
       {classes.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
           <button
-            onClick={() => setClassFilter("__all__")}
+            onClick={() => onClassFilterChange("__all__")}
             className={cn(
               "rounded-full border px-2.5 py-1 text-xs font-semibold transition-all",
               classFilter === "__all__"
@@ -125,7 +126,7 @@ export function GroupPanel({ students, onRefresh }: Props) {
             return (
               <button
                 key={c}
-                onClick={() => setClassFilter(c)}
+                onClick={() => onClassFilterChange(c)}
                 className={cn(
                   "rounded-full border px-2.5 py-1 text-xs font-semibold transition-all",
                   classFilter === c

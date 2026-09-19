@@ -9,13 +9,14 @@ import { cn } from "@/lib/utils"
 interface Props {
   students: StudentDTO[]
   onRefresh: () => void
+  classFilter: string
+  onClassFilterChange: (filter: string) => void
 }
 
-export function PointsPanel({ students, onRefresh }: Props) {
+export function PointsPanel({ students, onRefresh, classFilter, onClassFilterChange }: Props) {
   const [ranked, setRanked] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [classFilter, setClassFilter] = useState<string>("__all__")
   const [awardDelta, setAwardDelta] = useState<number>(1)
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export function PointsPanel({ students, onRefresh }: Props) {
         <div className="relative">
           <select
             value={classFilter}
-            onChange={(e) => setClassFilter(e.target.value)}
+            onChange={(e) => onClassFilterChange(e.target.value)}
             className="h-8 appearance-none rounded-lg border border-slate-300 bg-white pl-3 pr-8 text-sm dark:border-slate-700 dark:bg-slate-900"
           >
             <option value="__all__">全部班別</option>

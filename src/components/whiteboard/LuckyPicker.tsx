@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 
 interface Props {
   students: StudentDTO[]
+  classFilter: string
+  onClassFilterChange: (filter: string) => void
 }
 
 type Phase = "idle" | "roam" | "descend" | "grab" | "lift" | "move" | "drop" | "done"
@@ -30,7 +32,7 @@ const HOME_Y = 26
 const DROP_X = 222
 const DROP_Y = 318
 
-export function LuckyPicker({ students }: Props) {
+export function LuckyPicker({ students, classFilter, onClassFilterChange }: Props) {
   const [phase, setPhase] = useState<Phase>("idle")
   const [clawX, setClawX] = useState(HOME_X)
   const [highlight, setHighlight] = useState(-1)
@@ -38,7 +40,6 @@ export function LuckyPicker({ students }: Props) {
   const [winner, setWinner] = useState<StudentDTO | null>(null)
   const [awarding, setAwarding] = useState(false)
   const [awardError, setAwardError] = useState("")
-  const [classFilter, setClassFilter] = useState<string>("__all__")
   const timersRef = useRef<number[]>([])
   const rollToken = useRef(0)
 
@@ -93,7 +94,7 @@ export function LuckyPicker({ students }: Props) {
     return (
       <div className="flex flex-col items-center gap-3 py-6">
         <p className="text-sm text-slate-400">此班別暫無學生。</p>
-        <Button variant="secondary" onClick={() => setClassFilter("__all__")}>顯示全部</Button>
+        <Button variant="secondary" onClick={() => onClassFilterChange("__all__")}>顯示全部</Button>
       </div>
     )
   }
@@ -236,7 +237,7 @@ export function LuckyPicker({ students }: Props) {
       {classes.length > 0 && (
         <div className="flex w-full flex-wrap items-center justify-center gap-1.5">
           <button
-            onClick={() => setClassFilter("__all__")}
+            onClick={() => onClassFilterChange("__all__")}
             className={cn(
               "rounded-full border px-2.5 py-1 text-xs font-semibold transition-all",
               classFilter === "__all__"
@@ -251,7 +252,7 @@ export function LuckyPicker({ students }: Props) {
             return (
               <button
                 key={c}
-                onClick={() => setClassFilter(c)}
+                onClick={() => onClassFilterChange(c)}
                 className={cn(
                   "rounded-full border px-2.5 py-1 text-xs font-semibold transition-all",
                   classFilter === c

@@ -37,11 +37,13 @@ const ICONS: Record<Exclude<PanelKey, null>, React.ReactNode> = {
 }
 
 export interface ClassroomSuiteProps {
-  onToggleCanvas?: () => void
-  canvasVisible?: boolean
+  onToggleCanvas: () => void
+  canvasVisible: boolean
+  classFilter: string
+  onClassFilterChange: (filter: string) => void
 }
 
-export function ClassroomSuite({ onToggleCanvas, canvasVisible }: ClassroomSuiteProps) {
+export function ClassroomSuite({ onToggleCanvas, canvasVisible, classFilter, onClassFilterChange }: ClassroomSuiteProps) {
   const [panel, setPanel] = useState<PanelKey>(null)
   const [students, setStudents] = useState<StudentDTO[]>([])
 
@@ -125,9 +127,9 @@ whileTap={{ scale: 0.94 }}
             </div>
             <div className="overflow-y-auto p-4 pt-0">
               {panel === "timer" && <TimerPanel />}
-              {panel === "group" && <GroupPanel students={students} onRefresh={loadStudents} />}
-              {panel === "picker" && <LuckyPicker students={students} />}
-              {panel === "points" && <PointsPanel students={students} onRefresh={loadStudents} />}
+              {panel === "group" && <GroupPanel students={students} onRefresh={loadStudents} classFilter={classFilter} onClassFilterChange={onClassFilterChange} />}
+              {panel === "picker" && <LuckyPicker students={students} classFilter={classFilter} onClassFilterChange={onClassFilterChange} />}
+              {panel === "points" && <PointsPanel students={students} onRefresh={loadStudents} classFilter={classFilter} onClassFilterChange={onClassFilterChange} />}
               {panel === "poll" && <PollPanel />}
               {panel === "quiz" && <QuizPanel />}
               {panel === "wordcloud" && <WordCloudPanel />}

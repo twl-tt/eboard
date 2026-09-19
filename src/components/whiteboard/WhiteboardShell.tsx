@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Play, Square, Moon, Sun, ZoomIn, ZoomOut,
-  BookOpen, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker
+  BookOpen, Highlighter, X, Languages, Maximize2, Minimize2, Brush, Sticker, Settings
 } from "lucide-react"
 import type { ArticleFull, PhoneticMode, TagDTO } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -55,6 +55,8 @@ export default function WhiteboardShell() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [tags, setTags] = useState<{ id: string; name: string; category: string; color: string; sortOrder: number }[]>([])
   const [stickerBarOpen, setStickerBarOpen] = useState(false)
+  const [classFilter, setClassFilter] = useState<string>("__all__")
+  const [brushSize, setBrushSize] = useState<number>(3)
   const [canvasVisible, setCanvasVisible] = useState(true)
   const [canvasTool, setCanvasTool] = useState<CanvasTool>("read")
   const [highlightSelection, setHighlightSelection] = useState(false)
@@ -77,6 +79,8 @@ export default function WhiteboardShell() {
     const savedY = parseInt(localStorage.getItem("touchOffsetY") || "0")
     setTouchOffsetX(savedX)
     setTouchOffsetY(savedY)
+    const savedClass = localStorage.getItem("wrp_classFilter") || "__all__"
+    setClassFilter(savedClass)
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         stopSpeak()
@@ -530,6 +534,50 @@ export default function WhiteboardShell() {
             {isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
           </Button>
 
+          <div className="relative">
+            <Button size="icon" variant="ghost" title="觸控偏移校準">
+              <Settings className="h-5 w-5" />
+            </Button>
+            <div className="absolute right-0 top-full z-50 mt-2 hidden w-64 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95 group-hover:block">
+              <h3 className="mb-1 text-sm font-bold text-slate-700 dark:text-slate-200">觸控偏移校準</h3>
+              <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">調整觸控座標偏移量，以修正 HDMI 電視顯示器的硬體偏差。</p>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <label className="w-12 text-xs text-slate-600 dark:text-slate-300">X 偏移</label>
+                  <input
+                    type="number"
+                    value={touchOffsetX}
+                    onChange={(e) => setTouchOffsetX(parseInt(e.target.value) || 0)}
+                    className="h-8 w-20 rounded-lg border border-slate-300 px-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="w-12 text-xs text-slate-600 dark:text-slate-300">Y 偏移</label>
+                  <input
+                    type="number"
+                    value={touchOffsetY}
+                    onChange={(e) => setTouchOffsetY(parseInt(e.target.value) || 0)}
+                    className="h-8 w-20 rounded-lg border border-slate-300 px-2 text-sm dark:border-slate-600 dark:bg-slate-800"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  className="mt-1"
+                  onClick={() => {
+                    localStorage.setItem("touchOffsetX", String(touchOffsetX))
+                    localStorage.setItem("touchOffsetY", String(touchOffsetY))
+                    window.dispatchEvent(new CustomEvent("touch-offset-changed", { detail: { x: touchOffsetX, y: touchOffsetY } }))
+                  }}
+                >
+                  儲存校準值
+                </Button>
+              </div>
+              <p className="mt-2 border-t border-slate-200 pt-2 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                已儲存: <span className="font-mono text-amber-500">X: {touchOffsetX}, Y: {touchOffsetY}</span>
+              </p>
+            </div>
+          </div>
+
           <span className="mx-1 hidden h-6 w-px bg-slate-300/70 sm:block dark:bg-slate-700/70" />
 
           <a
@@ -557,13 +605,14 @@ export default function WhiteboardShell() {
                  articleId=""
                      boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : boardMode === "normal" ? "transparent" : null}
                  containerRef={readingRef}
-                 currentTool={canvasTool}
-                 onToolChange={setCanvasTool}
-                 currentColor={canvasColor}
-                 onColorChange={setCanvasColor}
-                 touchOffsetX={touchOffsetX}
-                 touchOffsetY={touchOffsetY}
-               />
+currentTool={canvasTool}
+                  onToolChange={setCanvasTool}
+                  currentColor={canvasColor}
+                  onColorChange={setCanvasColor}
+                  brushSize={brushSize}
+                  touchOffsetX={touchOffsetX}
+                  touchOffsetY={touchOffsetY}
+                />
             </div>
           </div>
         )}
@@ -590,13 +639,14 @@ export default function WhiteboardShell() {
                       articleId={article.id}
                       boardColor={boardMode === "blackboard" ? boardColor : boardMode === "whiteboard" ? "#ffffff" : null}
                       containerRef={readingRef as React.RefObject<HTMLDivElement>}
-                      currentTool={canvasTool}
-                      onToolChange={setCanvasTool}
-                      currentColor={canvasColor}
-                      onColorChange={setCanvasColor}
-                      touchOffsetX={touchOffsetX}
-                      touchOffsetY={touchOffsetY}
-                    />
+currentTool={canvasTool}
+                       onToolChange={setCanvasTool}
+                       currentColor={canvasColor}
+                       onColorChange={setCanvasColor}
+                       brushSize={brushSize}
+                       touchOffsetX={touchOffsetX}
+                       touchOffsetY={touchOffsetY}
+                     />
                   )}
                   <div className="mb-4 h-1.5 w-28 rounded-full bg-gradient-to-r from-sky-500 via-indigo-500 to-violet-500" />
                   <div className="mb-6 flex flex-wrap items-end justify-between gap-2 border-b border-dashed border-slate-300 pb-4 dark:border-slate-700">
@@ -680,21 +730,25 @@ export default function WhiteboardShell() {
         )}
       </main>
 
-      <CanvasToolbar
-        currentTool={canvasTool}
-        onToolChange={(tool) => { setCanvasTool(tool); setHighlightSelection(false) }}
-        currentColor={canvasColor}
-        onColorChange={setCanvasColor}
-        onUndo={() => canvasApiRef.current?.undo()}
-        onRedo={() => canvasApiRef.current?.redo()}
-        onClear={() => canvasApiRef.current?.clear()}
-        canvasVisible={canvasVisible}
-        onClose={() => setCanvasVisible(false)}
-      />
+<CanvasToolbar
+  currentTool={canvasTool}
+  onToolChange={(tool) => { setCanvasTool(tool); setHighlightSelection(false) }}
+  currentColor={canvasColor}
+  onColorChange={setCanvasColor}
+  brushSize={brushSize}
+  onBrushSizeChange={setBrushSize}
+  onUndo={() => canvasApiRef.current?.undo()}
+  onRedo={() => canvasApiRef.current?.redo()}
+  onClear={() => canvasApiRef.current?.clear()}
+  canvasVisible={canvasVisible}
+  onClose={() => setCanvasVisible(false)}
+/>
 
       <ClassroomSuite
         onToggleCanvas={() => setCanvasVisible(v => !v)}
         canvasVisible={canvasVisible}
+        classFilter={classFilter}
+        onClassFilterChange={setClassFilter}
       />
     </div>
   )

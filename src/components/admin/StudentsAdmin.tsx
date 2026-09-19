@@ -19,23 +19,11 @@ export function StudentsAdmin() {
   const [awardDelta, setAwardDelta] = useState<number>(1)
   const [editingPointsId, setEditingPointsId] = useState<string | null>(null)
   const [pointsInput, setPointsInput] = useState("")
-  const [touchOffsetX, setTouchOffsetX] = useState(0)
-  const [touchOffsetY, setTouchOffsetY] = useState(0)
 
   const load = useCallback(async () => {
     const res = await fetch("/api/students")
     if (res.ok) setStudents(await res.json())
-    const savedX = parseInt(localStorage.getItem("touchOffsetX") || "0")
-    const savedY = parseInt(localStorage.getItem("touchOffsetY") || "0")
-    setTouchOffsetX(savedX)
-    setTouchOffsetY(savedY)
   }, [])
-
-  const saveTouchOffset = () => {
-    localStorage.setItem("touchOffsetX", String(touchOffsetX))
-    localStorage.setItem("touchOffsetY", String(touchOffsetY))
-    window.dispatchEvent(new CustomEvent("touch-offset-changed", { detail: { x: touchOffsetX, y: touchOffsetY } }))
-  }
 
   useEffect(() => {
     load()
@@ -284,27 +272,6 @@ export function StudentsAdmin() {
             )}
           </tbody>
         </table>
-      </div>
-
-      <div className="mt-6 rounded-xl border border-slate-200 p-6 dark:border-slate-800">
-        <h2 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-4">觸控偏移校準</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">調整觸控座標偏移量，以修正 HDMI 電視顯示器的硬體偏差。</p>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <Label className="text-xs">X 偏移</Label>
-            <Input className="w-24" type="number" value={touchOffsetX} onChange={(e) => setTouchOffsetX(parseInt(e.target.value) || 0)} />
-          </div>
-          <div className="flex items-center gap-2">
-            <Label className="text-xs">Y 偏移</Label>
-            <Input className="w-24" type="number" value={touchOffsetY} onChange={(e) => setTouchOffsetY(parseInt(e.target.value) || 0)} />
-          </div>
-          <Button size="sm" onClick={saveTouchOffset}>儲存校準值</Button>
-        </div>
-        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            已儲存: <span className="font-mono text-amber-500">X: {touchOffsetX}, Y: {touchOffsetY}</span>
-          </p>
-        </div>
       </div>
     </div>
   )

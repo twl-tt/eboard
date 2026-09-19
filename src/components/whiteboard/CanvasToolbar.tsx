@@ -9,6 +9,8 @@ interface Props {
   onToolChange: (tool: CanvasTool) => void
   onColorChange: (color: string) => void
   currentColor: string
+  brushSize: number
+  onBrushSizeChange: (size: number) => void
   onUndo: () => void
   onRedo: () => void
   onClear: () => void
@@ -32,21 +34,27 @@ const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a"]
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
-export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, brushSize, onBrushSizeChange, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
+  const [pos, setPos] = useState<{ right: number; y: number } | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ dx: number; dy: number } | null>(null)
   const draggedRef = useRef(false)
+  const mountedRef = useRef(false)
+  const brushSizes = [3, 8, 16]
 
   useEffect(() => {
+    mountedRef.current = true
     const place = () => {
-      const w = barRef.current?.offsetWidth ?? 560
-      const h = barRef.current?.offsetHeight ?? 44
-      setPos(prev => prev ?? { x: window.innerWidth - w - 20, y: window.innerHeight - h - 356 })
+      const header = document.querySelector("header")
+      const headerBottom = header ? header.getBoundingClientRect().bottom + 12 : 56
+      if (mountedRef.current) setPos({ right: 20, y: headerBottom })
     }
     place()
     window.addEventListener("resize", place)
-    return () => window.removeEventListener("resize", place)
+    return () => {
+      mountedRef.current = false
+      window.removeEventListener("resize", place)
+    }
   }, [])
 
   if (!canvasVisible) return null
@@ -59,12 +67,16 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
   }
 
   useEffect(() => {
+    mountedRef.current = true
     const moveDrag = (e: PointerEvent) => {
-      if (!dragRef.current || !barRef.current) return
+      if (!dragRef.current || !barRef.current || !mountedRef.current) return
       const w = barRef.current.offsetWidth
       const h = barRef.current.offsetHeight
+      const vw = window.innerWidth
+      const right = Math.max(4, vw - (e.clientX - dragRef.current.dx) - w)
+      const clampedRight = clamp(right, 4, vw - 4)
       setPos({
-        x: clamp(e.clientX - dragRef.current.dx, 4, window.innerWidth - w - 4),
+        right: clampedRight,
         y: clamp(e.clientY - dragRef.current.dy, 4, window.innerHeight - h - 4)
       })
       draggedRef.current = true
@@ -74,13 +86,15 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
     window.addEventListener("pointerup", endDrag)
     window.addEventListener("pointercancel", endDrag)
     return () => {
+      mountedRef.current = false
       window.removeEventListener("pointermove", moveDrag)
       window.removeEventListener("pointerup", endDrag)
       window.removeEventListener("pointercancel", endDrag)
     }
   }, [])
+
   const suppressClickAfterDrag = (e: React.MouseEvent) => {
-    if (draggedRef.current) {
+    if (draggedRef.current && !(e.target as HTMLElement).closest("button")) {
       e.preventDefault()
       e.stopPropagation()
       draggedRef.current = false
@@ -88,7 +102,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
   }
 
   const toolBtn = (active: boolean) =>
-    `flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all ${
+    `flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all ${
       active ? "bg-sky-500 text-white" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
     }`
 
@@ -97,8 +111,8 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       ref={barRef}
       role="toolbar"
       aria-label="畫布工具"
-      className="fixed z-50 flex max-w-[calc(100vw-16px)] items-center gap-1 overflow-x-auto rounded-full border border-slate-200/60 bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/95 select-none touch-none cursor-move"
-      style={pos ? { left: pos.x, top: pos.y } : { right: 20, bottom: 356 }}
+      className="fixed z-50 flex max-h-[calc(100vh-400px)] flex-col items-center gap-1 overflow-y-auto rounded-full border border-slate-200/60 bg-white/95 py-1.5 px-1.5 shadow-lg backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/95 select-none touch-none cursor-move"
+      style={pos ? { right: pos.right, top: pos.y } : { right: 20, top: 16 }}
       onPointerDown={startDrag}
       onClickCapture={suppressClickAfterDrag}
     >
@@ -113,14 +127,14 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
         </button>
       ))}
 
-      <div className="mx-0.5 h-6 w-px shrink-0 bg-slate-200 dark:bg-slate-600" />
+      <div className="my-0.5 h-px w-5 shrink-0 bg-slate-200 dark:bg-slate-600" />
 
-      <div className="flex shrink-0 items-center gap-1.5 px-0.5" aria-label="四種顏色">
+      <div className="flex shrink-0 flex-col items-center gap-1 py-0.5" aria-label="四種顏色">
         {COLORS.map((c) => (
           <button
             key={c}
             onClick={() => onColorChange(c)}
-            className={`h-5 w-5 shrink-0 rounded-full border transition-transform hover:scale-110 ${
+            className={`h-4 w-4 shrink-0 rounded-full border transition-transform hover:scale-110 ${
               currentColor === c ? "border-sky-500 scale-110 ring-2 ring-sky-300" : "border-slate-300 dark:border-slate-600"
             }`}
             style={{ backgroundColor: c }}
@@ -129,7 +143,23 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
         ))}
       </div>
 
-      <div className="mx-0.5 h-6 w-px shrink-0 bg-slate-200 dark:bg-slate-600" />
+      <div className="my-0.5 h-px w-5 shrink-0 bg-slate-200 dark:bg-slate-600" />
+
+      <div className="flex shrink-0 flex-col items-center gap-1 py-0.5" aria-label="筆刷粗細">
+        {brushSizes.map((s) => (
+          <button
+            key={s}
+            onClick={() => onBrushSizeChange(s)}
+            className={`rounded-full border transition-all hover:scale-110 ${
+              brushSize === s ? "border-sky-500 ring-2 ring-sky-300" : "border-slate-300 dark:border-slate-600"
+            }`}
+            style={{ width: s + 4, height: s + 4, backgroundColor: currentColor }}
+            title={`筆刷 ${s}px`}
+          />
+        ))}
+      </div>
+
+      <div className="my-0.5 h-px w-5 shrink-0 bg-slate-200 dark:bg-slate-600" />
 
       <button onClick={onUndo} className={toolBtn(false)} title="復原">
         <Undo2 className="h-4 w-4" />
@@ -139,17 +169,17 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       </button>
       <button
         onClick={onClear}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
         title="清除"
       >
         <Trash2 className="h-4 w-4" />
       </button>
 
-      <div className="mx-0.5 h-6 w-px shrink-0 bg-slate-200 dark:bg-slate-600" />
+      <div className="my-0.5 h-px w-5 shrink-0 bg-slate-200 dark:bg-slate-600" />
 
       <button
         onClick={onClose}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
         title="關閉"
       >
         <X className="h-4 w-4" />
