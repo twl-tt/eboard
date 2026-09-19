@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic"
 const optionSchema = z.object({
   text: z.string().trim().min(1).max(1000),
   isCorrect: z.boolean().optional(),
-  explanation: z.string().max(10000).optional()
+  explanation: z.string().max(10000).nullish()
 })
 
 const createSchema = z.object({
@@ -18,7 +18,7 @@ const createSchema = z.object({
   questionType: z.enum(["SINGLE", "MULTIPLE", "TRUEFALSE", "SHORTANSWER", "MATCHING"] as const),
   options: z.array(optionSchema).min(1).max(16),
   correctAnswer: z.string().max(1000).nullable().optional(),
-  explanation: z.string().max(10000).optional()
+  explanation: z.string().max(10000).nullish()
 })
 
 export async function GET() {
@@ -68,7 +68,7 @@ const rowSchema = z.object({
   question: z.string().min(1).max(2000),
   options: z.array(z.string().min(1).max(1000)),
   answer: z.string().optional(),
-  explanation: z.string().max(10000).optional()
+  explanation: z.string().max(10000).nullish()
 })
 
 function parseTSV(text: string): Record<string, string>[] {

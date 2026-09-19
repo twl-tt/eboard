@@ -21,7 +21,11 @@ export function QuestionsAdmin() {
   const [questionType, setQuestionType] = useState<QuestionType>("SINGLE")
   const [explanation, setExplanation] = useState("")
   const [correctAnswer, setCorrectAnswer] = useState("")
-  const [options, setOptions] = useState<{ id: string; text: string; isCorrect: boolean; explanation?: string }[]>([{ id: "", text: "", isCorrect: true }])
+  const [options, setOptions] = useState<{ id: string; text: string; isCorrect: boolean; explanation?: string }[]>(() => {
+    const arr = [{ id: "", text: "", isCorrect: true }]
+    for (let i = 1; i < 4; i++) arr.push({ id: Math.random().toString(), text: "", isCorrect: false })
+    return arr
+  })
   const [saving, setSaving] = useState(false)
 
   const fileRef = useRef<HTMLInputElement>(null)
