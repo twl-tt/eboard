@@ -72,6 +72,25 @@ export interface QuizDTO {
   answers?: Record<number, string>
 }
 
+export type QuestionType = "SINGLE" | "MULTIPLE" | "TRUEFALSE" | "SHORTANSWER" | "MATCHING"
+
+export interface QuestionDTO {
+  id: string
+  question: string
+  isActive: boolean
+  questionType: QuestionType | null
+  correctAnswer: string | null
+  explanation: string | null
+  createdAt: string
+  options: {
+    id: string
+    text: string
+    votes: number
+    isCorrect: boolean
+    explanation: string | null
+  }[]
+}
+
 export interface TagDTO {
   id: string
   name: string

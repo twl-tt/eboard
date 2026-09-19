@@ -59,3 +59,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return jsonError(e)
   }
 }
+
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  try {
+    await db.poll.delete({ where: { id: params.id, isQuiz: false } })
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    return jsonError(e)
+  }
+}

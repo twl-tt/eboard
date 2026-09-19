@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
 import { motion } from "framer-motion"
-import { BarChart3, QrCode, Plus, Square } from "lucide-react"
+import { BarChart3, QrCode, Plus, Square, Trash2 } from "lucide-react"
 import { CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input, Textarea, Label } from "@/components/ui/input"
@@ -74,6 +74,11 @@ export function PollPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: false })
     })
+    loadList()
+  }
+
+  async function removePoll(id: string) {
+    await fetch(`/api/classroom/polls/${id}`, { method: "DELETE" })
     loadList()
   }
 
@@ -150,21 +155,23 @@ export function PollPanel() {
             })}
           </div>
 
-          <div className="flex w-full items-center justify-between">
-            <span className="text-xs text-slate-400">總票數：{totalVotes}</span>
-            {activePoll.correctIndex !== null && !activePoll.isActive && (
-              <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-300">
-                <CheckCircle2 className="h-3 w-3" /> 正解：{String.fromCharCode(65 + activePoll.correctIndex)}
-              </span>
-            )}
-            {activePoll.isActive ? (
-              <Button variant="destructive" size="sm" onClick={() => closePoll(activePoll.id)}>
-                <Square className="h-4 w-4" /> 結束投票
-              </Button>
-            ) : (
-              <span className="flex items-center gap-1 text-xs text-slate-400"><BarChart3 className="h-4 w-4" /> 已結束</span>
-            )}
-          </div>
+            <div className="flex w-full items-center justify-between">
+              <span className="text-xs text-slate-400">總票數：{totalVotes}</span>
+              {activePoll.correctIndex !== null && !activePoll.isActive && (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-300">
+                  <CheckCircle2 className="h-3 w-3" /> 正解：{String.fromCharCode(65 + activePoll.correctIndex)}
+                </span>
+              )}
+              {activePoll.isActive ? (
+                <Button variant="destructive" size="sm" onClick={() => closePoll(activePoll.id)}>
+                  <Square className="h-4 w-4" /> 結束投票
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => removePoll(activePoll.id)}>
+                  <Trash2 className="h-4 w-4" /> 刪除
+                </Button>
+              )}
+            </div>
           <p className="flex items-center gap-1 text-xs text-slate-400"><QrCode className="h-4 w-4" /> 學生掃描 QR Code 即可投票</p>
         </div>
       ) : (
