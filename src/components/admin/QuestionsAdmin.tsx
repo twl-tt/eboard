@@ -91,7 +91,9 @@ export function QuestionsAdmin() {
     setQuestionType("SINGLE")
     setExplanation("")
     setCorrectAnswer("")
-    setOptions([{ id: "", text: "", isCorrect: true }])
+    const arr = [{ id: "", text: "", isCorrect: true }]
+    for (let i = 1; i < 4; i++) arr.push({ id: Math.random().toString(), text: "", isCorrect: false })
+    setOptions(arr)
   }
 
   async function removeQuestion(id: string) {
