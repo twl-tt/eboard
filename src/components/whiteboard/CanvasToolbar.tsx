@@ -14,7 +14,6 @@ interface Props {
   onUndo: () => void
   onRedo: () => void
   onClear: () => void
-  canvasVisible: boolean
   onClose: () => void
 }
 
@@ -34,7 +33,7 @@ const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a"]
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
-export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, brushSize, onBrushSizeChange, onUndo, onRedo, onClear, canvasVisible, onClose }: Props) {
+export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, brushSize, onBrushSizeChange, onUndo, onRedo, onClear, onClose }: Props) {
   const [pos, setPos] = useState<{ right: number; y: number } | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ dx: number; dy: number } | null>(null)
@@ -56,8 +55,6 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       window.removeEventListener("resize", place)
     }
   }, [])
-
-  if (!canvasVisible) return null
 
   const startDrag = (e: React.PointerEvent) => {
     if (e.button !== 0) return
@@ -111,7 +108,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       ref={barRef}
       role="toolbar"
       aria-label="畫布工具"
-      className="fixed z-50 flex max-h-[calc(100vh-400px)] flex-col items-center gap-1 overflow-y-auto rounded-full border border-slate-200/60 bg-white/95 py-1.5 px-1.5 shadow-lg backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/95 select-none touch-none cursor-move"
+      className="fixed z-50 flex max-h-[calc(100vh-200px)] min-h-0 flex-col items-center gap-1 overflow-y-auto rounded-full border border-slate-200/60 bg-white/95 py-1.5 px-1.5 shadow-lg backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/95 select-none touch-none cursor-move"
       style={pos ? { right: pos.right, top: pos.y } : { right: 20, top: 16 }}
       onPointerDown={startDrag}
       onClickCapture={suppressClickAfterDrag}

@@ -730,19 +730,20 @@ currentTool={canvasTool}
         )}
       </main>
 
-<CanvasToolbar
-  currentTool={canvasTool}
-  onToolChange={(tool) => { setCanvasTool(tool); setHighlightSelection(false) }}
-  currentColor={canvasColor}
-  onColorChange={setCanvasColor}
-  brushSize={brushSize}
-  onBrushSizeChange={setBrushSize}
-  onUndo={() => canvasApiRef.current?.undo()}
-  onRedo={() => canvasApiRef.current?.redo()}
-  onClear={() => canvasApiRef.current?.clear()}
-  canvasVisible={canvasVisible}
-  onClose={() => setCanvasVisible(false)}
-/>
+      {canvasVisible && (
+        <CanvasToolbar
+          currentTool={canvasTool}
+          onToolChange={(tool) => { setCanvasTool(tool); setHighlightSelection(false) }}
+          currentColor={canvasColor}
+          onColorChange={setCanvasColor}
+          brushSize={brushSize}
+          onBrushSizeChange={setBrushSize}
+          onUndo={() => canvasApiRef.current?.undo()}
+          onRedo={() => canvasApiRef.current?.redo()}
+          onClear={() => canvasApiRef.current?.clear()}
+          onClose={() => setCanvasVisible(false)}
+        />
+      )}
 
       <ClassroomSuite
         onToggleCanvas={() => setCanvasVisible(v => !v)}
