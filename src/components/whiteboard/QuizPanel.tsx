@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
-import { Sparkles, Monitor, Send } from "lucide-react"
+import { Sparkles, Monitor, Send, Library, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select } from "@/components/ui/dialog"
-import type { ArticleMeta, QuizDTO } from "@/lib/types"
+import { Label } from "@/components/ui/input"
+import { Dialog, Select } from "@/components/ui/dialog"
+import { Checkbox } from "@/components/ui/checkbox"
+import type { ArticleMeta, QuizDTO, QuestionDTO, QuestionType } from "@/lib/types"
 import type { GeneratedQuestion } from "@/lib/highlight"
 import { QuizScreen } from "./QuizScreen"
 
@@ -18,6 +20,23 @@ function isQuestion(value: unknown): value is GeneratedQuestion {
     q.options.every(o => typeof o === "string" && o.trim().length > 0) &&
     Number.isInteger(q.correctIndex) && q.correctIndex >= 0 && q.correctIndex < q.options.length &&
     typeof q.explanation === "string"
+}
+
+function questionToGenerated(q: QuestionDTO): GeneratedQuestion | null {
+  const options = q.options.map(o => o.text)
+  if (q.questionType === 'MATCHING') return null
+  if (q.questionType === 'SHORTANSWER') {
+    if (!q.correctAnswer) return null
+    return { question: q.question, options: [q.correctAnswer, '其他'], correctIndex: 0, explanation: q.explanation ?? '' }
+  }
+  if (q.questionType === 'TRUEFALSE') {
+    const correct = q.options.find(o => o.isCorrect)
+    const correctIndex = options.indexOf(correct?.text ?? '')
+    return { question: q.question, options: options.length >= 2 ? options : ['正確', '錯誤'], correctIndex: correctIndex >= 0 ? correctIndex : 0, explanation: q.explanation ?? '' }
+  }
+  const correctIndex = q.options.findIndex(o => o.isCorrect)
+  if (correctIndex < 0) return null
+  return { question: q.question, options, correctIndex, explanation: q.explanation ?? '' }
 }
 
 export function QuizPanel() {
@@ -35,6 +54,12 @@ export function QuizPanel() {
   const [quiz, setQuiz] = useState<QuizDTO | null>(null)
   const [origin, setOrigin] = useState("")
   const [draftLoaded, setDraftLoaded] = useState(false)
+  const [bankQuestions, setBankQuestions] = useState<QuestionDTO[]>([])
+  const [bankArticleId, setBankArticleId] = useState("")
+  const [bankType, setBankType] = useState<QuestionType | "">("")
+  const [bankLoading, setBankLoading] = useState(false)
+  const [bankDialogOpen, setBankDialogOpen] = useState(false)
+  const [selectedBankIds, setSelectedBankIds] = useState<Set<string>>(new Set())
   const requestVersion = useRef(0)
   const actionLock = useRef(false)
 
@@ -62,6 +87,11 @@ export function QuizPanel() {
     }).catch(e => { if (!cancelled) setError(e.message) })
     return () => { cancelled = true; requestVersion.current++ }
   }, [])
+
+  useEffect(() => {
+    if (!bankDialogOpen) return
+    loadBankQuestions()
+  }, [bankDialogOpen, bankArticleId, bankType])
 
   useEffect(() => {
     if (!draftLoaded) return
@@ -116,6 +146,38 @@ export function QuizPanel() {
     }
   }
 
+  async function loadBankQuestions() {
+    setBankLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (bankArticleId) params.set('articleId', bankArticleId)
+      if (bankType) params.set('questionType', bankType)
+      const res = await fetch(`/api/classroom/questions?${params.toString()}`)
+      const data = await res.json()
+      if (res.ok) {
+        setBankQuestions(Array.isArray(data) ? data : [])
+      }
+    } catch {}
+    finally { setBankLoading(false) }
+  }
+
+  function toggleBankSelect(id: string) {
+    setSelectedBankIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function addSelectedBankQuestions() {
+    const selected = bankQuestions.filter(q => selectedBankIds.has(q.id))
+    const generated = selected.map(questionToGenerated).filter((q): q is GeneratedQuestion => q !== null)
+    setQuestions(prev => [...prev, ...generated])
+    setSelectedBankIds(new Set())
+    setBankDialogOpen(false)
+  }
+
   async function publish() {
     if (!questions.length || actionLock.current) return
     actionLock.current = true
@@ -166,17 +228,100 @@ export function QuizPanel() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-[1fr_auto] gap-2">
-        <Select aria-label="選擇文章" value={articleId} disabled={generating || sending} onChange={e => setArticleId(e.target.value)}>
-          <option value="">選擇文章…</option>
-          {articles.map(a => <option key={a.id} value={a.id}>{a.grade} · {a.title}</option>)}
-        </Select>
-        <Input aria-label="題目數量" type="number" min={1} max={10} value={count} disabled={generating || sending} onChange={e => setCount(Math.max(1, Math.min(10, Math.floor(Number(e.target.value) || 1))))} className="w-20" />
-      </div>
+<div className="grid grid-cols-[1fr_auto] gap-2">
+         <Select aria-label="選擇文章" value={articleId} disabled={generating || sending} onChange={e => setArticleId(e.target.value)}>
+           <option value="">選擇文章…</option>
+           {articles.map(a => <option key={a.id} value={a.id}>{a.grade} · {a.title}</option>)}
+         </Select>
+         <Input aria-label="題目數量" type="number" min={1} max={10} value={count} disabled={generating || sending} onChange={e => setCount(Math.max(1, Math.min(10, Math.floor(Number(e.target.value) || 1))))} className="w-20" />
+         <Button onClick={() => {
+           setBankArticleId('');
+           setBankType('');
+           setSelectedBankIds(new Set());
+           setBankDialogOpen(true);
+         }} disabled={generating || sending}>
+           <Library className="h-4 w-4" /> 從題庫選擇
+         </Button>
+       </div>
       <Button onClick={generate} disabled={!articleId || generating || sending}>
         <Sparkles className="h-4 w-4" />{generating ? "生成中…" : `AI 生成 ${count} 題測驗`}
       </Button>
       {error && <p role="alert" className="rounded-xl bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-300">{error}</p>}
+      <Dialog open={bankDialogOpen} onClose={() => {
+        setBankDialogOpen(false)
+        setSelectedBankIds(new Set())
+      }} title="從題庫選擇題目" wide>
+        <div className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>相關文章</Label>
+              <Select value={bankArticleId} onChange={(e) => setBankArticleId(e.target.value)}>
+                <option value="">全部文章</option>
+                {articles.map(a => <option key={a.id} value={a.id}>{a.title}</option>)}
+              </Select>
+            </div>
+            <div>
+              <Label>題型</Label>
+              <Select value={bankType} onChange={(e) => setBankType(e.target.value as QuestionType | "")}>
+                <option value="">全部題型</option>
+                <option value="SINGLE">單選題</option>
+                <option value="MULTIPLE">多選題</option>
+                <option value="TRUEFALSE">判斷題</option>
+                <option value="SHORTANSWER">簡答題</option>
+                <option value="MATCHING">配對題</option>
+              </Select>
+            </div>
+          </div>
+          <div className="h-[300px] overflow-y-auto space-y-1">
+            {bankQuestions.length === 0 && bankLoading ? (
+              <p className="text-center text-sm text-slate-400">載入中…</p>
+            ) : bankQuestions.length === 0 ? (
+              <p className="text-center text-sm text-slate-400">尚未有題目。先在 admin → 題庫管理 新增題目。</p>
+            ) : (
+              bankQuestions.map((q) => (
+                <div
+                  key={q.id}
+                  className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2"
+                  style={{ borderColor: selectedBankIds.has(q.id) ? "border-sky-500" : "transparent" }}
+                >
+                  <Checkbox
+                    checked={selectedBankIds.has(q.id)}
+                    onChange={() => toggleBankSelect(q.id)}
+                    className="h-4 w-4 shrink-0"
+                  />
+                  <span className="text-sm font-medium truncate max-w-xs">{q.question}</span>
+                  <span className="text-xs text-slate-500 truncate max-w-xs">{q.questionType ?? ''}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-0"
+                    title="取消選擇"
+                    onClick={() => toggleBankSelect(q.id)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
+          {bankQuestions.length > 0 && (
+            <p className="text-xs text-slate-400">
+              {selectedBankIds.size} / {bankQuestions.length} 題已選擇
+            </p>
+          )}
+          <div className="mt-4 flex gap-3">
+            <Button variant="ghost" onClick={() => {
+              setBankDialogOpen(false)
+              setSelectedBankIds(new Set())
+            }}>
+              取消
+            </Button>
+            <Button onClick={addSelectedBankQuestions} disabled={bankLoading}>
+              {bankLoading ? "加入中…" : `加入 ${selectedBankIds.size} 題`}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
       {questions.length > 0 && (
         <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
           <p className="font-bold">{title} · {questions.length} 題</p>

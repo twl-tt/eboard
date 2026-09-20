@@ -22,10 +22,24 @@ const createSchema = z.object({
   articleId: z.string().nullable().optional()
 })
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url)
+    const q = searchParams.get("q")?.trim()
+    const articleId = searchParams.get("articleId")?.trim()
+    const questionType = searchParams.get("questionType")?.trim()
+    const where: any = { isQuiz: false, questionType: { not: null } }
+    if (articleId) {
+      where.articleId = articleId
+    }
+    if (q) {
+      where.OR = [{ question: { contains: q, mode: "insensitive" } }, { explanation: { contains: q, mode: "insensitive" } }]
+    }
+    if (questionType === "SINGLE" || questionType === "MULTIPLE" || questionType === "TRUEFALSE" || questionType === "SHORTANSWER" || questionType === "MATCHING") {
+      where.questionType = questionType
+    }
     const questions = await db.poll.findMany({
-      where: { isQuiz: false, questionType: { not: null } },
+      where,
       orderBy: { createdAt: "desc" },
       take: 100,
       include: questionInclude
