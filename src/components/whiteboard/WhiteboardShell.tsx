@@ -18,7 +18,6 @@ import { ArticlePicker } from "./ArticlePicker"
 import { ReadingPane } from "./ReadingPane"
 import { CanvasStage, type CanvasApi, type CanvasTool } from "./CanvasStage"
 import { ClassroomSuite } from "./ClassroomSuite"
-import { CanvasToolbar } from "./CanvasToolbar"
 import { ReorderMode } from "./ReorderMode"
 import { DictLookup } from "./DictLookup"
 import { StickerBar } from "./StickerBar"
@@ -730,26 +729,21 @@ currentTool={canvasTool}
         )}
       </main>
 
-      {canvasVisible && (
-        <CanvasToolbar
-          currentTool={canvasTool}
-          onToolChange={(tool) => { setCanvasTool(tool); setHighlightSelection(false) }}
-          currentColor={canvasColor}
-          onColorChange={setCanvasColor}
-          brushSize={brushSize}
-          onBrushSizeChange={setBrushSize}
-          onUndo={() => canvasApiRef.current?.undo()}
-          onRedo={() => canvasApiRef.current?.redo()}
-          onClear={() => canvasApiRef.current?.clear()}
-          onClose={() => setCanvasVisible(false)}
-        />
-      )}
-
       <ClassroomSuite
         onToggleCanvas={() => setCanvasVisible(v => !v)}
         canvasVisible={canvasVisible}
         classFilter={classFilter}
         onClassFilterChange={setClassFilter}
+        currentTool={canvasTool}
+        onToolChange={(tool) => { setCanvasTool(tool); setHighlightSelection(false) }}
+        currentColor={canvasColor}
+        onColorChange={setCanvasColor}
+        brushSize={brushSize}
+        onBrushSizeChange={setBrushSize}
+        onUndo={() => canvasApiRef.current?.undo()}
+        onRedo={() => canvasApiRef.current?.redo()}
+        onClear={() => canvasApiRef.current?.clear()}
+        onCloseToolbar={() => setCanvasVisible(false)}
       />
     </div>
   )

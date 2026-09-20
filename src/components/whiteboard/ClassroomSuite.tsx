@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Dices, Star, BarChart3, Brain, X, Users, GraduationCap, Cloud, Pencil, Clock, Timer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { StudentDTO } from "@/lib/types"
+import type { CanvasTool } from "./CanvasStage"
 import { LuckyPicker } from "./LuckyPicker"
 import { PointsPanel } from "./PointsPanel"
 import { PollPanel } from "./PollPanel"
@@ -12,6 +13,7 @@ import { QuizPanel } from "./QuizPanel"
 import { GroupPanel } from "./GroupPanel"
 import { WordCloudPanel } from "./WordCloudPanel"
 import { TimerPanel } from "./TimerPanel"
+import { CanvasToolbar } from "./CanvasToolbar"
 import { cn } from "@/lib/utils"
 
 type PanelKey = "timer" | "group" | "picker" | "points" | "poll" | "quiz" | "wordcloud" | null
@@ -41,9 +43,34 @@ export interface ClassroomSuiteProps {
   canvasVisible: boolean
   classFilter: string
   onClassFilterChange: (filter: string) => void
+  currentTool: CanvasTool
+  onToolChange: (tool: CanvasTool) => void
+  currentColor: string
+  onColorChange: (color: string) => void
+  brushSize: number
+  onBrushSizeChange: (size: number) => void
+  onUndo: () => void
+  onRedo: () => void
+  onClear: () => void
+  onCloseToolbar: () => void
 }
 
-export function ClassroomSuite({ onToggleCanvas, canvasVisible, classFilter, onClassFilterChange }: ClassroomSuiteProps) {
+export function ClassroomSuite({
+  onToggleCanvas,
+  canvasVisible,
+  classFilter,
+  onClassFilterChange,
+  currentTool,
+  onToolChange,
+  currentColor,
+  onColorChange,
+  brushSize,
+  onBrushSizeChange,
+  onUndo,
+  onRedo,
+  onClear,
+  onCloseToolbar,
+}: ClassroomSuiteProps) {
   const [panel, setPanel] = useState<PanelKey>(null)
   const [students, setStudents] = useState<StudentDTO[]>([])
 
@@ -63,15 +90,15 @@ export function ClassroomSuite({ onToggleCanvas, canvasVisible, classFilter, onC
 
   return (
     <>
-      <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-2.5">
+      <div className="fixed bottom-5 left-5 z-40 flex flex-col gap-2.5">
         {onToggleCanvas && (
           <motion.button
             key="canvas"
-            initial={{ opacity: 0, x: 60 }}
+            initial={{ opacity: 0, x: -60 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0, type: "spring", stiffness: 260, damping: 22 }}
             whileHover={{ scale: 1.07, y: -2 }}
-whileTap={{ scale: 0.94 }}
+            whileTap={{ scale: 0.94 }}
             onClick={onToggleCanvas}
             className={cn(
               "flex h-[52px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
@@ -84,7 +111,23 @@ whileTap={{ scale: 0.94 }}
             <Pencil className="h-5 w-5" />
             <span className="text-xs font-black tracking-wide">畫板</span>
           </motion.button>
-          )}
+        )}
+      </div>
+      {canvasVisible && (
+        <CanvasToolbar
+          currentTool={currentTool}
+          onToolChange={onToolChange}
+          currentColor={currentColor}
+          onColorChange={onColorChange}
+          brushSize={brushSize}
+          onBrushSizeChange={onBrushSizeChange}
+          onUndo={onUndo}
+          onRedo={onRedo}
+          onClear={onClear}
+          onClose={onCloseToolbar}
+        />
+      )}
+      <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-2.5">
         {keys.map((k, i) => (
           <motion.button
             key={k}
