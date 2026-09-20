@@ -1,12 +1,68 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Plus, Search, Pencil, Trash2, Upload, CheckCircle2 } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, Upload, CheckCircle2, ChevronDown, ChevronUp, Trash } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input, Textarea, Textarea as DialogTextarea, Label } from "@/components/ui/input"
 import { Dialog, Select } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
+import { ArticlePicker } from "../whiteboard/ArticlePicker"
 import type { QuestionDTO, QuestionType } from "@/lib/types"
+
+interface OptionEditorProps {
+  index: number
+  opt: { id: string; text: string; isCorrect: boolean; explanation?: string }
+  updateOption: (id: string, field: "text" | "isCorrect" | "explanation", value: string | boolean) => void
+  removeOption: (id: string) => void
+}
+
+function OptionEditor({ index, opt, updateOption, removeOption }: OptionEditorProps) {
+  const [showExplanation, setShowExplanation] = useState(false)
+  return (
+    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-2">
+      <div className="flex items-center gap-2">
+        <Checkbox
+          checked={opt.isCorrect}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateOption(opt.id, "isCorrect", e.target.checked)}
+          className="h-4 w-4 shrink-0"
+        />
+        <span className="w-6 text-center text-sm font-medium text-slate-500">{String.fromCharCode(65 + index)}.</span>
+        <Input
+          value={opt.text}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateOption(opt.id, "text", e.target.value)}
+          placeholder={`選項 ${String.fromCharCode(65 + index)}`}
+          className="flex-1 min-w-0"
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0"
+          onClick={() => setShowExplanation(!showExplanation)}
+          title={showExplanation ? "隱藏說明" : "顯示說明"}
+        >
+          {showExplanation ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0 text-red-500 hover:bg-red-500/10"
+          onClick={() => removeOption(opt.id)}
+          title="刪除選項"
+        >
+          <Trash className="h-4 w-4" />
+        </Button>
+      </div>
+      {showExplanation && (
+        <DialogTextarea
+          value={opt.explanation ?? ""}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateOption(opt.id, "explanation", e.target.value)}
+          placeholder="選項說明（可選）"
+          className="mt-2"
+        />
+      )}
+    </div>
+  )
+}
 
 export function QuestionsAdmin() {
   const [questions, setQuestions] = useState<QuestionDTO[]>([])
@@ -19,6 +75,7 @@ export function QuestionsAdmin() {
 
   const [question, setQuestion] = useState("")
   const [questionType, setQuestionType] = useState<QuestionType>("SINGLE")
+  const [articleId, setArticleId] = useState<string | null>(null)
   const [explanation, setExplanation] = useState("")
   const [correctAnswer, setCorrectAnswer] = useState("")
   const [options, setOptions] = useState<{ id: string; text: string; isCorrect: boolean; explanation?: string }[]>(() => {
@@ -69,6 +126,7 @@ export function QuestionsAdmin() {
           questionType,
           explanation: explanation.trim() || null,
           correctAnswer: questionType === "SHORTANSWER" ? correctAnswer.trim() || null : null,
+          articleId: articleId,
           options: options.map((opt, index) => ({
             text: opt.text.trim(),
             isCorrect: opt.isCorrect,
@@ -89,6 +147,7 @@ export function QuestionsAdmin() {
     setEditId(null)
     setQuestion("")
     setQuestionType("SINGLE")
+    setArticleId(null)
     setExplanation("")
     setCorrectAnswer("")
     const arr = [{ id: "", text: "", isCorrect: true }]
@@ -154,28 +213,30 @@ export function QuestionsAdmin() {
                 <div key={q.id} className="border rounded-xl p-4 bg-white dark:bg-slate-800">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold">{q.question}</h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        <span className="px-2 py-0.5 rounded text-xs font-medium 
-                          {q.questionType === 'SINGLE' ? 'bg-blue-100 text-blue-800' 
-                            : q.questionType === 'MULTIPLE' ? 'bg-green-100 text-green-800'
-                            : q.questionType === 'TRUEFALSE' ? 'bg-purple-100 text-purple-800'
-                            : q.questionType === 'SHORTANSWER' ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'}">
-                          {q.questionType === 'SINGLE' ? '單選題' 
-                            : q.questionType === 'MULTIPLE' ? '多選題'
-                            : q.questionType === 'TRUEFALSE' ? '判斷題'
-                            : q.questionType === 'SHORTANSWER' ? '簡答題'
-                            : '配對題'}
-                        </span>
-                        {q.explanation && <span className="ml-2 text-xs text-slate-400">· {q.explanation}</span>}
-                      </p>
+<h3 className="font-semibold">{q.question}</h3>
+                       <p className="mt-1 text-sm text-slate-500">
+                         <span className="px-2 py-0.5 rounded text-xs font-medium 
+                           {q.questionType === 'SINGLE' ? 'bg-blue-100 text-blue-800' 
+                             : q.questionType === 'MULTIPLE' ? 'bg-green-100 text-green-800'
+                             : q.questionType === 'TRUEFALSE' ? 'bg-purple-100 text-purple-800'
+                             : q.questionType === 'SHORTANSWER' ? 'bg-yellow-100 text-yellow-800'
+                             : 'bg-gray-100 text-gray-800'}">
+                           {q.questionType === 'SINGLE' ? '單選題' 
+                             : q.questionType === 'MULTIPLE' ? '多選題'
+                             : q.questionType === 'TRUEFALSE' ? '判斷題'
+                             : q.questionType === 'SHORTANSWER' ? '簡答題'
+                             : '配對題'}
+                         </span>
+                         {q.articleId && <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-800">已指定文章</span>}
+                         {q.explanation && <span className="ml-2 text-xs text-slate-400">· {q.explanation}</span>}
+                       </p>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       <Button variant="ghost" size="icon" title="編輯" onClick={() => {
                         setEditId(q.id)
                         setQuestion(q.question)
                         setQuestionType(q.questionType ?? "SINGLE")
+                        setArticleId(q.articleId ?? null)
                         setExplanation(q.explanation ?? "")
                         setCorrectAnswer(q.correctAnswer ?? "")
                         setOptions(q.options.map(o => ({ id: o.id, text: o.text, isCorrect: o.isCorrect })))
@@ -241,31 +302,26 @@ export function QuestionsAdmin() {
             </div>
           </div>
 
-          {questionType !== "SHORTANSWER" && (
+          <div>
+              <Label>相關文章</Label>
+              <ArticlePicker
+                value={articleId}
+                onChange={(id) => setArticleId(id)}
+              />
+            </div>
+
+            {questionType !== "SHORTANSWER" && (
             <div>
               <Label>選項</Label>
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {options.map((opt, idx) => (
-                  <div key={opt.id} className="flex items-start space-x-3">
-                    <Checkbox
-                      checked={opt.isCorrect}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateOption(opt.id, "isCorrect", e.target.checked)}
-                      className="h-4 w-4 mt-1"
-                    />
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <Input
-                        value={opt.text}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateOption(opt.id, "text", e.target.value)}
-                        placeholder={`選項 ${String.fromCharCode(65 + idx)}`}
-                      />
-<DialogTextarea
-                        value={opt.explanation ?? ""}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateOption(opt.id, "explanation", e.target.value)}
-                        placeholder="選項說明（可選）"
-                        className="mt-1"
-                      />
-                    </div>
-                  </div>
+                  <OptionEditor
+                    key={opt.id}
+                    index={idx}
+                    opt={opt}
+                    updateOption={updateOption}
+                    removeOption={removeOption}
+                  />
                 ))}
               </div>
             </div>

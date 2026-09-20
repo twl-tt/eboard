@@ -11,7 +11,8 @@ const questionSchema = z.object({
   questionType: z.enum(["SINGLE", "MULTIPLE", "TRUEFALSE", "SHORTANSWER", "MATCHING"]).optional(),
   options: z.array(z.object({ text: z.string().min(1).max(1000), isCorrect: z.boolean(), explanation: z.string().max(10000).optional() })).optional(),
   explanation: z.string().max(10000).optional(),
-  correctAnswer: z.string().max(1000).optional()
+  correctAnswer: z.string().max(1000).optional(),
+  articleId: z.string().nullable().optional()
 })
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
@@ -33,6 +34,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         question: body.question,
         questionType: body.questionType,
         explanation: body.explanation,
+        correctAnswer: body.correctAnswer,
+        articleId: body.articleId ?? null,
         options: body.options ? {
           deleteMany: {},
           create: body.options.map((opt, optionIndex) => ({

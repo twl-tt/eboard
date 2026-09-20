@@ -18,7 +18,8 @@ const createSchema = z.object({
   questionType: z.enum(["SINGLE", "MULTIPLE", "TRUEFALSE", "SHORTANSWER", "MATCHING"] as const),
   options: z.array(optionSchema).min(1).max(16),
   correctAnswer: z.string().max(1000).nullable().optional(),
-  explanation: z.string().max(10000).nullish()
+  explanation: z.string().max(10000).nullish(),
+  articleId: z.string().nullable().optional()
 })
 
 export async function GET() {
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
         questionType: body.questionType as QuestionType,
         explanation: body.explanation ?? null,
         correctAnswer: body.correctAnswer ?? null,
+        articleId: body.articleId ?? null,
         options: {
           create: body.options.map((opt, optionIndex) => ({
             text: opt.text,

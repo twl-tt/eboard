@@ -133,13 +133,17 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       const rect = container.getBoundingClientRect()
 
       canvas = new fabric.Canvas(canvasElRef.current, {
-        width: rect.width,
-        height: rect.height,
+        width: Math.floor(rect.width),
+        height: Math.floor(rect.height),
         backgroundColor: boardColor || null,
         selection: true,
         allowTouchScrolling: true
       })
       fabricRef.current = canvas
+      canvas.setDimensions({
+        width: Math.floor(rect.width),
+        height: Math.floor(rect.height)
+      })
 
       // Apply touch offset to adjust touch coordinates
       const applyTouchOffset = () => {
@@ -423,7 +427,10 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         className="absolute inset-0 z-40"
         style={{ touchAction: tool === "read" ? "pan-y" : "none", pointerEvents: tool === "read" ? "none" : "auto" }}
       >
-        <canvas ref={canvasElRef} />
+        <canvas
+          ref={canvasElRef}
+          style={{ width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%" }}
+        />
       </div>
     </>
   )

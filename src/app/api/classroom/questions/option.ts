@@ -18,6 +18,7 @@ export function questionDTO(
     questionType: question.questionType ?? null,
     correctAnswer: question.correctAnswer ?? null,
     explanation: question.explanation ?? null,
+    articleId: question.articleId ?? null,
     createdAt: question.createdAt.toISOString(),
     options: question.options.map((option) => ({
       id: option.id,

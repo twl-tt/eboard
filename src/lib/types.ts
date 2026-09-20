@@ -81,6 +81,7 @@ export interface QuestionDTO {
   questionType: QuestionType | null
   correctAnswer: string | null
   explanation: string | null
+  articleId: string | null
   createdAt: string
   options: {
     id: string

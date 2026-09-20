@@ -89,11 +89,13 @@ model Poll {
   correctAnswer String?
   explanation   String?       @db.Text
   isQuiz        Boolean       @default(false)
+  articleId     String?
   options       PollOption[]
   answers       QuizAnswer[]
   createdAt     DateTime     @default(now())
 
   @@index([isQuiz, createdAt])
+  @@index([articleId])
 }
 
 model PollOption {

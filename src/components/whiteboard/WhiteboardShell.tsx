@@ -624,7 +624,7 @@ currentTool={canvasTool}
                 <div
                   ref={readingRef}
                   className={cn(
-                    "relative h-full overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
+                    "relative h-full overflow-x-hidden overflow-y-auto rounded-3xl p-7 pb-24 ring-1 backdrop-blur",
                     boardMode === "blackboard"
                       ? "bg-slate-900 shadow-2xl shadow-slate-900 ring-slate-700"
                       : boardMode === "whiteboard"
