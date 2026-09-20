@@ -44,6 +44,8 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
 
   const startDrag = (e: React.PointerEvent) => {
     if (e.button !== 0 || !barRef.current) return
+    const target = e.target as HTMLElement
+    if (target.closest('button')) return
     const rect = barRef.current.getBoundingClientRect()
     dragRef.current = { startX: e.clientX, startY: e.clientY, startRect: rect, newOffset: { x: offset.x, y: offset.y } }
     draggedRef.current = false
