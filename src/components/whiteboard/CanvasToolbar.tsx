@@ -34,7 +34,7 @@ const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a"]
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
 export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, brushSize, onBrushSizeChange, onUndo, onRedo, onClear, onClose }: Props) {
-  const [pos, setPos] = useState<{ left: number; y: number } | null>(null)
+  const [pos, setPos] = useState<{ right: number; bottom: number } | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ dx: number; dy: number } | null>(null)
   const draggedRef = useRef(false)
@@ -44,7 +44,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
   useEffect(() => {
     mountedRef.current = true
     const place = () => {
-      if (mountedRef.current) setPos({ left: 20, y: window.innerHeight - 200 })
+      if (mountedRef.current) setPos({ right: 90, bottom: 20 })
     }
     place()
     window.addEventListener("resize", place)
@@ -68,11 +68,11 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       const w = barRef.current.offsetWidth
       const h = barRef.current.offsetHeight
       const vw = window.innerWidth
-      const left = Math.max(4, (e.clientX - dragRef.current.dx))
-      const clampedLeft = clamp(left, 4, vw - 4)
+      const right = Math.max(4, vw - (e.clientX - dragRef.current.dx) - w)
+      const clampedRight = clamp(right, 4, vw - 4)
       setPos({
-        left: clampedLeft,
-        y: clamp(e.clientY - dragRef.current.dy, 4, window.innerHeight - h - 4)
+        right: clampedRight,
+        bottom: clamp(e.clientY - dragRef.current.dy, 4, window.innerHeight - h - 4)
       })
       draggedRef.current = true
     }
@@ -107,7 +107,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       role="toolbar"
       aria-label="畫布工具"
       className="fixed z-50 flex max-h-[calc(100vh-200px)] min-h-0 flex-col items-center gap-1 overflow-y-auto rounded-full border border-slate-200/60 bg-white/95 py-1.5 px-1.5 shadow-lg backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/95 select-none touch-none cursor-move"
-      style={pos ? { left: pos.left, top: pos.y } : { left: 20, top: 16 }}
+      style={pos ? { right: pos.right, bottom: pos.bottom } : { right: 90, bottom: 20 }}
       onPointerDown={startDrag}
       onClickCapture={suppressClickAfterDrag}
     >
