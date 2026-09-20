@@ -224,7 +224,6 @@ switch (t) {
           if (existing) {
             canvas.setActiveObject(existing)
             existing.enterEditing()
-            existing.focus()
             return
           }
           const text = new fabric.IText("", {
@@ -239,7 +238,6 @@ switch (t) {
           canvas.renderAll()
           requestAnimationFrame(() => {
             text.enterEditing()
-            text.focus()
           })
           return
         }
