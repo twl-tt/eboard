@@ -90,7 +90,7 @@ export function ClassroomSuite({
 
   return (
     <>
-      <div className="fixed bottom-5 left-5 z-40 flex flex-col items-start gap-2.5">
+      <div className="fixed bottom-5 right-5 z-40 flex flex-row items-end gap-2.5">
         {canvasVisible && (
           <CanvasToolbar
             currentTool={currentTool}
