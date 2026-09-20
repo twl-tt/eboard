@@ -219,6 +219,14 @@ switch (t) {
         if (toolRef.current === "select") return
         if (toolRef.current === "text") {
           const pointer = canvas.getPointer(options.e)
+          const textObjects = canvas.getObjects().filter((obj: any) => obj.type === "i-text")
+          const existing = textObjects.find((obj: any) => obj.containsPoint(pointer))
+          if (existing) {
+            canvas.setActiveObject(existing)
+            existing.enterEditing()
+            existing.focus()
+            return
+          }
           const text = new fabric.IText("", {
             left: pointer.x,
             top: pointer.y,
@@ -228,9 +236,11 @@ switch (t) {
           })
           canvas.add(text)
           canvas.setActiveObject(text)
-          text.enterEditing()
-          setTool("select")
-          saveHistory()
+          canvas.renderAll()
+          requestAnimationFrame(() => {
+            text.enterEditing()
+            text.focus()
+          })
           return
         }
         if (toolRef.current === "eraser") {
