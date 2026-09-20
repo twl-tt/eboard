@@ -66,7 +66,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       const originTop = dragRef.current.baseTop + dragRef.current.startOffset.y
       const clampedLeft = clamp(originLeft + dx, 4, vw - w - 4)
       const clampedTop = clamp(originTop + dy, 4, vh - h - 4)
-      const newOffset = { x: clampedLeft - originLeft, y: clampedTop - originTop }
+      const newOffset = { x: clampedLeft - dragRef.current.baseLeft, y: clampedTop - dragRef.current.baseTop }
       dragRef.current.newOffset = newOffset
       toolbar.style.transform = `translate(${newOffset.x}px, ${newOffset.y}px)`
       draggedRef.current = true
