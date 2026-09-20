@@ -44,7 +44,17 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
   useEffect(() => {
     mountedRef.current = true
     const place = () => {
-      if (mountedRef.current) setPos({ right: 90, bottom: 20 })
+      const toolbar = barRef.current
+      if (!toolbar || !mountedRef.current) return
+      const rect = toolbar.getBoundingClientRect()
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      const toolbarWidth = rect.width
+      const toolbarHeight = rect.height
+
+      const right = Math.max(4, viewportWidth - (rect.left + toolbarWidth))
+      const bottom = Math.max(4, viewportHeight - (rect.bottom))
+      setPos({ right, bottom })
     }
     place()
     window.addEventListener("resize", place)
@@ -65,14 +75,29 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
     mountedRef.current = true
     const moveDrag = (e: PointerEvent) => {
       if (!dragRef.current || !barRef.current || !mountedRef.current) return
-      const w = barRef.current.offsetWidth
-      const h = barRef.current.offsetHeight
+      const toolbar = barRef.current
+      const w = toolbar.offsetWidth
+      const h = toolbar.offsetHeight
       const vw = window.innerWidth
-      const right = Math.max(4, vw - (e.clientX - dragRef.current.dx) - w)
-      const clampedRight = clamp(right, 4, vw - 4)
+      const vh = window.innerHeight
+      const toolbarLeft = e.clientX - dragRef.current.dx
+      const toolbarTop = e.clientY - dragRef.current.dy
+
+      const clampedLeft = clamp(toolbarLeft, 4, vw - w - 4)
+      const clampedTop = clamp(toolbarTop, 4, vh - h - 4)
+
+      const currentRect = toolbar.getBoundingClientRect()
+      const deltaX = clampedLeft - currentRect.left
+      const deltaY = clampedTop - currentRect.top
+
+      toolbar.style.right = "auto"
+      toolbar.style.bottom = "auto"
+      toolbar.style.left = `${clampedLeft}px`
+      toolbar.style.top = `${clampedTop}px`
+
       setPos({
-        right: clampedRight,
-        bottom: clamp(e.clientY - dragRef.current.dy, 4, window.innerHeight - h - 4)
+        right: vw - clampedLeft - w,
+        bottom: vh - clampedTop - h
       })
       draggedRef.current = true
     }

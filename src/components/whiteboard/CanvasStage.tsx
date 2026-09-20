@@ -181,26 +181,36 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
         canvas.selection = false
         canvas.forEachObject((obj: any) => { obj.selectable = false; obj.evented = false })
 
-        switch (t) {
-          case "select":
-            canvas.selection = true
-            canvas.forEachObject((obj: any) => { obj.selectable = true; obj.evented = true })
-            break
-          case "pen":
-            canvas.isDrawingMode = true
-            canvas.freeDrawingBrush.color = colorRef.current
-            canvas.freeDrawingBrush.width = 3
-            break
-          case "eraser":
-            canvas.isDrawingMode = false
-            eraseRadiusRef.current = 20
-            break
-          case "highlighter":
-            canvas.isDrawingMode = true
-            canvas.freeDrawingBrush.color = colorRef.current + "80"
-            canvas.freeDrawingBrush.width = 25
-            break
-        }
+switch (t) {
+        case "select":
+          canvas.selection = true
+          canvas.forEachObject((obj: any) => { obj.selectable = true; obj.evented = true })
+          break
+        case "pen":
+          canvas.isDrawingMode = true
+          canvas.freeDrawingBrush.color = colorRef.current
+          canvas.freeDrawingBrush.width = 3
+          break
+        case "eraser":
+          canvas.isDrawingMode = false
+          eraseRadiusRef.current = 20
+          break
+        case "highlighter":
+          canvas.isDrawingMode = true
+          canvas.freeDrawingBrush.color = colorRef.current + "80"
+          canvas.freeDrawingBrush.width = 25
+          break
+        case "text":
+          canvas.isDrawingMode = false
+          canvas.selection = false
+          canvas.forEachObject((obj: any) => { obj.selectable = false; obj.evented = false })
+          break
+        case "read":
+          canvas.isDrawingMode = false
+          canvas.selection = false
+          canvas.forEachObject((obj: any) => { obj.selectable = false; obj.evented = false })
+          break
+      }
       }
 
       canvas.on("mouse:down", (options: any) => {
