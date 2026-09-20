@@ -37,7 +37,7 @@ const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min)
 export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, brushSize, onBrushSizeChange, onUndo, onRedo, onClear, onClose, className }: Props) {
   const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const barRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef<{ startX: number; startY: number; startRect: DOMRect; newOffset: { x: number; y: number } } | null>(null)
+  const dragRef = useRef<{ startX: number; startY: number; baseLeft: number; baseTop: number; newOffset: { x: number; y: number } } | null>(null)
   const draggedRef = useRef(false)
   const mountedRef = useRef(false)
   const brushSizes = [3, 8, 16]
@@ -47,7 +47,7 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
     const target = e.target as HTMLElement
     if (target.closest('button')) return
     const rect = barRef.current.getBoundingClientRect()
-    dragRef.current = { startX: e.clientX, startY: e.clientY, startRect: rect, newOffset: { x: offset.x, y: offset.y } }
+    dragRef.current = { startX: e.clientX, startY: e.clientY, baseLeft: rect.left - offset.x, baseTop: rect.top - offset.y, newOffset: { x: offset.x, y: offset.y } }
     draggedRef.current = false
   }
 
@@ -62,10 +62,9 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       const h = toolbar.offsetHeight
       const vw = window.innerWidth
       const vh = window.innerHeight
-      const currentRect = toolbar.getBoundingClientRect()
-      const clampedLeft = clamp(currentRect.left + dx, 4, vw - w - 4)
-      const clampedTop = clamp(currentRect.top + dy, 4, vh - h - 4)
-      const newOffset = { x: clampedLeft - dragRef.current.startRect.left, y: clampedTop - dragRef.current.startRect.top }
+      const clampedLeft = clamp(dragRef.current.baseLeft + dx, 4, vw - w - 4)
+      const clampedTop = clamp(dragRef.current.baseTop + dy, 4, vh - h - 4)
+      const newOffset = { x: clampedLeft - dragRef.current.baseLeft, y: clampedTop - dragRef.current.baseTop }
       dragRef.current.newOffset = newOffset
       toolbar.style.transform = `translate(${newOffset.x}px, ${newOffset.y}px)`
       draggedRef.current = true
