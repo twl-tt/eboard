@@ -680,26 +680,27 @@ currentTool={canvasTool}
                       )}
                     </div>
                   </div>
-                  <ReadingPane
-                    sentences={article.sentences}
-                    phonetic={phonetic}
-                    fontSizeRem={fontSizeRem}
-                    focusMode={focusMode}
-                    focusId={focusId}
-                    speakingId={speakingId}
-                    voiceLang={voiceLang}
-                    highlights={highlights}
-                    highlightSelection={highlightSelection && canvasTool === "read"}
-                    onAddHighlight={addHighlight}
-                    onRemoveHighlight={removeHighlight}
-                    onSentenceClick={(s) => {
-                      if (focusMode) {
-                        setFocusId(s.id === focusId ? null : s.id)
-                        celebrate(0.5, 0.35)
-                      }
-                    }}
-                    showExplanation={showExplanation}
-                  />
+                    <ReadingPane
+                      sentences={article.sentences}
+                      phonetic={phonetic}
+                      fontSizeRem={fontSizeRem}
+                      focusMode={focusMode}
+                      focusId={focusId}
+                      speakingId={speakingId}
+                      voiceLang={voiceLang}
+                      highlights={highlights}
+                      highlightSelection={highlightSelection && canvasTool === "read"}
+                      onAddHighlight={addHighlight}
+                      onRemoveHighlight={removeHighlight}
+                      onSentenceClick={(s) => {
+                        if (focusMode) {
+                          setFocusId(s.id === focusId ? null : s.id)
+                          celebrate(0.5, 0.35)
+                        }
+                      }}
+                      showExplanation={showExplanation}
+                      currentTool={canvasTool}
+                    />
                   <div className="sticky bottom-0 flex justify-center pb-2 pt-4 pointer-events-none">
                     <div className="h-1 w-24 rounded-full bg-slate-300 dark:bg-slate-600 shadow-lg" />
                   </div>

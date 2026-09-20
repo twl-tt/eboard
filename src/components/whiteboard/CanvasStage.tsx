@@ -132,7 +132,7 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
       const container = containerRef.current!
       const rect = container.getBoundingClientRect()
       const initialWidth = Math.floor(rect.width)
-      const initialHeight = Math.floor(container.scrollHeight || rect.height)
+      const initialHeight = Math.floor(rect.height)
 
       canvas = new fabric.Canvas(canvasElRef.current, {
         width: initialWidth,
@@ -346,11 +346,15 @@ switch (t) {
   useEffect(() => {
     if (!fabricRef.current || !containerRef.current) return
     const c = fabricRef.current
-    c.setDimensions({
-      width: Math.floor(containerRef.current.scrollWidth),
-      height: Math.floor(containerRef.current.scrollHeight)
-    })
-  }, [articleId])
+    const onScroll = () => {
+      c.calcOffset()
+      c.renderAll()
+    }
+    containerRef.current.addEventListener("scroll", onScroll)
+    return () => {
+      containerRef.current?.removeEventListener("scroll", onScroll)
+    }
+  }, [])
 
   useEffect(() => {
     if (!fabricRef.current) return

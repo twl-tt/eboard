@@ -36,8 +36,9 @@ export function ReadingPane({
   onAddHighlight,
   onRemoveHighlight,
   showExplanation = false,
-  highlightSelection = false
-}: Props) {
+  highlightSelection = false,
+  currentTool = "read"
+}: Props & { currentTool?: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const hlBySentence = useMemo(() => {
     const map = new Map<string, Highlight[]>()
@@ -111,57 +112,58 @@ export function ReadingPane({
                 speakingId === s.id && "animate-pulse bg-amber-400/30 shadow-lg shadow-amber-500/20 ring-2 ring-amber-400"
               )}
             >
-              {s.tokens.map((t, ti) => {
-                const cover = (hlBySentence.get(s.id) ?? []).find((h) => h.tokenStart <= ti && h.tokenEnd >= ti)
-                const inner = isHanzi(t.ch[0]) ? (
-                  <ruby key={ti} data-tk={`${s.id}|${ti}`} className="ruby">
-                    {t.ch}
-                    {phonetic !== "off" && (
-                      <rt
-                        className={cn(
-                          "select-none font-sans font-normal tracking-widest text-slate-500 dark:text-slate-400",
-                          phonetic === "pinyin" ? "" : "text-[0.95em]"
-                        )}
-                        style={{ fontSize: "0.42em" }}
-                      >
-                        {phonetic === "pinyin" ? t.py : "?"}
-                      </rt>
+                        {s.tokens.map((t, ti) => {
+            const cover = (hlBySentence.get(s.id) ?? []).find((h) => h.tokenStart <= ti && h.tokenEnd >= ti)
+            const inner = isHanzi(t.ch[0]) ? (
+              <ruby key={ti} data-tk={`${s.id}|${ti}`} className="ruby">
+                {t.ch}
+                {phonetic !== "off" && (
+                  <rt
+                    className={cn(
+                      "select-none font-sans font-normal tracking-widest text-slate-500 dark:text-slate-400",
+                      phonetic === "pinyin" ? "" : "text-[0.95em]"
                     )}
-                  </ruby>
-                ) : (
-                  <span key={ti} data-tk={`${s.id}|${ti}`}>
-                    {t.ch}
-                  </span>
-                )
-                if (cover) {
-                  return (
-                    <mark
-                      key={`m-${ti}`}
-                      data-hid={cover.id}
-                      title="點擊以刪除螢光筆"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onRemoveHighlight(cover.id)
-                      }}
-                      className="cursor-pointer rounded-md transition-all hover:brightness-110"
-                      style={{ backgroundColor: HIGHLIGHT_BG[cover.color as HighlightColor], padding: "0 1px" }}
-                    >
-                      {inner}
-                    </mark>
-                  )
-                }
-                return <span key={ti}>{inner}</span>
-              })}
-              <button
-                className="absolute -right-2 -top-3 hidden rounded-full bg-sky-600 p-1 text-white shadow hover:bg-sky-500 group-hover:block"
-                title="朗讀此句"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  speakSeq([{ id: s.id, text: s.text }], voiceLang, {})
-                }}
-              >
-                <Volume2 className="h-4 w-4" />
-              </button>
+                    style={{ fontSize: "0.42em" }}
+                  >
+                    {phonetic === "pinyin" ? t.py : "?"}
+                  </rt>
+                )}
+              </ruby>
+            ) : (
+              <span key={ti} data-tk={`${s.id}|${ti}`}>
+                {t.ch}
+              </span>
+            )
+            if (cover) {
+              return (
+                <mark
+                  key={`m-${ti}`}
+                  data-hid={cover.id}
+                  title="點擊以刪除螢光筆"
+                  onClick={(e) => {
+                    if (currentTool === "text") return
+                    e.stopPropagation()
+                    onRemoveHighlight(cover.id)
+                  }}
+                  className="cursor-pointer rounded-md transition-all hover:brightness-110"
+                  style={{ backgroundColor: HIGHLIGHT_BG[cover.color as HighlightColor], padding: "0 1px" }}
+                >
+                  {inner}
+                </mark>
+              )
+            }
+            return <span key={ti}>{inner}</span>
+          })}
+          <button
+            className="absolute -right-2 -top-3 hidden rounded-full bg-sky-600 p-1 text-white shadow hover:bg-sky-500 group-hover:block"
+            title="朗讀此句"
+            onClick={(e) => {
+              e.stopPropagation()
+              speakSeq([{ id: s.id, text: s.text }], voiceLang, {})
+            }}
+          >
+            <Volume2 className="h-4 w-4" />
+          </button>
             </span>
             {showExplanation && s.explanation && (
               <span className="ml-2 mr-2 inline-block translate-y-[-0.35em] rounded-xl border border-emerald-500/30 bg-emerald-50 px-3 py-1 align-middle text-xs text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-900/30 dark:text-emerald-300">
