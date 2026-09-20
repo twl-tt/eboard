@@ -90,29 +90,6 @@ export function ClassroomSuite({
 
   return (
     <>
-      <div className="fixed bottom-5 left-5 z-40 flex flex-col gap-2.5">
-        {onToggleCanvas && (
-          <motion.button
-            key="canvas"
-            initial={{ opacity: 0, x: -60 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0, type: "spring", stiffness: 260, damping: 22 }}
-            whileHover={{ scale: 1.07, y: -2 }}
-            whileTap={{ scale: 0.94 }}
-            onClick={onToggleCanvas}
-            className={cn(
-              "flex h-[52px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
-              canvasVisible
-                ? "from-sky-500 to-indigo-600 shadow-sky-500/40"
-                : "from-slate-500 to-slate-700 shadow-slate-500/40"
-            )}
-            title={canvasVisible ? "隱藏畫板" : "顯示畫板"}
-          >
-            <Pencil className="h-5 w-5" />
-            <span className="text-xs font-black tracking-wide">畫板</span>
-          </motion.button>
-        )}
-      </div>
       {canvasVisible && (
         <CanvasToolbar
           currentTool={currentTool}
@@ -128,6 +105,27 @@ export function ClassroomSuite({
         />
       )}
       <div className="fixed bottom-5 right-5 z-40 flex flex-col gap-2.5">
+        {onToggleCanvas && (
+          <motion.button
+            key="canvas"
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.12 * (keys.length + 1), type: "spring", stiffness: 260, damping: 22 }}
+            whileHover={{ scale: 1.07, y: -2 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={onToggleCanvas}
+            className={cn(
+              "flex h-[52px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-2xl bg-gradient-to-br text-white shadow-xl transition-shadow",
+              canvasVisible
+                ? "from-sky-500 to-indigo-600 shadow-sky-500/40"
+                : "from-slate-500 to-slate-700 shadow-slate-500/40"
+            )}
+            title={canvasVisible ? "隱藏畫板" : "顯示畫板"}
+          >
+            <Pencil className="h-5 w-5" />
+            <span className="text-xs font-black tracking-wide">畫板</span>
+          </motion.button>
+        )}
         {keys.map((k, i) => (
           <motion.button
             key={k}
