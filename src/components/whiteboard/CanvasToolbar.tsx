@@ -15,6 +15,7 @@ interface Props {
   onRedo: () => void
   onClear: () => void
   onClose: () => void
+  className?: string
 }
 
 const TOOLS: { id: CanvasTool; icon: React.ReactNode; label: string }[] = [
@@ -33,41 +34,18 @@ const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a"]
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
 
-export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, brushSize, onBrushSizeChange, onUndo, onRedo, onClear, onClose }: Props) {
-  const [pos, setPos] = useState<{ right: number; bottom: number } | null>(null)
+export function CanvasToolbar({ currentTool, onToolChange, onColorChange, currentColor, brushSize, onBrushSizeChange, onUndo, onRedo, onClear, onClose, className }: Props) {
+  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const barRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef<{ dx: number; dy: number } | null>(null)
+  const dragRef = useRef<{ startX: number; startY: number; startRect: DOMRect; newOffset: { x: number; y: number } } | null>(null)
   const draggedRef = useRef(false)
   const mountedRef = useRef(false)
   const brushSizes = [3, 8, 16]
 
-  useEffect(() => {
-    mountedRef.current = true
-    const place = () => {
-      const toolbar = barRef.current
-      if (!toolbar || !mountedRef.current) return
-      const rect = toolbar.getBoundingClientRect()
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
-      const toolbarWidth = rect.width
-      const toolbarHeight = rect.height
-
-      const right = Math.max(4, viewportWidth - (rect.left + toolbarWidth))
-      const bottom = Math.max(4, viewportHeight - (rect.bottom))
-      setPos({ right, bottom })
-    }
-    place()
-    window.addEventListener("resize", place)
-    return () => {
-      mountedRef.current = false
-      window.removeEventListener("resize", place)
-    }
-  }, [])
-
   const startDrag = (e: React.PointerEvent) => {
-    if (e.button !== 0) return
-    const rect = barRef.current!.getBoundingClientRect()
-    dragRef.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top }
+    if (e.button !== 0 || !barRef.current) return
+    const rect = barRef.current.getBoundingClientRect()
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startRect: rect, newOffset: { x: offset.x, y: offset.y } }
     draggedRef.current = false
   }
 
@@ -75,50 +53,32 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
     mountedRef.current = true
     const moveDrag = (e: PointerEvent) => {
       if (!dragRef.current || !barRef.current || !mountedRef.current) return
+      const dx = e.clientX - dragRef.current.startX
+      const dy = e.clientY - dragRef.current.startY
       const toolbar = barRef.current
       const w = toolbar.offsetWidth
       const h = toolbar.offsetHeight
       const vw = window.innerWidth
       const vh = window.innerHeight
-      const toolbarLeft = e.clientX - dragRef.current.dx
-      const toolbarTop = e.clientY - dragRef.current.dy
-
-      const clampedLeft = clamp(toolbarLeft, 4, vw - w - 4)
-      const clampedTop = clamp(toolbarTop, 4, vh - h - 4)
-
       const currentRect = toolbar.getBoundingClientRect()
-      const deltaX = clampedLeft - currentRect.left
-      const deltaY = clampedTop - currentRect.top
-
-      toolbar.style.right = "auto"
-      toolbar.style.bottom = "auto"
-      toolbar.style.left = `${clampedLeft}px`
-      toolbar.style.top = `${clampedTop}px`
-
-      setPos({
-        right: vw - clampedLeft - w,
-        bottom: vh - clampedTop - h
-      })
+      const clampedLeft = clamp(currentRect.left + dx, 4, vw - w - 4)
+      const clampedTop = clamp(currentRect.top + dy, 4, vh - h - 4)
+      const newOffset = { x: clampedLeft - dragRef.current.startRect.left, y: clampedTop - dragRef.current.startRect.top }
+      dragRef.current.newOffset = newOffset
+      toolbar.style.transform = `translate(${newOffset.x}px, ${newOffset.y}px)`
       draggedRef.current = true
     }
-    const endDrag = () => { dragRef.current = null }
+    const endDrag = () => {
+      if (dragRef.current) { setOffset(dragRef.current.newOffset); dragRef.current = null }
+    }
     window.addEventListener("pointermove", moveDrag)
     window.addEventListener("pointerup", endDrag)
     window.addEventListener("pointercancel", endDrag)
-    return () => {
-      mountedRef.current = false
-      window.removeEventListener("pointermove", moveDrag)
-      window.removeEventListener("pointerup", endDrag)
-      window.removeEventListener("pointercancel", endDrag)
-    }
+    return () => { window.removeEventListener("pointermove", moveDrag); window.removeEventListener("pointerup", endDrag); window.removeEventListener("pointercancel", endDrag) }
   }, [])
 
   const suppressClickAfterDrag = (e: React.MouseEvent) => {
-    if (draggedRef.current && !(e.target as HTMLElement).closest("button")) {
-      e.preventDefault()
-      e.stopPropagation()
-      draggedRef.current = false
-    }
+    if (draggedRef.current && !(e.target as HTMLElement).closest("button")) { e.preventDefault(); e.stopPropagation(); draggedRef.current = false }
   }
 
   const toolBtn = (active: boolean) =>
@@ -131,8 +91,8 @@ export function CanvasToolbar({ currentTool, onToolChange, onColorChange, curren
       ref={barRef}
       role="toolbar"
       aria-label="畫布工具"
-      className="fixed z-50 flex max-h-[calc(100vh-200px)] min-h-0 flex-col items-center gap-1 overflow-y-auto rounded-full border border-slate-200/60 bg-white/95 py-1.5 px-1.5 shadow-lg backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/95 select-none touch-none cursor-move"
-      style={pos ? { right: pos.right, bottom: pos.bottom } : { right: 90, bottom: 20 }}
+      className={`z-50 flex max-h-[calc(100vh-200px)] min-h-0 flex-col items-center gap-1 overflow-y-auto rounded-full border border-slate-200/60 bg-white/95 py-1.5 px-1.5 shadow-lg backdrop-blur dark:border-slate-700/50 dark:bg-slate-900/95 select-none touch-none cursor-move flex-shrink-0 ${className || ""}`}
+      style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
       onPointerDown={startDrag}
       onClickCapture={suppressClickAfterDrag}
     >
