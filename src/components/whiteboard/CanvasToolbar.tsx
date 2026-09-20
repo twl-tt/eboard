@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Pencil, Eraser, Square, Circle, Minus, Type, Highlighter, Move, Undo2, Redo2, Trash2, X } from "lucide-react"
+import { Pencil, Eraser, Square, Circle, Minus, Type, Highlighter, Move, Undo2, Redo2, Trash2, X, MousePointer2 } from "lucide-react"
 import type { CanvasTool } from "./CanvasStage"
 
 interface Props {
@@ -19,7 +19,7 @@ interface Props {
 }
 
 const TOOLS: { id: CanvasTool; icon: React.ReactNode; label: string }[] = [
-  { id: "read", icon: <Type className="h-4 w-4" />, label: "選取及複製課文" },
+  { id: "read", icon: <MousePointer2 className="h-4 w-4" />, label: "選取及複製課文" },
   { id: "select", icon: <Move className="h-4 w-4" />, label: "選擇" },
   { id: "pen", icon: <Pencil className="h-4 w-4" />, label: "畫筆" },
   { id: "eraser", icon: <Eraser className="h-4 w-4" />, label: "橡皮擦" },

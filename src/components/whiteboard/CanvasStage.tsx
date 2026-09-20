@@ -131,18 +131,20 @@ export const CanvasStage = forwardRef<CanvasApi, Props>(function CanvasStage({ a
 
       const container = containerRef.current!
       const rect = container.getBoundingClientRect()
+      const initialWidth = Math.floor(rect.width)
+      const initialHeight = Math.floor(container.scrollHeight || rect.height)
 
       canvas = new fabric.Canvas(canvasElRef.current, {
-        width: Math.floor(rect.width),
-        height: Math.floor(rect.height),
+        width: initialWidth,
+        height: initialHeight,
         backgroundColor: boardColor || null,
         selection: true,
         allowTouchScrolling: true
       })
       fabricRef.current = canvas
       canvas.setDimensions({
-        width: Math.floor(rect.width),
-        height: Math.floor(rect.height)
+        width: initialWidth,
+        height: initialHeight
       })
 
       // Apply touch offset to adjust touch coordinates
@@ -340,6 +342,15 @@ switch (t) {
       }
     }
   }, [boardColor, containerRef])
+
+  useEffect(() => {
+    if (!fabricRef.current || !containerRef.current) return
+    const c = fabricRef.current
+    c.setDimensions({
+      width: Math.floor(containerRef.current.scrollWidth),
+      height: Math.floor(containerRef.current.scrollHeight)
+    })
+  }, [articleId])
 
   useEffect(() => {
     if (!fabricRef.current) return
