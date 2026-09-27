@@ -3,15 +3,14 @@ import { NextResponse } from "next/server"
 export const runtime = "nodejs"
 
 // DOMMatrix polyfill for pdfjs-dist (used by pdf-parse)
-const polyfillDOMMatrix = async () => {
-  if (typeof globalThis.DOMMatrix !== 'undefined') return
-
+// Must be at top level to run before pdfjs-dom loads
+if (typeof globalThis.DOMMatrix === 'undefined') {
   try {
-    const dommatrix = await import('dommatrix')
-    globalThis.DOMMatrix = dommatrix as any
+    const dommatrix = require('dommatrix')
+    globalThis.DOMMatrix = dommatrix
   } catch {
     // Fallback: create a minimal DOMMatrix stub
-    class DOMMatrixStub {
+    const DOMMatrixStub = class {
       a = 1; b = 0; c = 0; d = 1; e = 0; f = 0
       is2d = true
       is3d = false
@@ -50,8 +49,6 @@ export async function POST(req: Request) {
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       return NextResponse.json({ error: "请上传 .pdf 文件" }, { status: 400 })
     }
-
-    await polyfillDOMMatrix()
 
     const pdfParseModule = await import("pdf-parse")
     const pdfParse: any = pdfParseModule
