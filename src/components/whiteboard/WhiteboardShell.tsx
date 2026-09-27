@@ -1,5 +1,8 @@
 "use client"
 
+// Import DOMMatrix polyfill first (before any other imports)
+import "@/lib/dommatrix-polyfill"
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
