@@ -13,7 +13,8 @@ export async function POST(req: Request) {
 
     // Ensure DOMMatrix exists for pdfjs-dist (used by pdf-parse)
     if (typeof globalThis.DOMMatrix === 'undefined') {
-      globalThis.DOMMatrix = require('dommatrix')
+      const dommatrix = require('dommatrix')
+      globalThis.DOMMatrix = dommatrix.CSSMatrix || dommatrix
     }
 
     const pdfParseModule = await import("pdf-parse")
