@@ -6,14 +6,14 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData()
     const file = form.get("file")
-    if (!(file instanceof File)) return NextResponse.json({ error: "请选择 PPTX 文件" }, { status: 400 })
+    if (!(file instanceof File)) return NextResponse.json({ error: "请选择文件" }, { status: 400 })
     if (!file.name.toLowerCase().endsWith(".pptx")) {
       return NextResponse.json({ error: "请上传 .pptx 文件" }, { status: 400 })
     }
 
-    const pptxParser = await import("pptx-parser")
+    const pptxParser: any = await import("pptx-parser")
     const buffer = Buffer.from(await file.arrayBuffer())
-    const parsed = await pptxParser.default(buffer)
+    const parsed: any = await pptxParser.default(buffer)
 
     const slides = parsed.slides.map((slide: any, index: number) => ({
       index: index + 1,
@@ -40,6 +40,6 @@ export async function POST(req: Request) {
       slideCount: slides.length
     })
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 })
+    return NextResponse.json({ error: e instanceof Error ? e.message : "服务器内部错误" }, { status: 500 })
   }
 }
