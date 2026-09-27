@@ -2,20 +2,6 @@ import { NextResponse } from "next/server"
 
 export const runtime = "nodejs"
 
-globalThis.DOMMatrix = class DOMMatrix {
-  a = 1; b = 0; c = 0; d = 1; e = 0; f = 0
-  constructor(init?: string | number[]) {}
-  static fromMatrix(other?: DOMMatrix) { return new DOMMatrix() }
-  multiplySelf(other: DOMMatrix) { return this }
-  inverse() { return new DOMMatrix() }
-  translateSelf(x: number, y: number, z?: number) { return this }
-  scaleSelf(sx: number, sy?: number, sz?: number) { return this }
-  rotateSelf(angle: number, rx?: number, ry?: number, rz?: number) { return this }
-  toFloat32Array() { return new Float32Array([1, 0, 0, 1, 0, 0]) }
-  toFloat64Array() { return new Float64Array([1, 0, 0, 1, 0, 0]) }
-  [key: string]: any
-} as any
-
 export async function POST(req: Request) {
   try {
     const form = await req.formData()
@@ -23,6 +9,11 @@ export async function POST(req: Request) {
     if (!(file instanceof File)) return NextResponse.json({ error: "请选择文件" }, { status: 400 })
     if (!file.name.toLowerCase().endsWith(".pdf")) {
       return NextResponse.json({ error: "请上传 .pdf 文件" }, { status: 400 })
+    }
+
+    // Ensure DOMMatrix exists for pdfjs-dist (used by pdf-parse)
+    if (typeof globalThis.DOMMatrix === 'undefined') {
+      globalThis.DOMMatrix = require('dommatrix')
     }
 
     const pdfParseModule = await import("pdf-parse")

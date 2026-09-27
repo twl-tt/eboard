@@ -16,6 +16,7 @@
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "dommatrix": "^0.1.1",
     "fabric": "^5.3.0",
     "framer-motion": "^11.3.21",
     "html2canvas": "^1.4.1",
