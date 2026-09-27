@@ -3,7 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
 import { X, Pencil, Eraser, Square, Circle, Trash2, Minus, Highlighter, Type, Move, Undo2, Redo2 } from "lucide-react"
 
-export type CanvasTool = "read" | "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text"
+export type CanvasTool = "read" | "select" | "pen" | "eraser" | "rect" | "ellipse" | "line" | "highlighter" | "text" | "file"
 
 export interface CanvasApi {
   toJSON: () => string | null
@@ -14,6 +14,8 @@ export interface CanvasApi {
   undo: () => boolean
   redo: () => boolean
   addText: (text: string, x: number, y: number, color?: string) => void
+  addImage: (url: string, x: number, y: number, maxWidth?: number, maxHeight?: number) => void
+  addPdfSlide: (url: string, page: number, x: number, y: number, width?: number, height?: number) => void
 }
 
 interface Props {
@@ -207,6 +209,11 @@ switch (t) {
           canvas.selection = false
           canvas.forEachObject((obj: any) => { obj.selectable = false; obj.evented = false })
           break
+        case "file":
+          canvas.isDrawingMode = false
+          canvas.selection = false
+          canvas.forEachObject((obj: any) => { obj.selectable = false; obj.evented = false })
+          break
         case "read":
           canvas.isDrawingMode = false
           canvas.selection = false
@@ -239,6 +246,50 @@ switch (t) {
           requestAnimationFrame(() => {
             text.enterEditing()
           })
+          return
+        }
+        if (toolRef.current === "file") {
+          const pointer = canvas.getPointer(options.e)
+          const input = document.createElement("input")
+          input.type = "file"
+          input.accept = "image/png,image/jpeg,image/webp,image/gif,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          input.multiple = true
+          input.onchange = async () => {
+            const files = input.files
+            if (!files) return
+            for (const file of Array.from(files)) {
+              const fileUrl = URL.createObjectURL(file)
+              if (file.type.startsWith("image/")) {
+                fabricRef.current?.addImage?.(fileUrl, pointer.x - 50, pointer.y - 50, 200, 200)
+              } else if (file.type === "application/pdf") {
+                const fd = new FormData()
+                fd.append("file", file)
+                try {
+                  const res = await fetch("/api/import/pdf", { method: "POST", body: fd })
+                  const data = await res.json()
+                  if (res.ok) {
+                    for (let p = 0; p < Math.min(data.pages ?? 1, 5); p++) {
+                      fabricRef.current?.addPdfSlide?.(fileUrl, p + 1, pointer.x + p * 10, pointer.y + p * 10, 400, 500)
+                    }
+                  }
+                } catch {}
+              } else if (file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation") {
+                const fd = new FormData()
+                fd.append("file", file)
+                try {
+                  const res = await fetch("/api/import/pptx", { method: "POST", body: fd })
+                  const data = await res.json()
+                  if (res.ok) {
+                    for (let s = 0; s < Math.min(data.slideCount ?? 0, 5); s++) {
+                      fabricRef.current?.addText?.(`第${s + 1}頁: ${(data.slides[s]?.shapes?.[0]?.text ?? "").slice(0, 30)}`, pointer.x, pointer.y + s * 60, "#dc2626")
+                    }
+                  }
+                } catch {}
+              }
+              URL.revokeObjectURL(fileUrl)
+            }
+          }
+          input.click()
           return
         }
         if (toolRef.current === "eraser") {
@@ -446,6 +497,35 @@ switch (t) {
       fabricRef.current.add(txt)
       fabricRef.current.setActiveObject(txt)
       fabricRef.current.renderAll()
+    },
+    addImage: (url: string, x: number, y: number, maxWidth?: number, maxHeight?: number) => {
+      if (!fabricRef.current) return
+      const fabricModule = fabricModuleRef.current
+      if (!fabricModule) return
+      fabricModule.Image.fromURL(url, (img: any) => {
+        const scaleX = maxWidth ? Math.min(1, maxWidth / img.width) : 1
+        const scaleY = maxHeight ? Math.min(1, maxHeight / img.height) : 1
+        const scale = Math.min(scaleX, scaleY, 1)
+        img.set({ left: x, top: y, scaleX: scale, scaleY: scale, selectable: true })
+        fabricRef.current.add(img)
+        fabricRef.current.setActiveObject(img)
+        fabricRef.current.renderAll()
+      })
+    },
+    addPdfSlide: (url: string, page: number, x: number, y: number, width?: number, height?: number) => {
+      if (!fabricRef.current) return
+      const fabricModule = fabricModuleRef.current
+      if (!fabricModule) return
+      const imgUrl = url + (url.includes("?") ? "&" : "?") + `page=${page}`
+      fabricModule.Image.fromURL(imgUrl, (img: any) => {
+        const scaleX = width ? Math.min(1, width / img.width) : 1
+        const scaleY = height ? Math.min(1, height / img.height) : 1
+        const scale = Math.min(scaleX, scaleY, 1)
+        img.set({ left: x, top: y, scaleX: scale, scaleY: scale, selectable: true })
+        fabricRef.current.add(img)
+        fabricRef.current.setActiveObject(img)
+        fabricRef.current.renderAll()
+      })
     }
   }))
 

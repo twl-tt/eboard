@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server"
 
-const MAX_SIZE = 8 * 1024 * 1024
-const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif"]
+const MAX_SIZE = 10 * 1024 * 1024
+const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf", "application/vnd.openxmlformats-officedocument.presentationml.presentation"]
 
 export async function POST(req: Request) {
   try {

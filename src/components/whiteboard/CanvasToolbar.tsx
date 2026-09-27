@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Pencil, Eraser, Square, Circle, Minus, Type, Highlighter, Move, Undo2, Redo2, Trash2, X, MousePointer2 } from "lucide-react"
+import { Pencil, Eraser, Square, Circle, Minus, Type, Highlighter, Move, Undo2, Redo2, Trash2, X, MousePointer2, FileImage } from "lucide-react"
 import type { CanvasTool } from "./CanvasStage"
 
 interface Props {
@@ -28,6 +28,7 @@ const TOOLS: { id: CanvasTool; icon: React.ReactNode; label: string }[] = [
   { id: "line", icon: <Minus className="h-4 w-4" />, label: "直線" },
   { id: "highlighter", icon: <Highlighter className="h-4 w-4" />, label: "螢光筆" },
   { id: "text", icon: <Type className="h-4 w-4" />, label: "文字" },
+  { id: "file", icon: <FileImage className="h-4 w-4" />, label: "圖片 / 檔案" }
 ]
 
 const COLORS = ["#1f2937", "#dc2626", "#2563eb", "#16a34a"]

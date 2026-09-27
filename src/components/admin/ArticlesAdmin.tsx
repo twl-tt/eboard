@@ -48,15 +48,19 @@ export function ArticlesAdmin({ categories, refreshCategories }: { categories: C
           <Plus className="h-4 w-4" /> 新增課文
         </Button>
         <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-          <FileUp className="h-4 w-4" /> 匯入 .txt / .docx
+          <FileUp className="h-4 w-4" /> 匯入 .txt / .docx / .pdf / .pptx
         </Button>
-        <Button variant="secondary" onClick={() => { setBulkCategoryId(categories[0]?.id ?? ""); setBulkResult(null); setShowBulkImport(true) }}>
+        <Button variant="secondary" onClick={() => {
+          setBulkCategoryId(categories[0]?.id ?? "");
+          setBulkResult(null);
+          setShowBulkImport(true);
+        }}>
           <Upload className="h-4 w-4" /> 批量匯入 CSV/TSV
         </Button>
         <input
           ref={fileRef}
           type="file"
-          accept=".txt,.docx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".txt,.docx,.pdf,.pptx,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation"
           className="hidden"
           onChange={handleImportFile}
         />
@@ -216,6 +220,22 @@ export function ArticlesAdmin({ categories, refreshCategories }: { categories: C
       if (!res.ok) { alert(data.error ?? "匯入失敗"); return }
       text = data.text
       setTitle(title || f.name.replace(/\.docx$/i, ""))
+    } else if (f.name.toLowerCase().endsWith(".pdf")) {
+      const fd = new FormData()
+      fd.append("file", f)
+      const res = await fetch("/api/import/pdf", { method: "POST", body: fd })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error ?? "匯入失敗"); return }
+      text = data.text
+      setTitle(title || f.name.replace(/\.pdf$/i, ""))
+    } else if (f.name.toLowerCase().endsWith(".pptx")) {
+      const fd = new FormData()
+      fd.append("file", f)
+      const res = await fetch("/api/import/pptx", { method: "POST", body: fd })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error ?? "匯入失敗"); return }
+      text = data.fullText
+      setTitle(title || f.name.replace(/\.pptx$/i, ""))
     } else {
       text = await f.text()
       setTitle(title || f.name.replace(/\.[^.]+$/, ""))
