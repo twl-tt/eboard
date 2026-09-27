@@ -31,6 +31,13 @@ if (typeof globalThis.DOMMatrix === 'undefined') {
     inverse() { return new DOMMatrixStub() }
   }
   globalThis.DOMMatrix = DOMMatrixStub as any
+  if (typeof console !== 'undefined') {
+    console.log('[DOMMatrix polyfill] Installed stub DOMMatrix');
+  }
+} else {
+  if (typeof console !== 'undefined') {
+    console.log('[DOMMatrix polyfill] Native DOMMatrix available:', typeof globalThis.DOMMatrix);
+  }
 }
 
 export {} // Make this a module
