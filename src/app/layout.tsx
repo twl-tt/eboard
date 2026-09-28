@@ -35,6 +35,12 @@ const dommatrixInit = `
       invertSelf: function() { return this; },
       inverse: function() { return new DOMMatrixStub(); }
     };
+    // Static methods required by DOMMatrix interface
+    DOMMatrixStub.fromFloat32Array = function() { return new DOMMatrixStub(); };
+    DOMMatrixStub.fromFloat64Array = function() { return new DOMMatrixStub(); };
+    DOMMatrixStub.fromMatrix = function() { return new DOMMatrixStub(); };
+    DOMMatrixStub.fromString = function() { return new DOMMatrixStub(); };
+    DOMMatrixStub.fromArray = function() { return new DOMMatrixStub(); };
     globalThis.DOMMatrix = window.DOMMatrix = DOMMatrixStub;
   }
 })();
