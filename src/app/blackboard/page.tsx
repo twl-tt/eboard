@@ -11,8 +11,8 @@ const HIGHLIGHTER_COLORS = ["#fef08a", "#bbf7d0", "#bfdbfe"]
 
 function BlackboardContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const articleId = searchParams.get("article")
+const searchParams = useSearchParams()
+    const articleId = searchParams?.get("article") ?? ""
 
   const canvasElRef = useRef<HTMLCanvasElement>(null)
   const fabricRef = useRef<any>(null)
