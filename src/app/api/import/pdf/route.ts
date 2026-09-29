@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import "@/lib/server-polyfill"
 
 export const runtime = "nodejs"
 
